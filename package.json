@@ -1,12 +1,12 @@
 {
-  "name": "gruas-app-backoffice",
+  "name": "gruastremart-spa",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint gruas-app-backoffice",
+    "lint": "eslint gruastremart-spa",
     "preview": "vite preview"
   },
   "dependencies": {
