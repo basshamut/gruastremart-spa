@@ -22,6 +22,10 @@ export default function SignInForm() {
         }
     };
 
+    function handleSignUp() {
+        navigate("/register")
+    }
+
     return (
         <form
             onSubmit={handleSubmit}
@@ -58,6 +62,10 @@ export default function SignInForm() {
             >
                 Iniciar Sesión
             </button>
+            <button onClick={handleSignUp} className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition-colors w-full">
+                Registrarse
+            </button>
+
         </form>
     );
 }
