@@ -30,6 +30,7 @@ export default function SignInForm() {
             onSubmit={handleSubmit}
             className="w-full max-w-md mx-auto p-6 space-y-4 bg-white shadow-md rounded"
         >
+            <img className="h-20 w-auto mb-4 mx-auto" src="/favicon.svg" alt="Logo de la empresa" />
             <h2 className="text-2xl font-bold text-center">Iniciar Sesión</h2>
             {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
