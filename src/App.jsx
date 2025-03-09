@@ -1,31 +1,27 @@
-import { useState } from "react";
 import { useAuth } from "./hook/useAuth";
+import Footer from "./sections/Footer.jsx";
 import Header from "./sections/Header.jsx";
 import Hero from "./sections/Hero.jsx";
-import Footer from "./sections/Footer.jsx";
+import useGetRole from "./hook/useGetRole";
+import Spinner from "./components/Spinner.jsx";
 
 function App() {
-    const [count, setCount] = useState(0);
+    const { user, loading: authLoading } = useAuth();
+    const { role, loading: roleLoading, error } = useGetRole(user ? user.email : null);
 
-    // Opcional: Accede a la información del usuario actual
-    const { user, loading } = useAuth();
-
-    // Ejemplo simple de obtener "rol" según el usuario:
-    const getRole = () => {
-        if (!user) return "guest";
-        return "admin";
-    };
-
-    // Mientras carga la sesión inicial, puedes mostrar un loader
-    if (loading) {
-        return <div>Cargando sesión...</div>;
+    // Mientras carga la sesión inicial o el rol, puedes mostrar un loader
+    if (authLoading || roleLoading) {
+        return <div>
+            <Spinner />
+        </div>;
     }
 
     return (
         <div className="min-h-screen flex flex-col">
-            <Header role={getRole()} />
-            <Hero role={getRole()} />
-            <Footer role={getRole()} />
+            {error && <div>Role error: {error.message}</div>}
+            <Header role={role || "guest"} />
+            <Hero role={role || "guest"} />
+            <Footer role={role || "guest"} />
         </div>
     );
 }

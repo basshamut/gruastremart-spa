@@ -8,7 +8,6 @@ export default function SignInForm() {
     const [password, setPassword] = useState("");
     const [errorMsg, setErrorMsg] = useState(null);
 
-    // Ojo: se usa directamente 'useNavigate()', sin llaves
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
