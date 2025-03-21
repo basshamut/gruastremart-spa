@@ -11,35 +11,37 @@ export default function InternalActivityTable({ role }) {
     const [totalPages, setTotalPages] = useState(1);
     const [pageSize, setPageSize] = useState(10);
 
-    const fetchDemands = (pageNumber, size) => {
-        setLoading(true);
-        fetch(`http://localhost:8080/gruastremart-core-api/v1/crane-demands?page=${pageNumber}&size=${size}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("Error al obtener datos");
-                }
-                return response.json();
-            })
-            .then(data => {
-                setDemands(data.content);
-                setTotalPages(data.totalPages);
-                setLoading(false);
-            })
-            .catch(error => {
-                setError(error.message);
-                setLoading(false);
-            });
-    };
+
 
     useEffect(() => {
+        const fetchDemands = (pageNumber, size) => {
+            setLoading(true);
+            fetch(`http://localhost:8080/gruastremart-core-api/v1/crane-demands?page=${pageNumber}&size=${size}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Error al obtener datos");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    setDemands(data.content);
+                    setTotalPages(data.totalPages);
+                    setLoading(false);
+                })
+                .catch(error => {
+                    setError(error.message);
+                    setLoading(false);
+                });
+        };
+
         fetchDemands(page, pageSize);
-    }, [page, pageSize]);
+    }, [page, pageSize, token]);
 
     const handlePageChange = (newPage) => {
         setPage(Math.max(0, Math.min(newPage, totalPages - 1)));

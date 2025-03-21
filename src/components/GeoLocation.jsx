@@ -107,6 +107,7 @@ export default function GeoLocation({ onLocationChange, onDestinationChange }) {
                 if (onDestinationChange) {
                     onDestinationChange(location);
                 }
+                setError(null);
             } else {
                 setError("No se encontró la ubicación");
             }
@@ -115,23 +116,10 @@ export default function GeoLocation({ onLocationChange, onDestinationChange }) {
         }
     };
 
-    const clearLocations = () => {
-        setLocation(null);
-        setSearchLocation(null);
-        setSearchQuery("");
-        if (mapRef.current) {
-            mapRef.current.eachLayer((layer) => {
-                if (layer instanceof L.Marker) {
-                    mapRef.current.removeLayer(layer);
-                }
-            });
-            mapRef.current.setView([51.505, -0.09], 13);
-        }
-    };
-
     return (
         <div className="flex flex-col items-center p-6 w-full max-w-lg mx-auto">
-            <h1 className="text-2xl font-bold mb-4 text-center">Geolocalización</h1>
+            <h2 className="text-2xl font-bold mb-4 text-center">Solicitud de Servicio de Grúa</h2>
+
 
             <button
                 onClick={getLocation}
@@ -141,27 +129,20 @@ export default function GeoLocation({ onLocationChange, onDestinationChange }) {
             </button>
 
             <div className="mb-4 flex w-full">
-                <input 
-                    type="text" 
-                    value={searchQuery} 
-                    onChange={(e) => setSearchQuery(e.target.value)} 
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Buscar lugar de destino..."
                     className="flex-1 border px-2 py-1 rounded mr-2"
                 />
-                <button 
-                    onClick={searchPlace} 
+                <button
+                    onClick={searchPlace}
                     className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                 >
                     Destino
                 </button>
             </div>
-
-            <button
-                onClick={clearLocations}
-                className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors mb-4"
-            >
-                Limpiar Ubicaciones
-            </button>
 
             {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
 

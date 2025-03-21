@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function TowingRequestForm({formData, setFormData}) {
+export default function TowingRequestForm({ formData, setFormData }) {
 
     const token = localStorage.getItem('jwt');
     const [message, setMessage] = useState(null);
@@ -49,7 +49,7 @@ export default function TowingRequestForm({formData, setFormData}) {
     };
 
     return <>
-        <h2 className="text-2xl font-bold mb-4 text-center">Solicitud de Servicio de Grúa</h2>
+        <h2 className="text-2xl font-bold mb-4 text-center">Datos Generales</h2>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -118,13 +118,20 @@ export default function TowingRequestForm({formData, setFormData}) {
                 />
             </div>
 
-            <div className="md:col-span-2 flex justify-center mt-4">
+            <div className="md:col-span-3 flex justify-center mt-4">
                 <button
                     type="submit"
                     disabled={sending}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded disabled:opacity-50"
                 >
                     {sending ? "Enviando..." : "Solicitar Grúa"}
+                </button>
+                <button
+                type="button"
+                onClick={() => document.location.reload()}
+                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded disabled:opacity-50"
+                >
+                    Reiniciar Solicitud
                 </button>
             </div>
         </form>
