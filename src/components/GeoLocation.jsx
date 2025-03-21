@@ -16,7 +16,7 @@ const destinationIcon = L.icon({
     popupAnchor: [1, -34],
 });
 
-export default function GeoLocation() {
+export default function GeoLocation({ onLocationChange, onDestinationChange }) {
     const [location, setLocation] = useState(null);
     const [searchLocation, setSearchLocation] = useState(null);
     const [error, setError] = useState(null);
@@ -43,19 +43,19 @@ export default function GeoLocation() {
             });
 
             if (location) {
-                L.marker([location.latitud, location.longitud], { icon: userIcon }).addTo(map)
+                L.marker([location.latitude, location.longitude], { icon: userIcon }).addTo(map)
                     .bindPopup("Tu ubicación actual").openPopup();
             }
 
             if (searchLocation) {
-                L.marker([searchLocation.lat, searchLocation.lon], { icon: destinationIcon }).addTo(map)
+                L.marker([searchLocation.latitude, searchLocation.longitude], { icon: destinationIcon }).addTo(map)
                     .bindPopup(`Destino: ${searchQuery}`).openPopup();
             }
 
             if (location && searchLocation) {
                 map.fitBounds([
-                    [location.latitud, location.longitud],
-                    [searchLocation.lat, searchLocation.lon]
+                    [location.latitude, location.longitude],
+                    [searchLocation.latitude, searchLocation.longitude]
                 ]);
             }
         }
@@ -69,12 +69,16 @@ export default function GeoLocation() {
 
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                setLocation({
-                    latitud: position.coords.latitude,
-                    longitud: position.coords.longitude,
-                    precision: position.coords.accuracy,
-                });
+                const currentLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                };
+                setLocation(currentLocation);
                 setError(null);
+                if (onLocationChange) {
+                    onLocationChange(currentLocation);
+                }
             },
             (err) => {
                 setError("Error obteniendo ubicación: " + err.message);
@@ -95,7 +99,14 @@ export default function GeoLocation() {
             );
             const data = await response.json();
             if (data.length > 0) {
-                setSearchLocation({ lat: data[0].lat, lon: data[0].lon });
+                const location = {
+                    latitude: parseFloat(data[0].lat),
+                    longitude: parseFloat(data[0].lon),
+                };
+                setSearchLocation(location);
+                if (onDestinationChange) {
+                    onDestinationChange(location);
+                }
             } else {
                 setError("No se encontró la ubicación");
             }
@@ -120,7 +131,7 @@ export default function GeoLocation() {
 
     return (
         <div className="flex flex-col items-center p-6 w-full max-w-lg mx-auto">
-            <h1 className="text-2xl font-bold mb-4 text-center">Mini App de Geolocalización</h1>
+            <h1 className="text-2xl font-bold mb-4 text-center">Geolocalización</h1>
 
             <button
                 onClick={getLocation}
@@ -134,7 +145,7 @@ export default function GeoLocation() {
                     type="text" 
                     value={searchQuery} 
                     onChange={(e) => setSearchQuery(e.target.value)} 
-                    placeholder="Buscar lugar..."
+                    placeholder="Buscar lugar de destino..."
                     className="flex-1 border px-2 py-1 rounded mr-2"
                 />
                 <button 

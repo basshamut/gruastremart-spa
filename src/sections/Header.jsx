@@ -1,11 +1,11 @@
 import React from "react";
-import GeoLocation from "../components/GeoLocation.jsx";
+import TowingRequest from "../components/TowingRequest";
 
 export default function Header({role}) {
-    console.log(role);
+    console.log("Header-> " + role);
     return (
         <header className="bg-background p-4">
-            <GeoLocation />
+            <TowingRequest />
         </header>
     );
 }

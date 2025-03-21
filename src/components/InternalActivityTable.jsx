@@ -1,5 +1,5 @@
-export default function InternalActivityTable(props) {
-    const { role } = props;
+export default function InternalActivityTable({ role }) {
+    console.log("InternalActivityTable-> " + role);
     return (
         <>
             <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo!</h1>
