@@ -15,7 +15,7 @@ export default function InternalActivityTable({ role }) {
     useEffect(() => {
         const fetchDemands = (pageNumber, size) => {
             setLoading(true);
-            fetch(`${apiDomain}/v1/crane-demands?page=${pageNumber}&size=${size}`, {
+            fetch(`${apiDomain}/crane-demands?page=${pageNumber}&size=${size}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
