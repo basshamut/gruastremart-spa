@@ -10,13 +10,12 @@ export default function InternalActivityTable({ role }) {
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
     const [pageSize, setPageSize] = useState(10);
-
-
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
 
     useEffect(() => {
         const fetchDemands = (pageNumber, size) => {
             setLoading(true);
-            fetch(`http://localhost:8080/gruastremart-core-api/v1/crane-demands?page=${pageNumber}&size=${size}`, {
+            fetch(`${apiDomain}/v1/crane-demands?page=${pageNumber}&size=${size}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -41,7 +40,7 @@ export default function InternalActivityTable({ role }) {
         };
 
         fetchDemands(page, pageSize);
-    }, [page, pageSize, token]);
+    }, [page, pageSize, token, apiDomain]);
 
     const handlePageChange = (newPage) => {
         setPage(Math.max(0, Math.min(newPage, totalPages - 1)));

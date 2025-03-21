@@ -2,6 +2,7 @@ import { useState } from "react";
 
 export default function TowingRequestForm({ formData, setFormData }) {
 
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
     const token = localStorage.getItem('jwt');
     const [message, setMessage] = useState(null);
     const [sending, setSending] = useState(false);
@@ -16,7 +17,7 @@ export default function TowingRequestForm({ formData, setFormData }) {
         setMessage(null);
 
         try {
-            const response = await fetch("http://localhost:8080/gruastremart-core-api/v1/crane-demands", {
+            const response = await fetch(`${apiDomain}/gruastremart-core-api/v1/crane-demands`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
