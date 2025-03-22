@@ -17,7 +17,7 @@ export default function TowingRequestForm({ formData, setFormData }) {
         setMessage(null);
 
         try {
-            const response = await fetch(`${apiDomain}/gruastremart-core-api/v1/crane-demands`, {
+            const response = await fetch(`${apiDomain}/crane-demands`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
