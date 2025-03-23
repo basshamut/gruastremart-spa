@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function InternalActivityTable({ role }) {
-    console.log("InternalActivityTable-> " + role);
-
+export default function OperatorActivity({ role }) {
     const token = localStorage.getItem('jwt');
     const [demands, setDemands] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -113,14 +111,6 @@ export default function InternalActivityTable({ role }) {
                                 </div>
                             </>
                         )}
-                    </div>
-                </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
-                <div className="bg-card p-4 rounded-lg shadow-md">
-                    <h2 className="text-lg font-bold text-primary-foreground">Resumen Mensual</h2>
-                    <div className="mt-4">
-                        <p className="text-sm text-muted-foreground">No hay resumen disponible.</p>
                     </div>
                 </div>
             </div>

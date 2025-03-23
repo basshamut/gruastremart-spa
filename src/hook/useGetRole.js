@@ -36,8 +36,10 @@ const useGetRole = (userEmail) => {
                 setLoading(false);
             }
         };
-
-        fetchRole();
+        
+        if(userEmail){
+            fetchRole();
+        }
     }, [userEmail, apiDomain, token]);
 
     return { role, loading, error };

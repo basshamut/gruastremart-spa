@@ -1,12 +1,13 @@
 import React from "react";
-import {useAuth} from "../hook/useAuth";
-import {useNavigate} from "react-router-dom";
+import { useAuth } from "../hook/useAuth";
+import { useNavigate } from "react-router-dom";
 
 export default function LogoutButton() {
-    const {signOut} = useAuth();
+    const { signOut } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogout = async () => {
+    async function handleLogout(event) {
+        event.preventDefault();
         try {
             await signOut();
             navigate("/login");
@@ -16,8 +17,8 @@ export default function LogoutButton() {
     };
 
     return (
-        <a href="#" onClick={handleLogout}
-           className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
+        <a href="#" onClick={(event) => handleLogout(event)}
+            className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
             Cerrar Sesión
         </a>
     );

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function TowingRequestForm({ formData, setFormData }) {
+export default function CustomerForm({ formData, setFormData }) {
 
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
     const token = localStorage.getItem('jwt');
