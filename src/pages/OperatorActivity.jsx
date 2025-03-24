@@ -1,53 +1,19 @@
-import { useEffect, useState } from "react";
+import { usePaginatedDemands } from "../hook/usePaginatedDemands";
 
-export default function OperatorActivity({ role }) {
+export default function OperatorActivity() {
     const token = localStorage.getItem('jwt');
-    const [demands, setDemands] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [page, setPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
 
-    useEffect(() => {
-        const fetchDemands = (pageNumber, size) => {
-            setLoading(true);
-            fetch(`${apiDomain}/crane-demands?page=${pageNumber}&size=${size}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                }
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Error al obtener datos");
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    setDemands(data.content);
-                    setTotalPages(data.totalPages);
-                    setLoading(false);
-                })
-                .catch(error => {
-                    setError(error.message);
-                    setLoading(false);
-                });
-        };
-
-        fetchDemands(page, pageSize);
-    }, [page, pageSize, token, apiDomain]);
-
-    const handlePageChange = (newPage) => {
-        setPage(Math.max(0, Math.min(newPage, totalPages - 1)));
-    };
-
-    const handlePageSizeChange = (event) => {
-        setPageSize(Number(event.target.value));
-        setPage(0); // Resetear a la primera página
-    };
+    const {
+        demands,
+        loading,
+        error,
+        page,
+        totalPages,
+        pageSize,
+        handlePageChange,
+        handlePageSizeChange
+    } = usePaginatedDemands(apiDomain, token);
 
     return (
         <>

@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { useAuth } from "../hook/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hook/useAuth";
+import { useNavigate, useLocation } from "react-router-dom";
+
+import Footer from "../../sections/Footer";
 
 export default function SignInForm() {
+    const location = useLocation();
     const { signIn } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [errorMsg, setErrorMsg] = useState(null);
+    const [errorMsg, setErrorMsg] = useState(location.state?.message ? location.state.message : null);
 
     const navigate = useNavigate();
 
@@ -25,7 +28,7 @@ export default function SignInForm() {
         navigate("/register")
     }
 
-    return (
+    return (<>
         <form
             onSubmit={handleSubmit}
             className="w-full max-w-md mx-auto p-6 space-y-4 bg-white shadow-md rounded"
@@ -67,5 +70,7 @@ export default function SignInForm() {
             </button>
 
         </form>
+        <Footer/>
+        </>
     );
 }

@@ -1,13 +1,24 @@
-import {useNavigate} from "react-router-dom";
-import LogoutButton from "./LogoutButton.jsx";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hook/useAuth";
 
 export default function NavBar({ role }) {
     const navigate = useNavigate();
+    const { signOut } = useAuth();
 
     function goToActivityPage(event, role) {
         event.preventDefault();
         navigate("/home", { state: { role } });
     }
+
+    async function handleLogout(event) {
+        event.preventDefault();
+        try {
+            await signOut();
+            navigate("/");
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error.message);
+        }
+    };
 
     return (
         <>
@@ -16,7 +27,7 @@ export default function NavBar({ role }) {
             </div>
             <nav className="py-4">
                 {role === "ADMIN" && (<div>
-                    <a href="/home" className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
+                    <a href="#" onClick={(event) => { goToActivityPage(event, "ADMIN") }} className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
                         Inicio
                     </a>
                     <a href="#" className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
@@ -25,16 +36,18 @@ export default function NavBar({ role }) {
                     <a href="#" className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
                         Configuración
                     </a>
-                    <a href="#" onClick={(event) => {goToActivityPage(event, "CLIENT")}} className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
+                    <a href="#" onClick={(event) => { goToActivityPage(event, "CLIENT") }} className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
                         Tablero Usuarios
                     </a>
-                    <a href="#" onClick={(event) => {goToActivityPage(event, "OPERATOR")}} className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
+                    <a href="#" onClick={(event) => { goToActivityPage(event, "OPERATOR") }} className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
                         Tablero Operadores
                     </a>
                 </div>
                 )}
 
-                <LogoutButton />
+                <a href="#" onClick={(event) => { handleLogout(event) }} className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
+                    Cerrar sesión
+                </a>
             </nav>
         </>
     );

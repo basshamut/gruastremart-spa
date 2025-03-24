@@ -4,8 +4,8 @@ import "./styles/global.css";
 import App from './App.jsx'
 import {AuthProvider} from "./components/AuthProvider.jsx";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
-import SignInForm from "./components/SignInForm.jsx";
-import SignUpForm from "./components/SignUpForm.jsx";
+import SignInForm from "./components/access/SignInForm.jsx";
+import SignUpForm from "./components/access/SignUpForm.jsx";
 import CustomerActivity from './pages/CustomerActivity.jsx';
 import OperatorActivity from './pages/OperatorActivity.jsx';
 

@@ -1,16 +1,13 @@
 import React from "react";
-import { useAuth } from "../hook/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hook/useAuth";
 
 export default function LogoutButton() {
     const { signOut } = useAuth();
-    const navigate = useNavigate();
 
     async function handleLogout(event) {
         event.preventDefault();
         try {
             await signOut();
-            navigate("/login");
         } catch (error) {
             console.error("Error al cerrar sesión:", error.message);
         }

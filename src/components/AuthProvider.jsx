@@ -15,15 +15,17 @@ export function AuthProvider({ children }) {
         });
 
         // 2) Escuchamos cambios de autenticación (login, logout, etc.)
-        const { data: authListener } = supabase.auth.onAuthStateChange(
-            async (_event, session) => {
-                setUser(session?.user ?? null);
-
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            setUser(session?.user ?? null);
+        
+            if (session) {
                 localStorage.setItem("jwt", session.access_token);
-
-                setLoading(false);
+            } else {
+                localStorage.removeItem("jwt");
             }
-        );
+        
+            setLoading(false);
+        });
 
         // Limpieza del listener al desmontar
         return () => {
@@ -50,6 +52,11 @@ export function AuthProvider({ children }) {
     const signOut = async () => {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
+        window.location.href = "/";
+    };
+
+    const isSessionActive = () => {
+        return user !== null;
     };
 
     const value = {

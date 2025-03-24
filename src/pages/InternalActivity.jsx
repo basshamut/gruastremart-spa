@@ -1,57 +1,24 @@
-import { useEffect, useState } from "react";
+import { usePaginatedDemands } from "../hook/usePaginatedDemands";
 
-export default function InternalActivity({ role }) {
-    const token = localStorage.getItem('jwt');
-    const [demands, setDemands] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [page, setPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+export default function InternalActivity() {
+    const token = localStorage.getItem("jwt");
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
 
-    useEffect(() => {
-        const fetchDemands = (pageNumber, size) => {
-            setLoading(true);
-            fetch(`${apiDomain}/crane-demands?page=${pageNumber}&size=${size}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                }
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Error al obtener datos");
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    setDemands(data.content);
-                    setTotalPages(data.totalPages);
-                    setLoading(false);
-                })
-                .catch(error => {
-                    setError(error.message);
-                    setLoading(false);
-                });
-        };
-
-        fetchDemands(page, pageSize);
-    }, [page, pageSize, token, apiDomain]);
-
-    const handlePageChange = (newPage) => {
-        setPage(Math.max(0, Math.min(newPage, totalPages - 1)));
-    };
-
-    const handlePageSizeChange = (event) => {
-        setPageSize(Number(event.target.value));
-        setPage(0); // Resetear a la primera página
-    };
+    const {
+        demands,
+        loading,
+        error,
+        page,
+        totalPages,
+        pageSize,
+        handlePageChange,
+        handlePageSizeChange
+    } = usePaginatedDemands(apiDomain, token);
 
     return (
         <>
             <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo!</h1>
+
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
                 <div className="bg-card p-4 rounded-lg shadow-md">
                     <h2 className="text-lg font-bold text-primary-foreground">Actividad Reciente</h2>
@@ -65,28 +32,28 @@ export default function InternalActivity({ role }) {
                         ) : (
                             <>
                                 <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse mt-2">
-                                    <thead>
-                                        <tr className="border-b">
-                                            <th className="p-2">ID</th>
-                                            <th className="p-2">Descripción</th>
-                                            <th className="p-2">Usuario</th>
-                                            <th className="p-2">Fecha</th>
-                                            <th className="p-2">Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {demands.map(demand => (
-                                            <tr key={demand.id} className="border-b">
-                                                <td className="p-2">{demand.id}</td>
-                                                <td className="p-2">{demand.description}</td>
-                                                <td className="p-2">{demand.userId}</td>
-                                                <td className="p-2">{new Date(demand.dueDate).toLocaleDateString()}</td>
-                                                <td className="p-2">{demand.state}</td>
+                                    <table className="w-full text-left border-collapse mt-2">
+                                        <thead>
+                                            <tr className="border-b">
+                                                <th className="p-2">ID</th>
+                                                <th className="p-2">Descripción</th>
+                                                <th className="p-2">Usuario</th>
+                                                <th className="p-2">Fecha</th>
+                                                <th className="p-2">Estado</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {demands.map(demand => (
+                                                <tr key={demand.id} className="border-b">
+                                                    <td className="p-2">{demand.id}</td>
+                                                    <td className="p-2">{demand.description}</td>
+                                                    <td className="p-2">{demand.userId}</td>
+                                                    <td className="p-2">{new Date(demand.dueDate).toLocaleDateString()}</td>
+                                                    <td className="p-2">{demand.state}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                                 <div className="flex flex-col md:flex-row justify-between items-center mt-4 gap-2">
                                     <button
