@@ -1,6 +1,6 @@
 // src/components/SignUpForm.jsx
 import { useState } from "react";
-import { useAuth } from "../../hook/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
 export default function SignUpForm() {

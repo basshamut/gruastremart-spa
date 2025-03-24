@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../config/supabase/supabaseClient";
-import AuthContext from "./AuthContext";
-import Spinner from "./Spinner";
 
-export function AuthProvider({ children }) {
+export function useProvideAuth() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -17,17 +15,17 @@ export function AuthProvider({ children }) {
         // 2) Escuchamos cambios de autenticación (login, logout, etc.)
         const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
             setUser(session?.user ?? null);
-        
+
             if (session) {
                 localStorage.setItem("jwt", session.access_token);
             } else {
                 localStorage.removeItem("jwt");
             }
-        
+
             setLoading(false);
         });
 
-        // Limpieza del listener al desmontar
+        // Limpieza al desmontar
         return () => {
             authListener.subscription.unsubscribe();
         };
@@ -55,21 +53,11 @@ export function AuthProvider({ children }) {
         window.location.href = "/";
     };
 
-    const isSessionActive = () => {
-        return user !== null;
-    };
-
-    const value = {
+    return {
         user,
+        loading,
         signUp,
         signIn,
         signOut,
-        loading,
     };
-
-    return (
-        <AuthContext.Provider value={value}>
-            {loading ? <Spinner/> : children}
-        </AuthContext.Provider>
-    );
 }

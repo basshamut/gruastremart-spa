@@ -1,4 +1,4 @@
-import { usePaginatedDemands } from "../hook/usePaginatedDemands";
+import { usePaginatedDemands } from "../hooks/usePaginatedDemands";
 
 export default function OperatorActivity() {
     const token = localStorage.getItem('jwt');

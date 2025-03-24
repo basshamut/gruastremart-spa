@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../hook/useAuth";
-import NavBar from "../components/NavBar.jsx";
+import { useAuth } from "../hooks/useAuth";
+import NavBar from "../components/common/NavBar.jsx";
 import InternalActivityTable from "../pages/InternalActivity.jsx";
 import OperatorActivityTable from "../pages/OperatorActivity.jsx";
 import CustomerActivityTable from "../pages/CustomerActivity.jsx";

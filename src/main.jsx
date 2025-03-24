@@ -2,7 +2,7 @@ import React from 'react';
 import {createRoot} from 'react-dom/client'
 import "./styles/global.css";
 import App from './App.jsx'
-import {AuthProvider} from "./components/AuthProvider.jsx";
+import {AuthProvider} from "./components/access/AuthProvider.jsx";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import SignInForm from "./components/access/SignInForm.jsx";
 import SignUpForm from "./components/access/SignUpForm.jsx";

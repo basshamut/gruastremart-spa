@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hook/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function NavBar({ role }) {
     const navigate = useNavigate();

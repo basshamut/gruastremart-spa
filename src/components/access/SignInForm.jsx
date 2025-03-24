@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../../hook/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import Footer from "../../sections/Footer";

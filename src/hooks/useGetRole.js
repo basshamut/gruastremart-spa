@@ -21,14 +21,14 @@ const useGetRole = (userEmail) => {
 
                 if (!response.ok) {
                     console.error('Network response was not ok');
-                    data.role = "guest";
+                    data.role = "GUEST";
                 } else{
                     data = await response.json();
                 }
 
                 setRole(data.role);
             } catch (err) {
-                const message = "'Network response was not ok. Provisional role: guest'"
+                const message = "'Network response was not ok. Provisional role: GUEST'"
                 console.error(message);
                 err.message = message;
                 setError(err);

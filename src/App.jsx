@@ -1,9 +1,9 @@
-import { useAuth } from "./hook/useAuth";
+import { useAuth } from "./hooks/useAuth";
 import Footer from "./sections/Footer.jsx";
 import Header from "./sections/Header.jsx";
 import Hero from "./sections/Hero.jsx";
-import useGetRole from "./hook/useGetRole";
-import Spinner from "./components/Spinner.jsx";
+import useGetRole from "./hooks/useGetRole";
+import Spinner from "./components/common/Spinner.jsx";
 
 function App() {
     const { user, loading: authLoading } = useAuth();
@@ -19,9 +19,9 @@ function App() {
     return (
         <div className="min-h-screen flex flex-col">
             {error && <div>Role error: {error.message}</div>}
-            <Header role={role || "guest"} />
-            <Hero role={role || "guest"} />
-            <Footer role={role || "guest"} />
+            <Header />
+            <Hero role={role || "GUEST"} />
+            <Footer />
         </div>
     );
 }
