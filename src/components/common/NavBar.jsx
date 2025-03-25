@@ -14,6 +14,7 @@ export default function NavBar({ role }) {
         event.preventDefault();
         try {
             await signOut();
+            localStorage.removeItem("jwt");
             navigate("/");
         } catch (error) {
             console.error("Error al cerrar sesión:", error.message);

@@ -11,7 +11,7 @@ const useGetRole = (userEmail) => {
         const fetchRole = async () => {
             try {
 
-                const response = await fetch(`${apiDomain}/users/${userEmail}`, {
+                const response = await fetch(`${apiDomain}/users?page=0&size=1&email=${userEmail}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -21,12 +21,12 @@ const useGetRole = (userEmail) => {
 
                 if (!response.ok) {
                     console.error('Network response was not ok');
-                    data.role = "GUEST";
+                    data.role = null;
                 } else{
                     data = await response.json();
                 }
 
-                setRole(data.role);
+                setRole(data.content[0].role);
             } catch (err) {
                 const message = "'Network response was not ok. Provisional role: GUEST'"
                 console.error(message);
