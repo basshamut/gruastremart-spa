@@ -20,7 +20,7 @@ function App() {
         <div className="min-h-screen flex flex-col">
             {error && <div>Role error: {error.message}</div>}
             <Header />
-            <Hero role={role || "GUEST"} />
+            <Hero role={role || null} />
             <Footer />
         </div>
     );
