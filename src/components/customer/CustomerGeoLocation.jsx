@@ -25,7 +25,7 @@ export default function CustomerGeoLocation({ onLocationChange, onDestinationCha
 
     useEffect(() => {
         if (!mapRef.current) {
-            mapRef.current = L.map("map").setView([51.505, -0.09], 12);
+            mapRef.current = L.map("map").setView([10.4806, -66.9036], 12);
 
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: "&copy; OpenStreetMap contributors"
@@ -66,7 +66,7 @@ export default function CustomerGeoLocation({ onLocationChange, onDestinationCha
             setError("La geolocalización no es compatible con este navegador.");
             return;
         }
-
+    
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const currentLocation = {
@@ -76,6 +76,15 @@ export default function CustomerGeoLocation({ onLocationChange, onDestinationCha
                 };
                 setLocation(currentLocation);
                 setError(null);
+    
+                // 👇 Centrar el mapa si está disponible
+                if (mapRef.current) {
+                    mapRef.current.setView(
+                        [currentLocation.latitude, currentLocation.longitude],
+                        15 // Zoom of map
+                    );
+                }
+    
                 if (onLocationChange) {
                     onLocationChange(currentLocation);
                 }
@@ -90,6 +99,7 @@ export default function CustomerGeoLocation({ onLocationChange, onDestinationCha
             }
         );
     };
+    
 
     const searchPlace = async () => {
         if (!searchQuery) return;
