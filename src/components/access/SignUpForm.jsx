@@ -2,23 +2,37 @@
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import registerUserInDb from "../../hooks/useRegisterUserInDb"; // ¡Ya no será un hook reactivo!
 
 export default function SignUpForm() {
     const { signUp } = useAuth();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [errorMsg, setErrorMsg] = useState(null);
     const navigate = useNavigate();
 
-    function handleBack() {
-        navigate("/login")
+    const [form, setForm] = useState({
+        email: "",
+        password: "",
+        name: "",
+        lastName: "",
+        phone: "",
+        address: "",
+        identificationNumber: "",
+        birthDate: "",
+        role: "CLIENT",
+    });
+
+    const [errorMsg, setErrorMsg] = useState(null);
+
+    function handleChange(e) {
+        const { name, value } = e.target;
+        setForm(prev => ({ ...prev, [name]: value }));
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrorMsg(null);
         try {
-            await signUp(email, password);
+            await signUp(form.email, form.password); // Create user in Supabase
+            await registerUserInDb(form); // Create user in the database
             alert("¡Te has registrado correctamente! Revisa tu correo para confirmar.");
         } catch (error) {
             setErrorMsg(error.message);
@@ -34,27 +48,28 @@ export default function SignUpForm() {
             <h2 className="text-2xl font-bold text-center">Registro</h2>
             {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
-            <div>
-                <label className="block font-medium mb-1">Correo electrónico</label>
-                <input
-                    type="email"
-                    className="border border-gray-300 rounded w-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
-            </div>
-
-            <div>
-                <label className="block font-medium mb-1">Contraseña</label>
-                <input
-                    type="password"
-                    className="border border-gray-300 rounded w-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                />
-            </div>
+            {[
+                { label: "Correo electrónico", name: "email", type: "email" },
+                { label: "Contraseña", name: "password", type: "password" },
+                { label: "Nombre", name: "name" },
+                { label: "Apellidos", name: "lastName" },
+                { label: "Teléfono", name: "phone" },
+                { label: "Dirección", name: "address" },
+                { label: "DNI/NIF", name: "identificationNumber" },
+                { label: "Fecha de nacimiento", name: "birthDate", type: "date" },
+            ].map(({ label, name, type = "text" }) => (
+                <div key={name}>
+                    <label className="block font-medium mb-1">{label}</label>
+                    <input
+                        type={type}
+                        name={name}
+                        value={form[name]}
+                        onChange={handleChange}
+                        required
+                        className="border border-gray-300 rounded w-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                </div>
+            ))}
 
             <button
                 type="submit"
@@ -62,10 +77,13 @@ export default function SignUpForm() {
             >
                 Registrarse
             </button>
-            <button onClick={handleBack} className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition-colors w-full">
+            <button
+                onClick={() => navigate("/login")}
+                className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition-colors w-full"
+                type="button"
+            >
                 Volver
             </button>
-
         </form>
     );
 }
