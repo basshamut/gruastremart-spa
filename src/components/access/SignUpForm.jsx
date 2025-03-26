@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import registerUserInDb from "../../hooks/useRegisterUserInDb"; // ¡Ya no será un hook reactivo!
+import {registerUserInDb} from "../../services/UserService";
 
 export default function SignUpForm() {
     const { signUp } = useAuth();
