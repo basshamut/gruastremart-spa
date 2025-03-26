@@ -8,11 +8,14 @@ export function usePaginatedDemands(apiDomain, token, initialPageSize = 10) {
     const [totalPages, setTotalPages] = useState(1);
     const [pageSize, setPageSize] = useState(initialPageSize);
 
+    console.log("size: " + pageSize);
+
     useEffect(() => {
         const fetchDemands = async (pageNumber, size) => {
             setLoading(true);
+            const url = apiDomain + "/crane-demands?page=" + pageNumber + "&size=" + size
             try {
-                const response = await fetch(`${apiDomain}/crane-demands?page=${pageNumber}&size=${size}`, {
+                const response = await fetch(url, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",

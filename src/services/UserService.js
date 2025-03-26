@@ -1,5 +1,28 @@
-// src/hooks/useRegisterUserInDb.js
-export default async function registerUserInDb(userData) {
+export async function getRoleByEmail(email) {
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
+    const token = localStorage.getItem('jwt');
+
+    try {
+        const response = await fetch(`${apiDomain}/users?page=0&size=1&email=${email}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("No se pudo obtener el rol del usuario");
+        }
+
+        const data = await response.json();
+
+        return data.content?.[0]?.role || null;
+    } catch (err) {
+        console.error("Error al obtener el rol:", err);
+        throw err;
+    }
+}
+
+export async function registerUserInDb(userData) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
     const token = localStorage.getItem('jwt');
 
