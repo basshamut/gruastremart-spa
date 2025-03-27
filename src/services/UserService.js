@@ -27,7 +27,7 @@ export async function registerUserInDb(userData) {
     const token = localStorage.getItem('jwt');
 
     try {
-        const response = await fetch(`${apiDomain}/users`, {
+        const response = await fetch(`${apiDomain}/users/register`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
