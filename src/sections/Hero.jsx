@@ -14,8 +14,9 @@ export default function Hero({ role: userRole }) {
 
     // Detectar si hay un role en el state de la navegación
     useEffect(() => {
-        if (!userRole) {            
-            navigate("/login",{state: {message: "No se ha encontrado un rol para este usuario"}});
+        if (!userRole || !isSessionActive) {      
+            console.error("Debe iniciar sesión para acceder");
+            navigate("/login",{state: {message: "Debe iniciar sesión para acceder"}});
         }
 
         if (location.state?.role) {
