@@ -34,6 +34,7 @@ export default function SignUpForm() {
             await signUp(form.email, form.password); // Create user in Supabase
             await registerUserInDb(form); // Create user in the database
             alert("¡Te has registrado correctamente! Revisa tu correo para confirmar.");
+            navigate("/");
         } catch (error) {
             setErrorMsg(error.message);
         }
@@ -55,7 +56,7 @@ export default function SignUpForm() {
                 { label: "Apellidos", name: "lastName" },
                 { label: "Teléfono", name: "phone" },
                 { label: "Dirección", name: "address" },
-                { label: "DNI/NIF", name: "identificationNumber" },
+                { label: "Nro. Cedula", name: "identificationNumber" },
                 { label: "Fecha de nacimiento", name: "birthDate", type: "date" },
             ].map(({ label, name, type = "text" }) => (
                 <div key={name}>
