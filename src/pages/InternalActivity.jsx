@@ -1,5 +1,7 @@
+import React from "react";
+import {ReceiptText} from 'lucide-react';
 import Pagination from "../components/common/Pagination";
-import { usePaginatedDemands } from "../hooks/usePaginatedDemands";
+import {usePaginatedDemands} from "../hooks/usePaginatedDemands";
 
 export default function InternalActivity() {
     const token = localStorage.getItem("jwt");
@@ -35,24 +37,26 @@ export default function InternalActivity() {
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left border-collapse mt-2">
                                         <thead>
-                                            <tr className="border-b">
-                                                <th className="p-2">ID</th>
-                                                <th className="p-2">Descripción</th>
-                                                <th className="p-2">Usuario</th>
-                                                <th className="p-2">Fecha</th>
-                                                <th className="p-2">Estado</th>
-                                            </tr>
+                                        <tr className="border-b">
+                                            <th className="p-2">Descripción</th>
+                                            <th className="p-2">Origen</th>
+                                            <th className="p-2">Destino</th>
+                                            <th className="p-2">Fecha</th>
+                                            <th className="p-2">Estado</th>
+                                            <th className="p-2">Detalles</th>
+                                        </tr>
                                         </thead>
                                         <tbody>
-                                            {demands.map(demand => (
-                                                <tr key={demand.id} className="border-b">
-                                                    <td className="p-2">{demand.id}</td>
-                                                    <td className="p-2">{demand.description}</td>
-                                                    <td className="p-2">{demand.userId}</td>
-                                                    <td className="p-2">{new Date(demand.dueDate).toLocaleDateString()}</td>
-                                                    <td className="p-2">{demand.state}</td>
-                                                </tr>
-                                            ))}
+                                        {demands.map(demand => (
+                                            <tr key={demand.id} className="border-b">
+                                                <td className="p-2">{demand.description}</td>
+                                                <td className="p-2">{demand.currentLocation.name}</td>
+                                                <td className="p-2">{demand.destinationLocation.name}</td>
+                                                <td className="p-2">{new Date(demand.dueDate).toLocaleDateString()}</td>
+                                                <td className="p-2">{demand.state}</td>
+                                                <td className="p-2"><ReceiptText class="h-6 w-6 text-primary"/></td>
+                                            </tr>
+                                        ))}
                                         </tbody>
                                     </table>
                                 </div>
