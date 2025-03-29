@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import {useState, useEffect, useRef} from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -16,7 +16,7 @@ const destinationIcon = L.icon({
     popupAnchor: [1, -34],
 });
 
-export default function CustomerGeoLocation({ onLocationChange, onDestinationChange }) {
+export default function CustomerGeoLocation({onLocationChange, onDestinationChange}) {
     const [location, setLocation] = useState(null);
     const [searchLocation, setSearchLocation] = useState(null);
     const [error, setError] = useState(null);
@@ -43,13 +43,15 @@ export default function CustomerGeoLocation({ onLocationChange, onDestinationCha
             });
 
             if (location) {
-                L.marker([location.latitude, location.longitude], { icon: userIcon }).addTo(map)
-                    .bindPopup("Tu ubicación actual").openPopup();
+                L.marker([location.latitude, location.longitude], {icon: userIcon}).addTo(map)
+                    .bindPopup(location.name ? `Tu ubicación actual: ${location.name}` : "Tu ubicación actual")
+                    .openPopup();
             }
 
             if (searchLocation) {
-                L.marker([searchLocation.latitude, searchLocation.longitude], { icon: destinationIcon }).addTo(map)
-                    .bindPopup(`Destino: ${searchQuery}`).openPopup();
+                L.marker([searchLocation.latitude, searchLocation.longitude], {icon: destinationIcon}).addTo(map)
+                    .bindPopup(searchLocation.name ? `Destino: ${searchLocation.name}` : "Destino")
+                    .openPopup();
             }
 
             if (location && searchLocation) {
@@ -59,34 +61,44 @@ export default function CustomerGeoLocation({ onLocationChange, onDestinationCha
                 ]);
             }
         }
-    }, [location, searchLocation, searchQuery]);
+    }, [location, searchLocation]);
 
     const getLocation = () => {
         if (!navigator.geolocation) {
             setError("La geolocalización no es compatible con este navegador.");
             return;
         }
-    
+
         navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const currentLocation = {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                };
-                setLocation(currentLocation);
-                setError(null);
-    
-                // 👇 Centrar el mapa si está disponible
-                if (mapRef.current) {
-                    mapRef.current.setView(
-                        [currentLocation.latitude, currentLocation.longitude],
-                        15 // Zoom of map
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
                     );
-                }
-    
-                if (onLocationChange) {
-                    onLocationChange(currentLocation);
+                    const data = await response.json();
+
+                    const currentLocation = {
+                        latitude: lat,
+                        longitude: lon,
+                        accuracy: position.coords.accuracy,
+                        name: data.display_name || "Ubicación desconocida",
+                    };
+
+                    setLocation(currentLocation);
+                    setError(null);
+
+                    if (mapRef.current) {
+                        mapRef.current.setView([lat, lon], 15);
+                    }
+
+                    if (onLocationChange) {
+                        onLocationChange(currentLocation);
+                    }
+                } catch (err) {
+                    setError("No se pudo obtener el nombre de la ubicación.");
                 }
             },
             (err) => {
@@ -99,25 +111,42 @@ export default function CustomerGeoLocation({ onLocationChange, onDestinationCha
             }
         );
     };
-    
 
     const searchPlace = async () => {
+        if (!location) {
+            setError("Primero debes obtener tu ubicación actual.");
+            return;
+        }
+
         if (!searchQuery) return;
+
         try {
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`
             );
             const data = await response.json();
+
             if (data.length > 0) {
-                const location = {
-                    latitude: parseFloat(data[0].lat),
-                    longitude: parseFloat(data[0].lon),
+                const lat = parseFloat(data[0].lat);
+                const lon = parseFloat(data[0].lon);
+
+                const reverseResponse = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+                );
+                const reverseData = await reverseResponse.json();
+
+                const destinationLocation = {
+                    latitude: lat,
+                    longitude: lon,
+                    name: reverseData.display_name || searchQuery,
                 };
-                setSearchLocation(location);
-                if (onDestinationChange) {
-                    onDestinationChange(location);
-                }
+
+                setSearchLocation(destinationLocation);
                 setError(null);
+
+                if (onDestinationChange) {
+                    onDestinationChange(destinationLocation);
+                }
             } else {
                 setError("No se encontró la ubicación");
             }
@@ -126,6 +155,7 @@ export default function CustomerGeoLocation({ onLocationChange, onDestinationCha
         }
     };
 
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
             <h2 className="text-2xl font-bold mb-4 text-center">Solicitud de Servicio de Grúa</h2>
@@ -133,7 +163,7 @@ export default function CustomerGeoLocation({ onLocationChange, onDestinationCha
             <div className="flex flex-col items-center w-fit mx-auto">
                 <button
                     onClick={getLocation}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors mb-4 w-full"
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors mb-4 min-w-[250px]"
                 >
                     Obtener Ubicación Actual
                 </button>
@@ -143,17 +173,19 @@ export default function CustomerGeoLocation({ onLocationChange, onDestinationCha
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Buscar lugar de destino..."
-                    className="border px-2 py-1 rounded mb-4 w-full"
+                    className="border px-2 py-1 rounded mb-4 min-w-[250px]"
                 />
 
                 <button
                     onClick={searchPlace}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors mb-4 w-full"
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors mb-4 min-w-[250px]"
                 >
                     Destino
                 </button>
 
-                {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
+                <div className="h-6 mt-2 text-center">
+                    {error && <p className="text-red-500">{error}</p>}
+                </div>
             </div>
             <div id="map" className="w-full h-96 mt-4 rounded shadow-lg"></div>
         </div>

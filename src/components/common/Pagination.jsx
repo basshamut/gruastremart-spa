@@ -1,31 +1,45 @@
-// components/Pagination.jsx
 export default function Pagination({
-    page,
-    totalPages,
-    pageSize,
-    onPageChange,
-    onPageSizeChange
-}) {
+                                       page,
+                                       totalPages,
+                                       pageSize,
+                                       onPageChange,
+                                       onPageSizeChange
+                                   }) {
+
+    const safePage = isNaN(page) ? 0 : page;
+    const isPrevDisabled = safePage <= 0;
+
+    let isNextDisabled = true;
+    if(totalPages){
+        isNextDisabled = safePage >= totalPages - 1 || totalPages < 1;
+    }
+
+
+    console.log('safePage:', safePage);
+    console.log('totalPages:', totalPages);
+    console.log('isNextDisabled:', isNextDisabled);
+    console.log('isPrevDisabled:', isPrevDisabled);
+
     return (
         <div className="flex flex-col md:flex-row justify-between items-center mt-4 gap-2">
             <button
-                onClick={() => onPageChange(page - 1)}
-                disabled={page === 0}
+                onClick={() => onPageChange(safePage - 1)}
+                disabled={isPrevDisabled}
                 className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
             >
                 Anterior
             </button>
-            <span>Página {page + 1} de {totalPages}</span>
+            <span>Página {safePage + 1} de {totalPages}</span>
             <button
-                onClick={() => onPageChange(page + 1)}
-                disabled={page >= totalPages - 1}
+                onClick={() => onPageChange(safePage + 1)}
+                disabled={isNextDisabled}
                 className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
             >
                 Siguiente
             </button>
             <select
                 value={pageSize}
-                onChange={(e) => onPageSizeChange(e.target.value)}
+                onChange={(e) => onPageSizeChange(Number(e.target.value))}
                 className="p-2 border rounded"
             >
                 <option value={5}>5</option>

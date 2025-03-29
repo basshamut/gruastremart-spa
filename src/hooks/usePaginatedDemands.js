@@ -8,14 +8,14 @@ export function usePaginatedDemands(apiDomain, token, initialPageSize = 10) {
     const [totalPages, setTotalPages] = useState(1);
     const [pageSize, setPageSize] = useState(initialPageSize);
 
-    console.log("size: " + pageSize);
-
     useEffect(() => {
         const fetchDemands = async (pageNumber, size) => {
             setLoading(true);
-            const url = apiDomain + "/crane-demands?page=" + pageNumber + "&size=" + size
+            const safePage = isNaN(pageNumber) ? 0 : Math.max(0, pageNumber);
+            const safeSize = isNaN(size) || size <= 0 ? initialPageSize : size;
+
             try {
-                const response = await fetch(url, {
+                const response = await fetch(`${apiDomain}/crane-demands?page=${safePage}&size=${safeSize}`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -29,7 +29,12 @@ export function usePaginatedDemands(apiDomain, token, initialPageSize = 10) {
 
                 const data = await response.json();
                 setDemands(data.content);
-                setTotalPages(data.totalPages);
+                setTotalPages(data.page.totalPages);
+
+                if (safePage >= data.page.totalPages && data.page.totalPages > 0) {
+                    setPage(data.page.totalPages - 1);
+                }
+
             } catch (error) {
                 setError(error.message);
             } finally {
@@ -41,11 +46,14 @@ export function usePaginatedDemands(apiDomain, token, initialPageSize = 10) {
     }, [page, pageSize, token, apiDomain]);
 
     const handlePageChange = (newPage) => {
-        setPage(Math.max(0, Math.min(newPage, totalPages - 1)));
+        if (!isNaN(newPage)) {
+            setPage(Math.max(0, Math.min(newPage, totalPages - 1)));
+        }
     };
 
     const handlePageSizeChange = (newSize) => {
-        setPageSize(Number(newSize));
+        const size = Number(newSize);
+        setPageSize(isNaN(size) || size <= 0 ? initialPageSize : size);
         setPage(0); // reset
     };
 

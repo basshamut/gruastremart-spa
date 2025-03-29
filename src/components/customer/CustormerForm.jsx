@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 export default function CustomerForm({ formData, setFormData }) {
-
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
     const token = localStorage.getItem('jwt');
     const [message, setMessage] = useState(null);
@@ -11,6 +10,7 @@ export default function CustomerForm({ formData, setFormData }) {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSending(true);
@@ -49,6 +49,19 @@ export default function CustomerForm({ formData, setFormData }) {
         }
     };
 
+    const isFormValid = () => {
+        return (
+            formData.origin?.trim() &&
+            formData.carType?.trim() &&
+            formData.breakdown?.trim() &&
+            formData.referenceSource?.trim() &&
+            formData.recommendedBy?.trim() &&
+            formData.description?.trim() &&
+            formData.currentLocation !== null &&
+            formData.destinationLocation !== null
+        );
+    };
+
     return <>
         <h2 className="text-2xl font-bold mb-4 text-center">Datos Generales</h2>
 
@@ -84,30 +97,42 @@ export default function CustomerForm({ formData, setFormData }) {
             </div>
 
             <div className="md:col-span-3 flex justify-center mt-4">
-                <div className="flex gap-4 w-4/5 max-w-[900px] justify-center">
-                    <button
-                        type="submit"
-                        disabled={sending}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded disabled:opacity-50"
-                    >
-                        {sending ? "Enviando..." : "Solicitar Grúa"}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => document.location.reload()}
-                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded disabled:opacity-50"
-                    >
-                        Reiniciar
-                    </button>
+                <div className="flex flex-col items-center w-4/5 max-w-[900px]">
+                    <div className="flex gap-4 justify-center">
+                        <button
+                            type="submit"
+                            disabled={sending || !isFormValid()}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded disabled:opacity-50"
+                            title={
+                                !isFormValid()
+                                    ? "Rellena todos los campos y asegúrate de tener ubicaciones seleccionadas"
+                                    : ""
+                            }
+                        >
+                            {sending ? "Enviando..." : "Solicitar Grúa"}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => document.location.reload()}
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded"
+                        >
+                            Reiniciar
+                        </button>
+                    </div>
+
+                    {/* Mensaje de advertencia visible */}
+                    {!isFormValid() && !sending && (
+                        <p className="text-sm text-red-500 text-center mt-2">
+                            Rellena todos los campos y asegúrate de haber seleccionado tu ubicación actual y el destino.
+                        </p>
+                    )}
                 </div>
             </div>
-
         </form>
-
 
         {message && (
             <p className="text-center mt-4 font-semibold">{message}</p>
         )}
-
     </>
 }
