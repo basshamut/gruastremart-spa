@@ -54,7 +54,7 @@ export default function InternalActivity() {
                                                 <td className="p-2">{demand.destinationLocation.name}</td>
                                                 <td className="p-2">{new Date(demand.dueDate).toLocaleDateString()}</td>
                                                 <td className="p-2">{demand.state}</td>
-                                                <td className="p-2"><ReceiptText class="h-6 w-6 text-primary"/></td>
+                                                <td className="p-2"><ReceiptText className="h-6 w-6 text-primary"/></td>
                                             </tr>
                                         ))}
                                         </tbody>

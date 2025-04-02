@@ -17,7 +17,7 @@ export default function CustomerForm({ formData, setFormData }) {
         setMessage(null);
 
         try {
-            const response = await fetch(`${apiDomain}/crane-demands`, {
+            const response = await fetch(`${apiDomain}/v1/crane-demands`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
