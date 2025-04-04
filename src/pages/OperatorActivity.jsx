@@ -1,7 +1,8 @@
-import React from "react";
-import {ReceiptText} from 'lucide-react';
+import React, { useState } from "react";
+import { ReceiptText } from "lucide-react";
 import Pagination from "../components/common/Pagination";
-import {usePaginatedDemands} from "../hooks/usePaginatedDemands";
+import { usePaginatedDemands } from "../hooks/usePaginatedDemands";
+import { useCraneNotifications } from "../hooks/useCraneNotifications";
 
 export default function InternalActivity() {
     const token = localStorage.getItem("jwt");
@@ -18,6 +19,19 @@ export default function InternalActivity() {
         handlePageSizeChange
     } = usePaginatedDemands(apiDomain, token);
 
+    const [liveDemands, setLiveDemands] = useState([]);
+
+    // WebSocket: recibir solicitudes nuevas en tiempo real
+    useCraneNotifications((nuevaSolicitud) => {
+        setLiveDemands(prev => [nuevaSolicitud, ...prev]);
+    });
+
+    // Fusionar solicitudes paginadas + nuevas en tiempo real
+    const todasLasSolicitudes = [
+        ...liveDemands,
+        ...demands.filter(d => !liveDemands.some(ld => ld.id === d.id))
+    ];
+
     return (
         <>
             <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo!</h1>
@@ -30,7 +44,7 @@ export default function InternalActivity() {
                             <p className="text-sm text-muted-foreground">Cargando...</p>
                         ) : error ? (
                             <p className="text-sm text-red-500">{error}</p>
-                        ) : demands.length === 0 ? (
+                        ) : todasLasSolicitudes.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No hay actividad reciente.</p>
                         ) : (
                             <>
@@ -47,19 +61,26 @@ export default function InternalActivity() {
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {demands.map(demand => (
+                                        {todasLasSolicitudes.map((demand) => (
                                             <tr key={demand.id} className="border-b">
                                                 <td className="p-2">{demand.description}</td>
-                                                <td className="p-2">{demand.currentLocation.name}</td>
-                                                <td className="p-2">{demand.destinationLocation.name}</td>
-                                                <td className="p-2">{new Date(demand.dueDate).toLocaleDateString()}</td>
-                                                <td className="p-2">{demand.state}</td>
-                                                <td className="p-2"><ReceiptText class="h-6 w-6 text-primary"/></td>
+                                                <td className="p-2">{demand.currentLocation?.name || '—'}</td>
+                                                <td className="p-2">{demand.destinationLocation?.name || '—'}</td>
+                                                <td className="p-2">
+                                                    {demand.dueDate
+                                                        ? new Date(demand.dueDate).toLocaleDateString()
+                                                        : '—'}
+                                                </td>
+                                                <td className="p-2">{demand.state || 'Pendiente'}</td>
+                                                <td className="p-2">
+                                                    <ReceiptText className="h-6 w-6 text-primary" />
+                                                </td>
                                             </tr>
                                         ))}
                                         </tbody>
                                     </table>
                                 </div>
+
                                 <Pagination
                                     page={page}
                                     totalPages={totalPages}
