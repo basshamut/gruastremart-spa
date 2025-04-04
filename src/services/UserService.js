@@ -3,7 +3,7 @@ export async function getRoleByEmail(email) {
     const token = localStorage.getItem('jwt');
 
     try {
-        const response = await fetch(`${apiDomain}/users?page=0&size=1&email=${email}`, {
+        const response = await fetch(`${apiDomain}/v1/users?page=0&size=1&email=${email}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -27,7 +27,7 @@ export async function registerUserInDb(userData) {
     const token = localStorage.getItem('jwt');
 
     try {
-        const response = await fetch(`${apiDomain}/users/register`, {
+        const response = await fetch(`${apiDomain}/v1/users/register`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

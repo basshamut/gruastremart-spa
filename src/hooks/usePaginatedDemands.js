@@ -15,7 +15,7 @@ export function usePaginatedDemands(apiDomain, token, initialPageSize = 10) {
             const safeSize = isNaN(size) || size <= 0 ? initialPageSize : size;
 
             try {
-                const response = await fetch(`${apiDomain}/crane-demands?page=${safePage}&size=${safeSize}`, {
+                const response = await fetch(`${apiDomain}/v1/crane-demands?page=${safePage}&size=${safeSize}`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",

@@ -14,12 +14,6 @@ export default function Pagination({
         isNextDisabled = safePage >= totalPages - 1 || totalPages < 1;
     }
 
-
-    console.log('safePage:', safePage);
-    console.log('totalPages:', totalPages);
-    console.log('isNextDisabled:', isNextDisabled);
-    console.log('isPrevDisabled:', isPrevDisabled);
-
     return (
         <div className="flex flex-col md:flex-row justify-between items-center mt-4 gap-2">
             <button
