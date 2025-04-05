@@ -23,7 +23,7 @@ export default function OperatorActivity() {
         pageSize,
         handlePageChange,
         handlePageSizeChange
-    } = usePaginatedDemands(apiDomain, token, refreshTrigger, 10); // ✅ OJO: initialPageSize es el cuarto
+    } = usePaginatedDemands(apiDomain, token, refreshTrigger, 10);
 
     // Función que se ejecutará cuando llegue una nueva notificación
     const handleNewDemand = (newCraneDemand) => {
