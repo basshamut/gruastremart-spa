@@ -1,55 +1,95 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import {useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {useAuth} from "../../hooks/useAuth";
+import {Home, LogOut, Menu, Settings, User, Users, X} from "lucide-react";
 
-export default function NavBar({ role }) {
+export default function NavBar({role}) {
     const navigate = useNavigate();
-    const { signOut } = useAuth();
+    const {signOut} = useAuth();
+    const [open, setOpen] = useState(false);
 
-    function goToActivityPage(event, role) {
-        event.preventDefault();
-        navigate("/home", { state: { role } });
-    }
-
-    async function handleLogout(event) {
-        event.preventDefault();
-        try {
-            await signOut();
-            localStorage.removeItem("jwt");
-            navigate("/");
-        } catch (error) {
-            console.error("Error al cerrar sesión:", error.message);
+    const goTo = (e, destination, role = null) => {
+        e.preventDefault();
+        setOpen(false); // cerrar menú
+        if (destination === "logout") {
+            signOut().then(() => {
+                localStorage.removeItem("jwt");
+                navigate("/");
+            });
+        } else {
+            navigate(destination, {state: role ? {role} : {}});
         }
     };
 
+    const mobileNavItems = [
+        {
+            label: "Inicio",
+            icon: <Home className="w-5 h-5 mr-2"/>,
+            onClick: (e) => goTo(e, "/home", role),
+            show: true
+        },
+        {
+            label: "Perfil",
+            icon: <User className="w-5 h-5 mr-2"/>,
+            onClick: (e) => goTo(e, "/profile"),
+            show: role === "ADMIN"
+        },
+        {
+            label: "Usuarios",
+            icon: <Users className="w-5 h-5 mr-2"/>,
+            onClick: (e) => goTo(e, "/home", "CLIENT"),
+            show: role === "ADMIN"
+        },
+        {
+            label: "Operadores",
+            icon: <Settings className="w-5 h-5 mr-2"/>,
+            onClick: (e) => goTo(e, "/home", "OPERATOR"),
+            show: role === "ADMIN"
+        },
+        {
+            label: "Salir",
+            icon: <LogOut className="w-5 h-5 mr-2"/>,
+            onClick: (e) => goTo(e, "logout"),
+            show: true
+        }
+    ];
+
     return (
         <>
-            <div className="p-4">
-                <h2 className="text-lg font-bold text-primary-foreground">Dashboard</h2>
+            {/* Botón de menú solo en móvil */}
+            <div className="fixed top-4 left-4 z-50 md:hidden">
+                <button
+                    onClick={() => setOpen(!open)}
+                    className="p-2 bg-card shadow-md rounded-full border text-foreground"
+                    aria-label="Abrir menú"
+                >
+                    {open ? <X className="w-6 h-6"/> : <Menu className="w-6 h-6"/>}
+                </button>
             </div>
-            <nav className="py-4">
-                {role === "ADMIN" && (<div>
-                    <a href="#" onClick={(event) => { goToActivityPage(event, "ADMIN") }} className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
-                        Inicio
-                    </a>
-                    <a href="#" className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
-                        Perfil
-                    </a>
-                    <a href="#" className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
-                        Configuración
-                    </a>
-                    <a href="#" onClick={(event) => { goToActivityPage(event, "CLIENT") }} className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
-                        Tablero Usuarios
-                    </a>
-                    <a href="#" onClick={(event) => { goToActivityPage(event, "OPERATOR") }} className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
-                        Tablero Operadores
-                    </a>
-                </div>
-                )}
 
-                <a href="#" onClick={(event) => { handleLogout(event) }} className="block py-2 px-4 text-sm text-secondary-foreground hover:bg-secondary/80 hover:text-secondary rounded-md">
-                    Cerrar sesión
-                </a>
-            </nav>
+            {/* Menú lateral emergente con fondo sólido */}
+            {open && (
+                <div
+                    className="fixed top-0 left-0 bottom-0 w-64 bg-white dark:bg-card z-40 shadow-lg border-r md:hidden px-4 pt-20">
+                    <ul className="space-y-3">
+                        {mobileNavItems
+                            .filter((item) => item.show)
+                            .map((item, idx) => (
+                                <li key={idx}>
+                                    <a
+                                        href="#"
+                                        onClick={item.onClick}
+                                        className="flex items-center text-sm py-2 px-2 rounded-md hover:bg-secondary/50"
+                                    >
+                                        {item.icon}
+                                        {item.label}
+                                    </a>
+                                </li>
+                            ))}
+                    </ul>
+                </div>
+            )}
+
         </>
     );
 }
