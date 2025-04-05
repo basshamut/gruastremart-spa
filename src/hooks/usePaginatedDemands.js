@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export function usePaginatedDemands(apiDomain, token, initialPageSize = 10) {
+export function usePaginatedDemands(apiDomain, token, refreshTrigger = 0, initialPageSize = 10) {
     const [demands, setDemands] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -15,13 +15,16 @@ export function usePaginatedDemands(apiDomain, token, initialPageSize = 10) {
             const safeSize = isNaN(size) || size <= 0 ? initialPageSize : size;
 
             try {
-                const response = await fetch(`${apiDomain}/v1/crane-demands?page=${safePage}&size=${safeSize}`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = await fetch(
+                    `${apiDomain}/v1/crane-demands?page=${safePage}&size=${safeSize}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
 
                 if (!response.ok) {
                     throw new Error("Error al obtener datos");
@@ -29,12 +32,11 @@ export function usePaginatedDemands(apiDomain, token, initialPageSize = 10) {
 
                 const data = await response.json();
                 setDemands(data.content);
-                setTotalPages(data.page.totalPages);
+                setTotalPages(data.page?.totalPages ?? 1);
 
-                if (safePage >= data.page.totalPages && data.page.totalPages > 0) {
+                if (safePage >= data.page?.totalPages && data.page.totalPages > 0) {
                     setPage(data.page.totalPages - 1);
                 }
-
             } catch (error) {
                 setError(error.message);
             } finally {
@@ -43,7 +45,7 @@ export function usePaginatedDemands(apiDomain, token, initialPageSize = 10) {
         };
 
         fetchDemands(page, pageSize);
-    }, [page, pageSize, token, apiDomain]);
+    }, [page, pageSize, token, apiDomain, refreshTrigger]);
 
     const handlePageChange = (newPage) => {
         if (!isNaN(newPage)) {
