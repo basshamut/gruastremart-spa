@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../config/supabase/supabaseClient";
+import {useEffect, useState} from "react";
+import {supabase} from "../config/supabase/supabaseClient";
 
 export function useProvideAuth() {
     const [user, setUser] = useState(null);
@@ -7,19 +7,22 @@ export function useProvideAuth() {
 
     useEffect(() => {
         // 1) Comprobamos si ya hay una sesión activa
-        supabase.auth.getSession().then(({ data }) => {
+        supabase.auth.getSession().then(({data}) => {
             setUser(data?.session?.user ?? null);
             setLoading(false);
         });
 
         // 2) Escuchamos cambios de autenticación (login, logout, etc.)
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const {data: authListener} = supabase.auth.onAuthStateChange(async (_event, session) => {
             setUser(session?.user ?? null);
 
             if (session) {
                 localStorage.setItem("jwt", session.access_token);
+                localStorage.setItem("role", null);
+
             } else {
                 localStorage.removeItem("jwt");
+                localStorage.removeItem("role");
             }
 
             setLoading(false);
@@ -33,13 +36,13 @@ export function useProvideAuth() {
 
     // Funciones de ayuda
     const signUp = async (email, password) => {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const {data, error} = await supabase.auth.signUp({email, password});
         if (error) throw error;
         return data;
     };
 
     const signIn = async (email, password) => {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const {data, error} = await supabase.auth.signInWithPassword({
             email,
             password,
         });
@@ -48,9 +51,8 @@ export function useProvideAuth() {
     };
 
     const signOut = async () => {
-        const { error } = await supabase.auth.signOut();
+        const {error} = await supabase.auth.signOut();
         if (error) throw error;
-        window.location.href = "/";
     };
 
     return {
