@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, {useEffect, useState} from "react";
 import Pagination from "../components/common/Pagination";
-import { usePaginatedDemands } from "../hooks/usePaginatedDemands";
-import { useCraneNotifications } from "../hooks/useCraneNotifications";
+import {usePaginatedDemands} from "../hooks/usePaginatedDemands";
+import {useCraneNotifications} from "../hooks/useCraneNotifications";
 
 export default function OperatorActivity() {
     const token = localStorage.getItem("jwt");
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
 
-    // Estado para forzar la recarga de datos
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    // Estado para las notificaciones nuevas
     const [pendingNotifications, setPendingNotifications] = useState([]);
     const [hasNewNotifications, setHasNewNotifications] = useState(false);
 
@@ -23,11 +21,10 @@ export default function OperatorActivity() {
         pageSize,
         handlePageChange,
         handlePageSizeChange
-    } = usePaginatedDemands(apiDomain, token, refreshTrigger, 10);
+    } = usePaginatedDemands(apiDomain, token, refreshTrigger, 50);
 
     // Función que se ejecutará cuando llegue una nueva notificación
     const handleNewDemand = (newCraneDemand) => {
-        console.log("Nueva solicitud recibida:", newCraneDemand.dueDate);
         setPendingNotifications(prev => [...prev, newCraneDemand]);
         setHasNewNotifications(true);
     };
@@ -103,11 +100,13 @@ export default function OperatorActivity() {
                                         <div key={demand.id} className="border rounded p-3">
                                             <div className="grid grid-cols-2 gap-2">
                                                 <div>
-                                                    <span className="font-medium text-xs block text-muted-foreground">Falla</span>
+                                                    <span
+                                                        className="font-medium text-xs block text-muted-foreground">Falla</span>
                                                     <span className="line-clamp-1">{demand.breakdown}</span>
                                                 </div>
                                                 <div>
-                                                    <span className="font-medium text-xs block text-muted-foreground">Origen</span>
+                                                    <span
+                                                        className="font-medium text-xs block text-muted-foreground">Origen</span>
                                                     <span className="line-clamp-1">{demand.origin}</span>
                                                 </div>
                                             </div>

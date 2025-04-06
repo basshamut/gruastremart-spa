@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
-import { Menu, X, Home, User, Settings, Users, LogOut } from "lucide-react";
+import {useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {useAuth} from "../../hooks/useAuth";
+import {Home, LogOut, Menu, Settings, User, Users, X} from "lucide-react";
 
-export default function NavBar({ role }) {
+export default function NavBar({role}) {
     const navigate = useNavigate();
-    const { signOut } = useAuth();
+    const {signOut} = useAuth();
     const [open, setOpen] = useState(false);
 
     const goTo = (e, destination, role = null) => {
@@ -14,47 +14,48 @@ export default function NavBar({ role }) {
         if (destination === "logout") {
             signOut().then(() => {
                 localStorage.removeItem("jwt");
-                navigate("/");
+                localStorage.removeItem("role");
+                window.location.href = "/login";
             });
         } else {
-            navigate(destination, { state: role ? { role } : {} });
+            navigate(destination, {state: role ? {role} : {}});
         }
     };
 
     const menuItems = [
         {
             label: "Inicio",
-            icon: <Home className="w-5 h-5 mr-2" />,
+            icon: <Home className="w-5 h-5 mr-2"/>,
             onClick: (e) => goTo(e, "/home", role),
             show: true
         },
         {
             label: "Perfil",
-            icon: <User className="w-5 h-5 mr-2" />,
+            icon: <User className="w-5 h-5 mr-2"/>,
             onClick: (e) => goTo(e, "#"),
             show: role === "ADMIN"
         },
         {
             label: "Configuraciones",
-            icon: <User className="w-5 h-5 mr-2" />,
+            icon: <User className="w-5 h-5 mr-2"/>,
             onClick: (e) => goTo(e, "#"),
             show: role === "ADMIN"
         },
         {
             label: "Usuarios",
-            icon: <Users className="w-5 h-5 mr-2" />,
+            icon: <Users className="w-5 h-5 mr-2"/>,
             onClick: (e) => goTo(e, "/home", "CLIENT"),
             show: role === "ADMIN"
         },
         {
             label: "Operadores",
-            icon: <Settings className="w-5 h-5 mr-2" />,
+            icon: <Settings className="w-5 h-5 mr-2"/>,
             onClick: (e) => goTo(e, "/home", "OPERATOR"),
             show: role === "ADMIN"
         },
         {
             label: "Salir",
-            icon: <LogOut className="w-5 h-5 mr-2" />,
+            icon: <LogOut className="w-5 h-5 mr-2"/>,
             onClick: (e) => goTo(e, "logout"),
             show: true
         }
@@ -69,7 +70,7 @@ export default function NavBar({ role }) {
                     className="p-2 bg-card shadow-md rounded-full border text-foreground"
                     aria-label="Abrir menú"
                 >
-                    {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                    {open ? <X className="w-6 h-6"/> : <Menu className="w-6 h-6"/>}
                 </button>
             </div>
 
