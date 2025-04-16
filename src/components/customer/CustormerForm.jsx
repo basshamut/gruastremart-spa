@@ -2,7 +2,7 @@ import { useState } from "react";
 
 export default function CustomerForm({ formData, setFormData }) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-    const token = localStorage.getItem('jwt');
+    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
     const [message, setMessage] = useState(null);
     const [sending, setSending] = useState(false);
 

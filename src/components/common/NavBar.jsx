@@ -13,8 +13,7 @@ export default function NavBar({role}) {
         setOpen(false);
         if (destination === "logout") {
             signOut().then(() => {
-                localStorage.removeItem("jwt");
-                localStorage.removeItem("role");
+                localStorage.removeItem("internalRole");
                 window.location.href = "/login";
             });
         } else {

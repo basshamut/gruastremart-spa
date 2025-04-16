@@ -1,6 +1,6 @@
 export async function getRoleByEmail(email) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-    const token = localStorage.getItem('jwt');
+    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
 
     try {
         const response = await fetch(`${apiDomain}/v1/users?page=0&size=1&email=${email}`, {
@@ -24,7 +24,7 @@ export async function getRoleByEmail(email) {
 
 export async function registerUserInDb(userData) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-    const token = localStorage.getItem('jwt');
+    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
 
     try {
         const response = await fetch(`${apiDomain}/v1/users/register`, {

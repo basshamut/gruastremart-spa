@@ -6,8 +6,6 @@ import {AuthProvider} from "./components/access/AuthProvider.jsx";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import SignInForm from "./components/access/SignInForm.jsx";
 import SignUpForm from "./components/access/SignUpForm.jsx";
-import CustomerActivity from './pages/CustomerActivity.jsx';
-import OperatorActivity from './pages/OperatorActivity.jsx';
 
 createRoot(document.getElementById('root')).render(
     <React.StrictMode>
@@ -18,8 +16,8 @@ createRoot(document.getElementById('root')).render(
                     <Route path="/login" element={<SignInForm/>}/>
                     <Route path="/register" element={<SignUpForm/>}/>
                     <Route path="/home" element={<App/>}/>
-                    <Route path="/customers" element={<CustomerActivity/>}/>
-                    <Route path="/operators" element={<OperatorActivity/>}/>
+                    <Route path="/customers" element={<App/>}/>
+                    <Route path="/operators" element={<App/>}/>
                 </Routes>
             </BrowserRouter>
         </AuthProvider>

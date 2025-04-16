@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 
-export function usePaginatedDemands(apiDomain, token, refreshTrigger = 0, initialPageSize = 10) {
+export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize = 10) {
     const [demands, setDemands] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -8,15 +8,22 @@ export function usePaginatedDemands(apiDomain, token, refreshTrigger = 0, initia
     const [totalPages, setTotalPages] = useState(1);
     const [pageSize, setPageSize] = useState(initialPageSize);
 
+    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
+
     useEffect(() => {
         const fetchDemands = async (pageNumber, size) => {
             setLoading(true);
             const safePage = isNaN(pageNumber) ? 0 : Math.max(0, pageNumber);
             const safeSize = isNaN(size) || size <= 0 ? initialPageSize : size;
 
+            const urlForAll = `${apiDomain}/v1/crane-demands?page=${safePage}&size=${safeSize}`;
+            const urlForState = `${apiDomain}/v1/crane-demands?state=${state}&page=${safePage}&size=${safeSize}`;
+            const apiUrl = !state ? urlForAll : urlForState;
+
             try {
                 const response = await fetch(
-                    `${apiDomain}/v1/crane-demands?page=${safePage}&size=${safeSize}`,
+                    apiUrl,
                     {
                         method: "GET",
                         headers: {
