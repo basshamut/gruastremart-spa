@@ -1,6 +1,15 @@
 import React from "react";
 
-export default function Modal({ isOpen, onClose, onConfirm, title, children, confirmText = "Confirmar", cancelText = "Cancelar" }) {
+export default function Modal({
+                                  isOpen,
+                                  onClose,
+                                  onConfirm,
+                                  title,
+                                  children,
+                                  confirmText = "Confirmar",
+                                  showConfirmButton,
+                                  cancelText = "Cancelar"
+                              }) {
     if (!isOpen) return null;
 
     return (
@@ -17,12 +26,14 @@ export default function Modal({ isOpen, onClose, onConfirm, title, children, con
                     >
                         {cancelText}
                     </button>
-                    <button
-                        onClick={onConfirm}
-                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-                    >
-                        {confirmText}
-                    </button>
+                    {showConfirmButton && (
+                        <button
+                            onClick={onConfirm}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                        >
+                            {confirmText}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
