@@ -5,16 +5,22 @@ import InternalActivityTable from "../pages/InternalActivity.jsx";
 import OperatorActivityTable from "../pages/OperatorActivity.jsx";
 import CustomerActivityTable from "../pages/CustomerActivity.jsx";
 
-export default function Hero({role: userRole}) {
+export default function Hero() {
     const navigate = useNavigate();
     const location = useLocation();
-    const [activeRole, setActiveRole] = useState(userRole);
+    const [activeRole, setActiveRole] = useState("");
+    const [userRole, setUserRole] = useState("");
 
-    // Detectar si hay un role en el state de la navegación
     useEffect(() => {
-        if (!userRole) {
+        const roleInStorage = localStorage.getItem("internalRole");
+        console.log(roleInStorage);
+
+        if (!roleInStorage) {
             console.error("Debe iniciar sesión para acceder");
             navigate("/login", {state: {message: "Debe iniciar sesión para acceder"}});
+        } else {
+            setUserRole(roleInStorage);
+            setActiveRole(roleInStorage);
         }
 
         if (location.state?.role) {
