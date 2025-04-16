@@ -22,11 +22,16 @@ export default function SignInForm() {
             await signIn(email, password);
 
             const role = await getRoleByEmail(email);
+            console.log("SignInForm -> role", role);
+
             if (!role) {
                 throw new Error("No se pudo determinar el rol del usuario");
             }
 
-            localStorage.setItem("role", role);
+            if(!localStorage.getItem("internalRole")) {
+                localStorage.setItem("internalRole", role);
+            }
+
             navigate("/home");
         } catch (error) {
             navigate("/login", { state: { message: error.message } });

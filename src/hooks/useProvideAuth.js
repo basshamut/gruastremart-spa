@@ -16,13 +16,8 @@ export function useProvideAuth() {
         const {data: authListener} = supabase.auth.onAuthStateChange(async (_event, session) => {
             setUser(session?.user ?? null);
 
-            if (session) {
-                localStorage.setItem("jwt", session.access_token);
-                localStorage.setItem("role", null);
-
-            } else {
-                localStorage.removeItem("jwt");
-                localStorage.removeItem("role");
+            if (!session) {
+                localStorage.removeItem("internalRole");
             }
 
             setLoading(false);

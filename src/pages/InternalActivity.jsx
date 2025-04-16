@@ -5,9 +5,6 @@ import { usePaginatedDemands } from "../hooks/usePaginatedDemands";
 import { useCraneNotifications } from "../hooks/useCraneNotifications";
 
 export default function InternalActivity() {
-    const token = localStorage.getItem("jwt");
-    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [newNotificationsCount, setNewNotificationsCount] = useState(0);
 
@@ -20,7 +17,7 @@ export default function InternalActivity() {
         pageSize,
         handlePageChange,
         handlePageSizeChange
-    } = usePaginatedDemands(apiDomain, token, refreshTrigger, 10);
+    } = usePaginatedDemands(null, refreshTrigger, 10);
 
     // WebSocket: recibir solicitudes nuevas en tiempo real
     useCraneNotifications(() => {
@@ -80,7 +77,7 @@ export default function InternalActivity() {
                                                 <td className="p-2">{demand.description}</td>
                                                 <td className="p-2">{demand.currentLocation.name}</td>
                                                 <td className="p-2">{demand.destinationLocation.name}</td>
-                                                <td className="p-2">{new Date(demand.dueDate).toLocaleDateString()}</td>
+                                                <td className="p-2">{new Date(demand.createdAt).toLocaleDateString()}</td>
                                                 <td className="p-2">{demand.state}</td>
                                                 <td className="p-2"><ReceiptText className="h-6 w-6 text-primary" /></td>
                                             </tr>
@@ -105,7 +102,7 @@ export default function InternalActivity() {
                                                 </div>
                                                 <div>
                                                     <span className="font-medium text-xs block text-muted-foreground">Fecha</span>
-                                                    <span>{new Date(demand.dueDate).toLocaleDateString()}</span>
+                                                    <span>{new Date(demand.createdAt).toLocaleDateString()}</span>
                                                 </div>
                                                 <div>
                                                     <span className="font-medium text-xs block text-muted-foreground">Estado</span>
