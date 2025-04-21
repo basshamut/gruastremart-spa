@@ -1,4 +1,4 @@
-export async function getRoleByEmail(email) {
+export async function getUserDetailByEmail(email) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
     const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
 
@@ -15,7 +15,15 @@ export async function getRoleByEmail(email) {
 
         const data = await response.json();
 
-        return data.content?.[0]?.role || null;
+        if (data.content?.length > 0) {
+            return {
+                id: data.content[0].id,
+                email: data.content[0].email,
+                role: data.content[0].role
+            };
+        }
+
+        return null;
     } catch (err) {
         console.error("Error al obtener el rol:", err);
         throw err;

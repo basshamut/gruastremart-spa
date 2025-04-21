@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import NavBar from "../components/common/NavBar.jsx";
-import InternalActivityTable from "../pages/InternalActivity.jsx";
-import OperatorActivityTable from "../pages/OperatorActivity.jsx";
-import CustomerActivityTable from "../pages/CustomerActivity.jsx";
+import InternalActivity from "../pages/InternalActivity.jsx";
+import OperatorActivity from "../pages/OperatorActivity.jsx";
+import CustomerActivity from "../pages/CustomerActivity.jsx";
 
 export default function Hero() {
     const navigate = useNavigate();
@@ -12,7 +12,7 @@ export default function Hero() {
     const [userRole, setUserRole] = useState("");
 
     useEffect(() => {
-        const roleInStorage = localStorage.getItem("internalRole");
+        const roleInStorage = JSON.parse(localStorage.getItem("userDetail")).role;
         console.log(roleInStorage);
 
         if (!roleInStorage) {
@@ -37,9 +37,9 @@ export default function Hero() {
             </aside>
 
             <main className="flex-1 p-4">
-                {activeRole === "ADMIN" && <InternalActivityTable role={activeRole}/>}
-                {activeRole === "OPERATOR" && <OperatorActivityTable role={activeRole}/>}
-                {activeRole === "CLIENT" && <CustomerActivityTable role={activeRole}/>}
+                {activeRole === "ADMIN" && <InternalActivity role={activeRole}/>}
+                {activeRole === "OPERATOR" && <OperatorActivity role={activeRole}/>}
+                {activeRole === "CLIENT" && <CustomerActivity role={activeRole}/>}
             </main>
         </section>
     );

@@ -1,7 +1,9 @@
 import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useAuth} from "../../hooks/useAuth";
-import {Home, LogOut, Menu, Settings, User, Users, X} from "lucide-react";
+import {ClipboardCheck, HardHat, Home, LogOut, Menu, MessageSquareWarning, Settings, User, X} from "lucide-react";
+
+import {clearLocalStorage} from "../../utils/Utils.js";
 
 export default function NavBar({role}) {
     const navigate = useNavigate();
@@ -13,7 +15,7 @@ export default function NavBar({role}) {
         setOpen(false);
         if (destination === "logout") {
             signOut().then(() => {
-                localStorage.removeItem("internalRole");
+                clearLocalStorage()
                 window.location.href = "/login";
             });
         } else {
@@ -32,24 +34,13 @@ export default function NavBar({role}) {
             label: "Perfil",
             icon: <User className="w-5 h-5 mr-2"/>,
             onClick: (e) => goTo(e, "#"),
-            show: role === "ADMIN"
+            show: true
         },
+
         {
             label: "Configuraciones",
-            icon: <User className="w-5 h-5 mr-2"/>,
-            onClick: (e) => goTo(e, "#"),
-            show: role === "ADMIN"
-        },
-        {
-            label: "Usuarios",
-            icon: <Users className="w-5 h-5 mr-2"/>,
-            onClick: (e) => goTo(e, "/home", "CLIENT"),
-            show: role === "ADMIN"
-        },
-        {
-            label: "Operadores",
             icon: <Settings className="w-5 h-5 mr-2"/>,
-            onClick: (e) => goTo(e, "/home", "OPERATOR"),
+            onClick: (e) => goTo(e, "#"),
             show: role === "ADMIN"
         },
         {
