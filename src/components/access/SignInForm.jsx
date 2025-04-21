@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getRoleByEmail} from "../../services/UserService";
+import { getUserDetailByEmail} from "../../services/UserService";
 
 import Footer from "../../sections/Footer";
 
@@ -21,15 +21,14 @@ export default function SignInForm() {
         try {
             await signIn(email, password);
 
-            const role = await getRoleByEmail(email);
-            console.log("SignInForm -> role", role);
+            const userDetail = await getUserDetailByEmail(email);
 
-            if (!role) {
-                throw new Error("No se pudo determinar el rol del usuario");
+            if (!userDetail || !userDetail.role) {
+                throw new Error("No se pudo obtener el detal del usuario");
             }
 
-            if(!localStorage.getItem("internalRole")) {
-                localStorage.setItem("internalRole", role);
+            if(!localStorage.getItem("userDetail")) {
+                localStorage.setItem("userDetail", JSON.stringify(userDetail));
             }
 
             navigate("/home");
