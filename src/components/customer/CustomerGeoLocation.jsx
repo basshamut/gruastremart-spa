@@ -187,7 +187,7 @@ export default function CustomerGeoLocation({onLocationChange, onDestinationChan
                     {error && <p className="text-red-500">{error}</p>}
                 </div>
             </div>
-            <div id="map" className="w-full h-96 mt-4 rounded shadow-lg"></div>
+            <div id="map" className="w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] mt-4 rounded shadow-lg"></div>
         </div>
     );
 }
