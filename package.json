@@ -14,6 +14,7 @@
     "@stomp/stompjs": "^7.1.0",
     "@supabase/supabase-js": "^2.49.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "dayjs": "^1.11.13",
     "esri-leaflet-geocoder": "^3.1.5",
     "gruastremart-spa": "file:",
     "leaflet": "^1.9.4",
