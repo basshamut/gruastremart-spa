@@ -47,7 +47,13 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                     destinationLocation: null,
                 });
             } else {
-                setMessage("❌ Error al enviar la solicitud.");
+                const errorData = await response.json();
+                if(errorData?.message && errorData?.message === "User already has an active or taken crane demand") {
+                    setMessage("❌ Ya tienes una solicitud activa o asignada a un operador.");
+                }
+                else {
+                    setMessage("❌ Error al enviar la solicitud.");
+                }
             }
         } catch (error) {
             console.error(error);

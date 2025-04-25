@@ -11,6 +11,9 @@ export default function CustomerRequests() {
     const [page, setPage] = useState(0);
     const [size] = useState(3);
 
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalContent, setModalContent] = useState(null);
+
     useEffect(() => {
         const fetchRequests = async () => {
             setLoading(true);
@@ -53,39 +56,55 @@ export default function CustomerRequests() {
     };
 
     const cancelRequest = async (id) => {
-        if (!window.confirm("¿Seguro que quieres cancelar esta solicitud?")) return;
+        setModalContent({
+            title: "Cancelar solicitud",
+            message: "¿Seguro que quieres cancelar esta solicitud?",
+            onConfirm: async () => {
+                try {
+                    const response = await fetch(`${apiDomain}/v1/crane-demands/${id}/cancel`, {
+                        method: "PATCH",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    });
 
-        try {
-            const response = await fetch(`${apiDomain}/v1/crane-demands/${id}/cancel`, {
-                method: "PATCH", // ajusta si usas PUT u otro
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
+                    if (!response.ok) throw new Error("No se pudo cancelar");
 
-            if (!response.ok) throw new Error("No se pudo cancelar");
-
-            setRequests((prev) => prev.map((r) => r.id === id ? {...r, state: "INACTIVE"} : r));
-        } catch (err) {
-            alert("❌ Error cancelando la solicitud.");
-        }
+                    setRequests((prev) =>
+                        prev.map((r) => (r.id === id ? {...r, state: "INACTIVE"} : r))
+                    );
+                    setModalOpen(false);
+                } catch (err) {
+                    setModalContent({
+                        title: "Error",
+                        message: "❌ Error cancelando la solicitud.",
+                        onlyClose: true,
+                    });
+                }
+            },
+        });
+        setModalOpen(true);
     };
 
     const viewDetails = (req) => {
-        alert(`
-📝 Detalles de la solicitud:
-• Estado: ${req.state}
+        setModalContent({
+            title: "Detalles de la solicitud",
+            message: `
+📝 Estado: ${req.state}
 • Origen: ${req.origin}
 • Tipo de vehículo: ${req.carType}
 • Descripción: ${req.description || "N/A"}
 • Fecha: ${new Date(req.createdAt).toLocaleString()}
-`);
+            `,
+            onlyClose: true,
+        });
+        setModalOpen(true);
     };
 
     return (
         <div className="bg-white rounded shadow p-4 mt-6">
-            <h2 className="text-xl font-semibold mb-4">Tus solicitudes de grúa</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center">Mis Solicitudes</h2>
 
             <div className="mb-4">
                 <label className="font-medium mr-2">Filtrar por estado:</label>
@@ -140,7 +159,6 @@ export default function CustomerRequests() {
                 </ul>
             )}
 
-            {/* Navegación */}
             <div className="flex justify-between mt-4">
                 <button
                     onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
@@ -157,6 +175,41 @@ export default function CustomerRequests() {
                     Siguiente página
                 </button>
             </div>
+
+            {modalOpen && modalContent && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                        <h3 className="text-xl font-bold mb-4">{modalContent.title}</h3>
+                        <pre className="whitespace-pre-wrap text-gray-800 mb-4">{modalContent.message}</pre>
+                        <div className="flex justify-end gap-2">
+                            {!modalContent.onlyClose && (
+                                <>
+                                    <button
+                                        onClick={() => setModalOpen(false)}
+                                        className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={modalContent.onConfirm}
+                                        className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded"
+                                    >
+                                        Confirmar
+                                    </button>
+                                </>
+                            )}
+                            {modalContent.onlyClose && (
+                                <button
+                                    onClick={() => setModalOpen(false)}
+                                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded"
+                                >
+                                    Cerrar
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
