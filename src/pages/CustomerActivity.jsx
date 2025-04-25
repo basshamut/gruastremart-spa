@@ -4,7 +4,7 @@ import CustomerForm from "../components/customer/CustormerForm";
 import {useTakenDemandNotification} from "../hooks/useCraneTakenNotifications";
 import CustomerRequests from "../components/customer/CustomerRequests.jsx";
 
-//TODO Verificar antes de mostar el mapa si el cliente tiene solicitudes abiertas. Solo deberia ser una por cliente.
+//TODO Verificar antes enviar el formulario si el cliente tiene solicitudes abiertas. No puede tener ni en estado ACTIVE ni en TAKEN
 
 export default function CustomerActivity({view}) {
     const [formData, setFormData] = useState({
@@ -46,6 +46,15 @@ export default function CustomerActivity({view}) {
             <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo!</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
+                {takenMessage && (
+                    <div className="bg-green-100 text-green-700 p-2 rounded mb-4">
+                        {takenMessage}
+                    </div>
+                )}
+                <CustomerRequests/>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
                 <div className="bg-card p-4 rounded-lg shadow-md">
                     <CustomerGeoLocation
                         onLocationChange={handleLocationChange}
@@ -57,15 +66,6 @@ export default function CustomerActivity({view}) {
                         onDemandCreated={handleCreatedDemand}
                     />
                 </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
-                {takenMessage && (
-                    <div className="bg-green-100 text-green-700 p-2 rounded mb-4">
-                        {takenMessage}
-                    </div>
-                )}
-                <CustomerRequests/>
             </div>
         </>
     );
