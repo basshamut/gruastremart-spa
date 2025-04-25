@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import CustomerGeoLocation from "../components/customer/CustomerGeoLocation";
 import CustomerForm from "../components/customer/CustormerForm";
 import {useTakenDemandNotification} from "../hooks/useCraneTakenNotifications";
@@ -20,14 +20,20 @@ export default function CustomerActivity({view}) {
 
     const [takenMessage, setTakenMessage] = useState(null);
     const [createdDemandId, setCreatedDemandId] = useState(null);
-    const [takenDemandId, setTakenDemandId] = useState(localStorage.getItem("takenDemandId"));
 
-    useTakenDemandNotification(createdDemandId, () => {
-        console.log("🚨 Solicitud tomada por un operador");
-        localStorage.setItem("takenDemandId", createdDemandId);
-        setTakenDemandId(createdDemandId);
-        setTakenMessage("🎉 Tu solicitud ha sido tomada por un operador.");
-    });
+    useTakenDemandNotification(
+        createdDemandId,
+        () => {
+            console.log("🚨 Tu solicitud ha sido tomada por un operador.");
+            setTakenMessage("🎉 Tu solicitud ha sido tomada por un operador.");
+            localStorage.removeItem("lastCreatedDemandId");
+            setCreatedDemandId(null);
+        },
+        (status) => {
+            console.log("📡 Estado del WebSocket:", status);
+        }
+    );
+
 
     const handleLocationChange = (location) => {
         setFormData((prev) => ({...prev, currentLocation: location}));
@@ -39,7 +45,15 @@ export default function CustomerActivity({view}) {
 
     const handleCreatedDemand = (newDemandId) => {
         setCreatedDemandId(newDemandId);
+        localStorage.setItem("lastCreatedDemandId", newDemandId);
     };
+
+    useEffect(() => {
+        const storedId = localStorage.getItem("lastCreatedDemandId");
+        if (storedId) {
+            setCreatedDemandId(storedId);
+        }
+    }, []);
 
     return (
         <>

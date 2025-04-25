@@ -1,4 +1,5 @@
 import {useEffect, useState} from "react";
+import {formatDate} from "../../utils/Utils.js";
 
 export default function CustomerRequests() {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
@@ -9,7 +10,7 @@ export default function CustomerRequests() {
     const [error, setError] = useState(null);
     const [stateFilter, setStateFilter] = useState("");
     const [page, setPage] = useState(0);
-    const [size] = useState(3);
+    const [size] = useState(5);
 
     const [modalOpen, setModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState(null);
@@ -95,7 +96,7 @@ export default function CustomerRequests() {
 • Origen: ${req.origin}
 • Tipo de vehículo: ${req.carType}
 • Descripción: ${req.description || "N/A"}
-• Fecha: ${new Date(req.createdAt).toLocaleString()}
+• Fecha: ${formatDate(req.createdAt)}
             `,
             onlyClose: true,
         });
@@ -135,7 +136,7 @@ export default function CustomerRequests() {
                             <p><strong>Estado:</strong> {req.state}</p>
                             <p><strong>Origen:</strong> {req.origin}</p>
                             <p><strong>Tipo de vehículo:</strong> {req.carType}</p>
-                            <p><strong>Fecha:</strong> {new Date(req.createdAt).toLocaleString()}</p>
+                            <p><strong>Fecha:</strong> {formatDate(req.createdAt)}</p>
 
                             <div className="mt-2 flex gap-2">
                                 <button

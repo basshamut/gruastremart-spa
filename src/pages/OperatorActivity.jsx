@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from "react";
-import {useNavigate} from "react-router-dom";
+
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
 import {usePaginatedDemands} from "../hooks/usePaginatedDemands";
 import {useCraneNotifications} from "../hooks/useCraneNotifications";
 import {assignCraneDemand} from "../services/CraneDemandService.js";
+import {formatDate} from "../utils/Utils.js";
 
 export default function OperatorActivity() {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -253,7 +254,7 @@ export default function OperatorActivity() {
                 <p><strong>Ubicación actual:</strong> {selectedDemand?.currentLocation?.name}</p>
                 <p><strong>Destino:</strong> {selectedDemand?.destinationLocation?.name}</p>
                 <p>
-                    <strong>Fecha:</strong> {selectedDemand?.createdAt && new Date(selectedDemand.createdAt).toLocaleDateString()}
+                    <strong>Fecha:</strong> {selectedDemand?.createdAt && formatDate(selectedDemand.createdAt)}
                 </p>
 
                 {modalError && (

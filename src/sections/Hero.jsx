@@ -13,7 +13,7 @@ export default function Hero() {
 
     useEffect(() => {
         const roleInStorage = JSON.parse(localStorage.getItem("userDetail")).role;
-        console.log(roleInStorage);
+        const userInStorage = JSON.parse(localStorage.getItem("userDetail"));
 
         if (!roleInStorage) {
             console.error("Debe iniciar sesión para acceder");
