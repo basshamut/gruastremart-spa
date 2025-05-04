@@ -1,5 +1,8 @@
 import {useEffect, useState} from "react";
 import {formatDate} from "../../utils/Utils.js";
+import LocationTracker from "../common/LocationTracker";
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
 
 export default function CustomerRequests() {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
@@ -11,45 +14,90 @@ export default function CustomerRequests() {
     const [stateFilter, setStateFilter] = useState("");
     const [page, setPage] = useState(0);
     const [size] = useState(5);
+    const [selectedRequest, setSelectedRequest] = useState(null);
 
     const [modalOpen, setModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState(null);
+    const [takenMessage, setTakenMessage] = useState(null);
+
+    // Extraer fetchRequests para poder llamarla manualmente
+    const fetchRequests = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const createdByUserId = JSON.parse(localStorage.getItem("userDetail")).id;
+            const params = new URLSearchParams({
+                page,
+                size,
+                createdByUserId
+            });
+            if (stateFilter) {
+                params.append("state", stateFilter);
+            }
+
+            const response = await fetch(`${apiDomain}/v1/crane-demands?${params.toString()}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) throw new Error("Error al obtener las solicitudes");
+
+            const data = await response.json();
+            setRequests(data.content || []);
+        } catch (err) {
+            console.error(err);
+            setError("Error cargando solicitudes.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchRequests = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const createdByUserId = JSON.parse(localStorage.getItem("userDetail")).id;
-                const params = new URLSearchParams({
-                    page,
-                    size,
-                    createdByUserId
-                });
-                if (stateFilter) {
-                    params.append("state", stateFilter);
-                }
-
-                const response = await fetch(`${apiDomain}/v1/crane-demands?${params.toString()}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
-                if (!response.ok) throw new Error("Error al obtener las solicitudes");
-
-                const data = await response.json();
-                setRequests(data.content || []);
-            } catch (err) {
-                console.error(err);
-                setError("Error cargando solicitudes.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchRequests();
     }, [page, size, stateFilter]);
+
+    useEffect(() => {
+        // Suscribirse a las notificaciones de todas las solicitudes activas o tomadas
+        const clients = [];
+        const activeOrTakenIds = requests
+            .filter(r => r.state === "ACTIVE" || r.state === "TAKEN")
+            .map(r => r.id);
+
+        activeOrTakenIds.forEach(craneDemandId => {
+            const stompClient = new Client({
+                webSocketFactory: () => new SockJS(`${apiDomain}/ws`),
+                connectHeaders: {
+                    Authorization: `Bearer ${token}`,
+                },
+                onConnect: () => {
+                    const topic = `/topic/demand-taken/${craneDemandId}`;
+                    stompClient.subscribe(topic, (msg) => {
+                        setTakenMessage("🎉 Tu solicitud ha sido tomada por un operador.");
+                        fetchRequests();
+                        setTimeout(() => setTakenMessage(null), 10000);
+                    });
+                },
+                reconnectDelay: 5000,
+            });
+            stompClient.activate();
+            clients.push(stompClient);
+        });
+        return () => {
+            clients.forEach(client => client.deactivate());
+        };
+    }, [requests]);
+
+    useEffect(() => {
+        if (modalOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "auto";
+        }
+        return () => {
+            document.body.style.overflow = "auto";
+        };
+    }, [modalOpen]);
 
     const handleFilterChange = (e) => {
         setStateFilter(e.target.value);
@@ -89,100 +137,123 @@ export default function CustomerRequests() {
     };
 
     const viewDetails = (req) => {
+        const updatedReq = requests.find(r => r.id === req.id) || req;
+        setSelectedRequest(updatedReq);
         setModalContent({
             title: "Detalles de la solicitud",
             message: `
-📝 Estado: ${req.state}
-• Origen: ${req.origin}
-• Tipo de vehículo: ${req.carType}
-• Descripción: ${req.description || "N/A"}
-• Fecha: ${formatDate(req.createdAt)}
+📝 Estado: ${updatedReq.state}
+• Origen: ${updatedReq.origin}
+• Tipo de vehículo: ${updatedReq.carType}
+• Descripción: ${updatedReq.description || "N/A"}
+• Fecha: ${formatDate(updatedReq.createdAt)}
             `,
             onlyClose: true,
         });
         setModalOpen(true);
     };
 
+    if (modalOpen && selectedRequest) {
+        console.log('selectedRequest:', selectedRequest);
+    }
+
     return (
         <div className="bg-white rounded shadow p-4 mt-6">
             <h2 className="text-2xl font-bold mb-4 text-center">Mis Solicitudes</h2>
-
+            {takenMessage && (
+                <div className="bg-green-100 text-green-700 p-2 rounded mb-4 text-center">
+                    {takenMessage}
+                </div>
+            )}
+            
+            {/* Filtro de estado */}
             <div className="mb-4">
-                <label className="font-medium mr-2">Filtrar por estado:</label>
                 <select
                     value={stateFilter}
                     onChange={handleFilterChange}
-                    className="border rounded p-1"
+                    className="w-full p-2 border rounded"
                 >
-                    <option value="">-- Todos --</option>
+                    <option value="">Todos los estados</option>
                     <option value="ACTIVE">Activas</option>
-                    <option value="INACTIVE">Inactivas</option>
                     <option value="TAKEN">Tomadas</option>
-                    <option value="COMPLETED">Completadas</option>
+                    <option value="INACTIVE">Inactivas</option>
                 </select>
             </div>
 
-            {loading && <p>Cargando...</p>}
-            {error && <p className="text-red-600">{error}</p>}
-
-            {!loading && !error && requests.length === 0 && (
-                <p>No tienes solicitudes registradas.</p>
-            )}
-
-            {!loading && requests.length > 0 && (
-                <ul className="divide-y divide-gray-200">
+            {/* Lista de solicitudes */}
+            {loading ? (
+                <p className="text-center">Cargando...</p>
+            ) : error ? (
+                <p className="text-center text-red-500">{error}</p>
+            ) : requests.length === 0 ? (
+                <p className="text-center">No hay solicitudes.</p>
+            ) : (
+                <div className="space-y-4">
                     {requests.map((req) => (
-                        <li key={req.id} className="py-2 border-b">
-                            <p><strong>Estado:</strong> {req.state}</p>
-                            <p><strong>Origen:</strong> {req.origin}</p>
-                            <p><strong>Tipo de vehículo:</strong> {req.carType}</p>
-                            <p><strong>Fecha:</strong> {formatDate(req.createdAt)}</p>
-
-                            <div className="mt-2 flex gap-2">
-                                <button
-                                    onClick={() => viewDetails(req)}
-                                    className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
-                                >
-                                    Ver detalles
-                                </button>
-
-                                {req.state === "ACTIVE" && (
+                        <div key={req.id} className="border p-4 rounded">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h3 className="font-bold">{req.origin}</h3>
+                                    <p className="text-sm text-gray-600">
+                                        Estado: {req.state}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                        Fecha: {formatDate(req.createdAt)}
+                                    </p>
+                                </div>
+                                <div className="space-x-2">
                                     <button
-                                        onClick={() => cancelRequest(req.id)}
-                                        className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                                        onClick={() => viewDetails(req)}
+                                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                                     >
-                                        Cancelar
+                                        Ver
                                     </button>
-                                )}
+                                    {req.state === "ACTIVE" && (
+                                        <button
+                                            onClick={() => cancelRequest(req.id)}
+                                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                        >
+                                            Cancelar
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                        </li>
+                        </div>
                     ))}
-                </ul>
+                </div>
             )}
 
-            <div className="flex justify-between mt-4">
-                <button
-                    onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                    disabled={page === 0}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded disabled:opacity-50"
-                >
-                    Página anterior
-                </button>
-                <span className="self-center">Página {page + 1}</span>
-                <button
-                    onClick={() => setPage((prev) => prev + 1)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded"
-                >
-                    Siguiente página
-                </button>
-            </div>
-
+            {/* Modal */}
             {modalOpen && modalContent && (
                 <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                         <h3 className="text-xl font-bold mb-4">{modalContent.title}</h3>
                         <pre className="whitespace-pre-wrap text-gray-800 mb-4">{modalContent.message}</pre>
-                        <div className="flex justify-end gap-2">
+
+                        {/* Sección de seguimiento para solicitudes tomadas */}
+                        {selectedRequest && selectedRequest.state === "TAKEN" &&
+                          selectedRequest.currentLocation &&
+                          selectedRequest.currentLocation.latitude !== undefined &&
+                          selectedRequest.currentLocation.longitude !== undefined && (
+                            <LocationTracker
+                              craneDemandId={selectedRequest.id}
+                              initialLocation={{
+                                lat: selectedRequest.currentLocation.latitude,
+                                lng: selectedRequest.currentLocation.longitude
+                              }}
+                              origin={{
+                                lat: selectedRequest.currentLocation.latitude,
+                                lng: selectedRequest.currentLocation.longitude
+                              }}
+                              destination={selectedRequest.destinationLocation ? {
+                                lat: selectedRequest.destinationLocation.latitude,
+                                lng: selectedRequest.destinationLocation.longitude
+                              } : undefined}
+                              onOperatorLocationUpdate={loc => console.log('Ubicación operador (cliente):', loc)}
+                            />
+                        )}
+
+                        <div className="flex justify-end gap-2 mt-4">
                             {!modalContent.onlyClose && (
                                 <>
                                     <button

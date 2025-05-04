@@ -20,6 +20,7 @@ export default function CustomerActivity({view}) {
 
     const [takenMessage, setTakenMessage] = useState(null);
     const [createdDemandId, setCreatedDemandId] = useState(null);
+    const [requests, setRequests] = useState([]);
 
     useTakenDemandNotification(
         createdDemandId,
@@ -33,7 +34,6 @@ export default function CustomerActivity({view}) {
             console.log("📡 Estado del WebSocket:", status);
         }
     );
-
 
     const handleLocationChange = (location) => {
         setFormData((prev) => ({...prev, currentLocation: location}));
@@ -55,6 +55,38 @@ export default function CustomerActivity({view}) {
         }
     }, []);
 
+    // Obtener solicitudes del usuario para saber si hay alguna en estado TAKEN
+    useEffect(() => {
+        const fetchRequests = async () => {
+            const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
+            const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+            try {
+                const createdByUserId = JSON.parse(localStorage.getItem("userDetail")).id;
+                const params = new URLSearchParams({
+                    page: 0,
+                    size: 10,
+                    createdByUserId
+                });
+                const response = await fetch(`${apiDomain}/v1/crane-demands?${params.toString()}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                if (!response.ok) throw new Error("Error al obtener las solicitudes");
+                const data = await response.json();
+                setRequests(data.content || []);
+            } catch (err) {
+                setRequests([]);
+            }
+        };
+        fetchRequests();
+    }, []);
+
+    // Buscar la solicitud en estado TAKEN
+    const takenRequest = requests.find(r => r.state === "TAKEN");
+    const takenDemandId = takenRequest?.id || null;
+    const takenState = takenRequest?.state || null;
+
     return (
         <>
             <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo!</h1>
@@ -73,6 +105,8 @@ export default function CustomerActivity({view}) {
                     <CustomerGeoLocation
                         onLocationChange={handleLocationChange}
                         onDestinationChange={handleDestinationChange}
+                        craneDemandId={takenDemandId}
+                        takenState={takenState}
                     />
                     <CustomerForm
                         formData={formData}
