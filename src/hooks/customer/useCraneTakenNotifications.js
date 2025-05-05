@@ -32,4 +32,4 @@ export function useTakenDemandNotification(craneDemandId, onTakenDemand, onStatu
         stompClient.activate();
         return () => stompClient.deactivate();
     }, [craneDemandId]);
-} 
+}

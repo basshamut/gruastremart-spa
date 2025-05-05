@@ -76,4 +76,4 @@ export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize =
         handlePageChange,
         handlePageSizeChange,
     };
-} 
+}

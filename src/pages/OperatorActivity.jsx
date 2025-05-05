@@ -2,8 +2,8 @@ import React, {useEffect, useState} from "react";
 
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
-import {usePaginatedDemands} from "../hooks/usePaginatedDemands";
-import {useCraneNotifications} from "../hooks/useCraneNotifications";
+import {usePaginatedDemands} from "../hooks/customer/usePaginatedDemands.js";
+import {useCraneNotifications} from "../hooks/customer/useCraneNotifications.js";
 import {assignCraneDemand} from "../services/CraneDemandService.js";
 import {formatDate} from "../utils/Utils.js";
 

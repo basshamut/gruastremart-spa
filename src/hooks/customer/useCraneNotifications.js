@@ -26,4 +26,4 @@ export function useCraneNotifications(onNewDemand) {
             stompClient.deactivate();
         };
     }, []);
-} 
+}

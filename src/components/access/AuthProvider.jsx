@@ -1,6 +1,6 @@
 import AuthContext from "./AuthContext";
 import Spinner from "../common/Spinner";
-import { useProvideAuth } from "../../hooks/useProvideAuth";
+import { useProvideAuth } from "../../hooks/common/useProvideAuth.js";
 
 export function AuthProvider({ children }) {
     const auth = useProvideAuth();

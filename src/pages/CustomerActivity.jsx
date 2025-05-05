@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import CustomerGeoLocation from "../components/customer/CustomerGeoLocation";
 import CustomerForm from "../components/customer/CustormerForm";
-import {useTakenDemandNotification} from "../hooks/useCraneTakenNotifications";
+import {useTakenDemandNotification} from "../hooks/customer/useCraneTakenNotifications.js";
 import CustomerRequests from "../components/customer/CustomerRequests.jsx";
 
 //TODO Verificar antes enviar el formulario si el cliente tiene solicitudes abiertas. No puede tener ni en estado ACTIVE ni en TAKEN
