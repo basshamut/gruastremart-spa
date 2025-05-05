@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ReceiptText } from 'lucide-react';
 import Pagination from "../components/common/Pagination";
-import { usePaginatedDemands } from "../hooks/customer/usePaginatedDemands.js";
-import { useCraneNotifications } from "../hooks/customer/useCraneNotifications.js";
+import { usePaginatedDemands } from "../hooks/customer/usePaginatedDemands";
+import { useCraneNotifications } from "../hooks/customer/useCraneNotifications";
 
 export default function InternalActivity() {
     const [refreshTrigger, setRefreshTrigger] = useState(0);

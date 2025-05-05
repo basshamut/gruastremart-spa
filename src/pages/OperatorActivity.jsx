@@ -2,10 +2,10 @@ import React, {useEffect, useState} from "react";
 
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
-import {usePaginatedDemands} from "../hooks/customer/usePaginatedDemands.js";
-import {useCraneNotifications} from "../hooks/customer/useCraneNotifications.js";
-import {assignCraneDemand} from "../services/CraneDemandService.js";
-import {formatDate} from "../utils/Utils.js";
+import {usePaginatedDemands} from "../hooks/customer/usePaginatedDemands";
+import {useCraneNotifications} from "../hooks/customer/useCraneNotifications";
+import {assignCraneDemand} from "../services/CraneDemandService";
+import {formatDate} from "../utils/Utils";
 
 export default function OperatorActivity() {
     const [refreshTrigger, setRefreshTrigger] = useState(0);

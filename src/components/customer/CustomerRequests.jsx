@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import {formatDate} from "../../utils/Utils.js";
+import {formatDate} from "../../utils/Utils";
 import LocationTracker from "../common/LocationTracker";
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';

@@ -1,9 +1,9 @@
 import {useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {useAuth} from "../../hooks/common/useAuth.js";
+import {useAuth} from "../../hooks/common/useAuth";
 import {ClipboardCheck, HardHat, Home, LogOut, Menu, MessageSquareWarning, Settings, User, X} from "lucide-react";
 
-import {clearLocalStorage} from "../../utils/Utils.js";
+import {clearLocalStorage} from "../../utils/Utils";
 
 export default function NavBar({role}) {
     const navigate = useNavigate();

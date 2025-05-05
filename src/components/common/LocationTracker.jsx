@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import { useLocationTracking } from "../../hooks/common/useLocationTracking.js";
+import { useLocationTracking } from "../../hooks/common/useLocationTracking";
 import { useOperatorLocation } from "../../hooks/common/useOperatorLocation";
 import { useState } from "react";
 import L from "leaflet";

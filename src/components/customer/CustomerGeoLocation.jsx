@@ -1,7 +1,7 @@
 import {useState, useEffect, useRef} from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useOperatorLocation } from "../../hooks/common/useOperatorLocation.js";
+import { useOperatorLocation } from "../../hooks/common/useOperatorLocation";
 
 const userIcon = L.icon({
     iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
