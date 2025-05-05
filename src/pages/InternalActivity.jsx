@@ -7,6 +7,8 @@ import { useCraneNotifications } from "../hooks/useCraneNotifications";
 export default function InternalActivity() {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [newNotificationsCount, setNewNotificationsCount] = useState(0);
+    const userName = JSON.parse(localStorage.getItem("userDetail")).name
+    console.log(userName);
 
     const {
         demands,
@@ -37,7 +39,7 @@ export default function InternalActivity() {
 
     return (
         <>
-            <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo!</h1>
+            <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo {userName} !</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
                 <div className="bg-card p-4 rounded-lg shadow-md">

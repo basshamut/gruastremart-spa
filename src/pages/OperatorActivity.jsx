@@ -19,6 +19,9 @@ export default function OperatorActivity() {
     const activeDemands = usePaginatedDemands("ACTIVE", refreshTrigger, 50);
     const takenDemands = usePaginatedDemands("TAKEN", refreshTrigger, 50);
 
+    const userName = JSON.parse(localStorage.getItem("userDetail")).name
+    console.log(userName);
+
     const handleNewDemand = (newCraneDemand) => {
         setPendingNotificationsForActiveDemands(prev => [...prev, newCraneDemand]);
         setHasNewNotifications(true);
@@ -74,7 +77,7 @@ export default function OperatorActivity() {
 
     return (
         <>
-            <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo!</h1>
+            <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo {userName} !</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
                 <div className="bg-card p-4 rounded-lg shadow-md">
