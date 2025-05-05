@@ -1,38 +1,103 @@
-import { useEffect, useState } from "react";
-import { formatDate } from "../../utils/Utils.js";
+import {useEffect, useState} from "react";
+import {formatDate} from "../../utils/Utils.js";
 import LocationTracker from "../common/LocationTracker";
-import { useCustomerRequests } from "../../hooks/customer/useCustomerRequests";
-import { useTakenDemandsWebSocket } from "../../hooks/customer/useTakenDemandsWebSocket";
-import { useBodyScrollLock } from "../../hooks/customer/useBodyScrollLock";
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
 
 export default function CustomerRequests() {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
     const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
 
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [stateFilter, setStateFilter] = useState("");
+    const [page, setPage] = useState(0);
+    const [size] = useState(5);
     const [selectedRequest, setSelectedRequest] = useState(null);
+
     const [modalOpen, setModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState(null);
     const [takenMessage, setTakenMessage] = useState(null);
 
-    useBodyScrollLock(modalOpen);
-    const {
-        requests,
-        loading,
-        error,
-        fetchRequests,
-        setPage,
-        page,
-        stateFilter,
-        setStateFilter,
-        size,
-        setRequests
-    } = useCustomerRequests(apiDomain, token);
+    // Extraer fetchRequests para poder llamarla manualmente
+    const fetchRequests = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const createdByUserId = JSON.parse(localStorage.getItem("userDetail")).id;
+            const params = new URLSearchParams({
+                page,
+                size,
+                createdByUserId
+            });
+            if (stateFilter) {
+                params.append("state", stateFilter);
+            }
 
-    useTakenDemandsWebSocket(requests, apiDomain, token, () => {
-        setTakenMessage("🎉 Tu solicitud ha sido tomada por un operador.");
+            const response = await fetch(`${apiDomain}/v1/crane-demands?${params.toString()}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) throw new Error("Error al obtener las solicitudes");
+
+            const data = await response.json();
+            setRequests(data.content || []);
+        } catch (err) {
+            console.error(err);
+            setError("Error cargando solicitudes.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchRequests();
-        setTimeout(() => setTakenMessage(null), 10000);
-    });
+    }, [page, size, stateFilter]);
+
+    useEffect(() => {
+        // Suscribirse a las notificaciones de todas las solicitudes activas o tomadas
+        const clients = [];
+        const activeOrTakenIds = requests
+            .filter(r => r.state === "ACTIVE" || r.state === "TAKEN")
+            .map(r => r.id);
+
+        activeOrTakenIds.forEach(craneDemandId => {
+            const stompClient = new Client({
+                webSocketFactory: () => new SockJS(`${apiDomain}/ws`),
+                connectHeaders: {
+                    Authorization: `Bearer ${token}`,
+                },
+                onConnect: () => {
+                    const topic = `/topic/demand-taken/${craneDemandId}`;
+                    stompClient.subscribe(topic, (msg) => {
+                        setTakenMessage("🎉 Tu solicitud ha sido tomada por un operador.");
+                        fetchRequests();
+                        setTimeout(() => setTakenMessage(null), 10000);
+                    });
+                },
+                reconnectDelay: 5000,
+            });
+            stompClient.activate();
+            clients.push(stompClient);
+        });
+        return () => {
+            clients.forEach(client => client.deactivate());
+        };
+    }, [requests]);
+
+    useEffect(() => {
+        if (modalOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "auto";
+        }
+        return () => {
+            document.body.style.overflow = "auto";
+        };
+    }, [modalOpen]);
 
     const handleFilterChange = (e) => {
         setStateFilter(e.target.value);
@@ -56,7 +121,7 @@ export default function CustomerRequests() {
                     if (!response.ok) throw new Error("No se pudo cancelar");
 
                     setRequests((prev) =>
-                        prev.map((r) => (r.id === id ? { ...r, state: "INACTIVE" } : r))
+                        prev.map((r) => (r.id === id ? {...r, state: "INACTIVE"} : r))
                     );
                     setModalOpen(false);
                 } catch (err) {
@@ -76,7 +141,13 @@ export default function CustomerRequests() {
         setSelectedRequest(updatedReq);
         setModalContent({
             title: "Detalles de la solicitud",
-            message: `\n📝 Estado: ${updatedReq.state}\n• Origen: ${updatedReq.origin}\n• Tipo de vehículo: ${updatedReq.carType}\n• Descripción: ${updatedReq.description || "N/A"}\n• Fecha: ${formatDate(updatedReq.createdAt)}\n            `,
+            message: `
+📝 Estado: ${updatedReq.state}
+• Origen: ${updatedReq.origin}
+• Tipo de vehículo: ${updatedReq.carType}
+• Descripción: ${updatedReq.description || "N/A"}
+• Fecha: ${formatDate(updatedReq.createdAt)}
+            `,
             onlyClose: true,
         });
         setModalOpen(true);
@@ -94,6 +165,7 @@ export default function CustomerRequests() {
                     {takenMessage}
                 </div>
             )}
+
             {/* Filtro de estado */}
             <div className="mb-4">
                 <select
@@ -107,6 +179,7 @@ export default function CustomerRequests() {
                     <option value="INACTIVE">Inactivas</option>
                 </select>
             </div>
+
             {/* Lista de solicitudes */}
             {loading ? (
                 <p className="text-center">Cargando...</p>
@@ -149,34 +222,37 @@ export default function CustomerRequests() {
                     ))}
                 </div>
             )}
+
             {/* Modal */}
             {modalOpen && modalContent && (
                 <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                         <h3 className="text-xl font-bold mb-4">{modalContent.title}</h3>
                         <pre className="whitespace-pre-wrap text-gray-800 mb-4">{modalContent.message}</pre>
+
                         {/* Sección de seguimiento para solicitudes tomadas */}
                         {selectedRequest && selectedRequest.state === "TAKEN" &&
-                          selectedRequest.currentLocation &&
-                          selectedRequest.currentLocation.latitude !== undefined &&
-                          selectedRequest.currentLocation.longitude !== undefined && (
-                            <LocationTracker
-                              craneDemandId={selectedRequest.id}
-                              initialLocation={{
-                                lat: selectedRequest.currentLocation.latitude,
-                                lng: selectedRequest.currentLocation.longitude
-                              }}
-                              origin={{
-                                lat: selectedRequest.currentLocation.latitude,
-                                lng: selectedRequest.currentLocation.longitude
-                              }}
-                              destination={selectedRequest.destinationLocation ? {
-                                lat: selectedRequest.destinationLocation.latitude,
-                                lng: selectedRequest.destinationLocation.longitude
-                              } : undefined}
-                              onOperatorLocationUpdate={loc => console.log('Ubicación operador (cliente):', loc)}
-                            />
-                        )}
+                            selectedRequest.currentLocation &&
+                            selectedRequest.currentLocation.latitude !== undefined &&
+                            selectedRequest.currentLocation.longitude !== undefined && (
+                                <LocationTracker
+                                    craneDemandId={selectedRequest.id}
+                                    initialLocation={{
+                                        lat: selectedRequest.currentLocation.latitude,
+                                        lng: selectedRequest.currentLocation.longitude
+                                    }}
+                                    origin={{
+                                        lat: selectedRequest.currentLocation.latitude,
+                                        lng: selectedRequest.currentLocation.longitude
+                                    }}
+                                    destination={selectedRequest.destinationLocation ? {
+                                        lat: selectedRequest.destinationLocation.latitude,
+                                        lng: selectedRequest.destinationLocation.longitude
+                                    } : undefined}
+                                    onOperatorLocationUpdate={loc => console.log('Ubicación operador (cliente):', loc)}
+                                />
+                            )}
+
                         <div className="flex justify-end gap-2 mt-4">
                             {!modalContent.onlyClose && (
                                 <>

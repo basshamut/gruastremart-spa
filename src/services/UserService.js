@@ -18,6 +18,7 @@ export async function getUserDetailByEmail(email) {
         if (data.content?.length > 0) {
             return {
                 id: data.content[0].id,
+                name: data.content[0].name,
                 email: data.content[0].email,
                 role: data.content[0].role
             };
