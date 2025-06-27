@@ -93,10 +93,12 @@ export function useOperatorLocationInterval(intervalSeconds = 30) {
             {
                 enableHighAccuracy: true,
                 timeout: 15000, // Aumentar timeout a 15 segundos
-                maximumAge: 300000, // Permitir ubicaciones de hasta 5 minutos de antigüedad
+                maximumAge: 0, // Forzar ubicación fresca - NO usar caché
             }
         );
-    }, []);    const startTracking = useCallback(() => {
+    }, []);
+
+    const startTracking = useCallback(() => {
         if (isTracking) return;
 
         console.log(`🚀 Iniciando seguimiento de localización del operador cada ${intervalSeconds} segundo(s)`);

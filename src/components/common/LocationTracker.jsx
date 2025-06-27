@@ -121,7 +121,6 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
-                    
                     {/* Marcador de origen */}
                     {origin && (
                         <Marker
@@ -133,7 +132,6 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                             </Popup>
                         </Marker>
                     )}
-
                     {/* Marcador de destino */}
                     {destination && (
                         <Marker
@@ -145,7 +143,6 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                             </Popup>
                         </Marker>
                     )}
-
                     {/* Marcador del operador */}
                     {operatorLocation && (
                         <Marker
@@ -153,7 +150,9 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                             icon={operatorIcon}
                         >
                             <Popup>
-                                Ubicación actual del operador
+                                Ubicación actual del operador<br/>
+                                Lat: {operatorLocation.lat.toFixed(6)}<br/>
+                                Lng: {operatorLocation.lng.toFixed(6)}
                             </Popup>
                         </Marker>
                     )}
