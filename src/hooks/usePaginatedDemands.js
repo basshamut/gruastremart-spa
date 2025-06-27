@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 
-export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize = 10) {
+export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize = 10, lat = null, lng = null) {
     const [demands, setDemands] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -9,16 +9,22 @@ export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize =
     const [pageSize, setPageSize] = useState(initialPageSize);
 
     const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
-    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-
-    useEffect(() => {
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;    useEffect(() => {
         const fetchDemands = async (pageNumber, size) => {
             setLoading(true);
             const safePage = isNaN(pageNumber) ? 0 : Math.max(0, pageNumber);
             const safeSize = isNaN(size) || size <= 0 ? initialPageSize : size;
 
-            const urlForAll = `${apiDomain}/v1/crane-demands?page=${safePage}&size=${safeSize}`;
-            const urlForState = `${apiDomain}/v1/crane-demands?state=${state}&page=${safePage}&size=${safeSize}`;
+            let urlForAll = `${apiDomain}/v1/crane-demands?page=${safePage}&size=${safeSize}`;
+            let urlForState = `${apiDomain}/v1/crane-demands?state=${state}&page=${safePage}&size=${safeSize}`;
+            
+            // Agregar coordenadas a la URL si están disponibles
+            if (lat !== null && lng !== null) {
+                const coords = `&lat=${lat}&lng=${lng}`;
+                urlForAll += coords;
+                urlForState += coords;
+            }
+            
             const apiUrl = !state ? urlForAll : urlForState;
 
             try {
@@ -51,8 +57,17 @@ export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize =
             }
         };
 
-        fetchDemands(page, pageSize);
-    }, [page, pageSize, token, apiDomain, refreshTrigger]);
+        // Solo hacer la petición si las coordenadas están disponibles O si no las necesitamos
+        // Para el caso del operador, esperamos a tener coordenadas antes de hacer la petición
+        if (lat !== null && lng !== null) {
+            console.log("🚀 Fetching demands with coordinates:", { lat, lng, state });
+            fetchDemands(page, pageSize);
+        } else {
+            // Si no tenemos coordenadas aún, mostrar loading pero no hacer petición
+            console.log("⏳ Waiting for coordinates before fetching demands...");
+            setLoading(true);
+        }
+    }, [page, pageSize, token, apiDomain, refreshTrigger, initialPageSize, state, lat, lng]);
 
     const handlePageChange = (newPage) => {
         if (!isNaN(newPage)) {
