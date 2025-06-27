@@ -83,6 +83,21 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                     {isTracking ? 'Detener seguimiento' : 'Iniciar seguimiento'}
                 </button>
             </div>
+            {/* Panel flotante de coordenadas */}
+            <div className="absolute top-4 right-4 bg-white bg-opacity-90 rounded shadow-lg p-4 z-[1000] min-w-[220px]">
+                <h5 className="font-bold mb-2 text-gray-700 text-sm">Flujo de coordenadas</h5>
+                <div className="text-xs text-gray-800">
+                    <div className="mb-1">
+                        <span className="font-semibold">Operador:</span> {operatorLocation ? `${operatorLocation.lat.toFixed(6)}, ${operatorLocation.lng.toFixed(6)}` : 'Sin datos'}
+                    </div>
+                    <div className="mb-1">
+                        <span className="font-semibold">Destino:</span> {destination ? `${destination.lat.toFixed(6)}, ${destination.lng.toFixed(6)}` : 'Sin datos'}
+                    </div>
+                    <div>
+                        <span className="font-semibold">Origen:</span> {origin ? `${origin.lat.toFixed(6)}, ${origin.lng.toFixed(6)}` : 'Sin datos'}
+                    </div>
+                </div>
+            </div>
 
             {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -146,4 +161,4 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
             </div>
         </div>
     );
-} 
+}
