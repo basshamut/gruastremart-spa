@@ -4,6 +4,7 @@ import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
 import {usePaginatedDemands} from "../hooks/usePaginatedDemands";
 import {useCraneNotifications} from "../hooks/useCraneNotifications";
+import {useOperatorLocationInterval} from "../hooks/useOperatorLocationInterval";
 import {assignCraneDemand} from "../services/CraneDemandService.js";
 import {formatDate} from "../utils/Utils.js";
 
@@ -14,13 +15,30 @@ export default function OperatorActivity() {
     const [selectedDemand, setSelectedDemand] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalError, setModalError] = useState(null);
-    const [showConfirmButton, setShowConfirmButton] = useState(true);
+    const [showConfirmButton, setShowConfirmButton] = useState(true);    // Hook para obtener localización del operador cada 30 segundos
+    const { 
+        location: operatorLocation,
+        startTracking, 
+        stopTracking 
+    } = useOperatorLocationInterval(30); // 30 segundos
 
-    const activeDemands = usePaginatedDemands("ACTIVE", refreshTrigger, 50);
-    const takenDemands = usePaginatedDemands("TAKEN", refreshTrigger, 50);
+    // Extraer coordenadas de la localización para usePaginatedDemands
+    const lat = operatorLocation?.latitude || null;
+    const lng = operatorLocation?.longitude || null;
+
+    const activeDemands = usePaginatedDemands("ACTIVE", refreshTrigger, 50, lat, lng);
+    const takenDemands = usePaginatedDemands("TAKEN", refreshTrigger, 50, lat, lng);
 
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
-    console.log(userName);
+    console.log(userName);    // Iniciar el seguimiento de localización cuando se monta el componente
+    useEffect(() => {
+        startTracking();
+
+        // Cleanup: detener el seguimiento cuando se desmonta el componente
+        return () => {
+            stopTracking();
+        };
+    }, [startTracking, stopTracking]);
 
     const handleNewDemand = (newCraneDemand) => {
         setPendingNotificationsForActiveDemands(prev => [...prev, newCraneDemand]);
@@ -88,7 +106,8 @@ export default function OperatorActivity() {
                                 onClick={refreshData}
                                 className="bg-primary text-white text-xs px-3 py-1 rounded-full flex items-center"
                             >
-                                {pendingNotificationsForActiveDemands.length} nueva{pendingNotificationsForActiveDemands.length > 1 ? 's' : ''} • Ver
+                                {pendingNotificationsForActiveDemands.length} nueva{pendingNotificationsForActiveDemands.length > 1 ? 's' : ''} •
+                                Ver
                             </button>
                         )}
                     </div>
