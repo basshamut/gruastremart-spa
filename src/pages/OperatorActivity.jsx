@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
@@ -13,6 +13,7 @@ export default function OperatorActivity() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalError, setModalError] = useState(null);
     const [showConfirmButton, setShowConfirmButton] = useState(true);
+    const [previousLocation, setPreviousLocation] = useState(null);
 
     // Hook personalizado que maneja toda la lógica de actividad del operador
     const {
@@ -35,6 +36,19 @@ export default function OperatorActivity() {
 
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
     console.log(userName);
+
+    // Guardar la ubicación anterior cada vez que cambia la actual
+    useEffect(() => {
+        if (operatorLocation) {
+            setPreviousLocation((prev) => {
+                // Solo actualizar si la ubicación realmente cambió
+                if (!prev || prev.latitude !== operatorLocation.latitude || prev.longitude !== operatorLocation.longitude) {
+                    return operatorLocation;
+                }
+                return prev;
+            });
+        }
+    }, [operatorLocation]);
 
     const openModal = (demand, modalType) => {
         setSelectedDemand(demand);
@@ -75,7 +89,7 @@ export default function OperatorActivity() {
             <div className="mt-4 bg-white bg-opacity-95 rounded-lg shadow-lg p-4 border border-gray-200">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h3 className="font-bold text-gray-700 text-sm mb-2">📍 Datos de tu Ubicación Actual</h3>
+                        <h3 className="font-bold text-gray-700 text-sm mb-2">📍 Ubicación Actual del Operador</h3>
                         
                         {locationError ? (
                             <div className="text-xs text-red-600 space-y-1">
@@ -102,7 +116,7 @@ export default function OperatorActivity() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-xs text-gray-800 space-y-1">
+                            <div className="text-xs text-gray-800 space-y-1 mt-2">
                                 <div>
                                     <span className="font-semibold">Latitud:</span> {operatorLocation.latitude.toFixed(6)}
                                 </div>
@@ -118,6 +132,13 @@ export default function OperatorActivity() {
                                 <div>
                                     <span className="font-semibold">Última actualización:</span> {new Date(operatorLocation.timestamp).toLocaleTimeString()}
                                 </div>
+                                {previousLocation &&
+                                    (previousLocation.latitude !== operatorLocation.latitude || previousLocation.longitude !== operatorLocation.longitude) && (
+                                        <div className="text-[11px] text-gray-400 mt-1">
+                                            <span className="font-semibold">Anterior:</span> {previousLocation.latitude.toFixed(6)}, {previousLocation.longitude.toFixed(6)}
+                                        </div>
+                                    )
+                                }
                             </div>
                         )}
                     </div>
