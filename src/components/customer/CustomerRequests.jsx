@@ -20,7 +20,6 @@ export default function CustomerRequests() {
     const [modalContent, setModalContent] = useState(null);
     const [takenMessage, setTakenMessage] = useState(null);
 
-    // Extraer fetchRequests para poder llamarla manualmente
     const fetchRequests = async () => {
         setLoading(true);
         setError(null);

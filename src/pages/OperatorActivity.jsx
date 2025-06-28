@@ -1,26 +1,30 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
 import {usePaginatedDemands} from "../hooks/usePaginatedDemands";
-import {useCraneNotifications} from "../hooks/useCraneNotifications";
-import {useOperatorLocationInterval} from "../hooks/useOperatorLocationInterval";
+import {useOperatorActivity} from "../hooks/useOperatorActivity";
 import {assignCraneDemand} from "../services/CraneDemandService.js";
 import {formatDate} from "../utils/Utils.js";
 
 export default function OperatorActivity() {
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
-    const [pendingNotificationsForActiveDemands, setPendingNotificationsForActiveDemands] = useState([]);
-    const [hasNewNotifications, setHasNewNotifications] = useState(false);
+    // Estados específicos del componente
     const [selectedDemand, setSelectedDemand] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalError, setModalError] = useState(null);
-    const [showConfirmButton, setShowConfirmButton] = useState(true);    // Hook para obtener localización del operador cada 30 segundos
-    const { 
-        location: operatorLocation,
-        startTracking, 
-        stopTracking 
-    } = useOperatorLocationInterval(30); // 30 segundos
+    const [showConfirmButton, setShowConfirmButton] = useState(true);
+
+    // Hook personalizado que maneja toda la lógica de actividad del operador
+    const {
+        operatorLocation,
+        locationError,
+        isTracking,
+        countdown,
+        pendingNotificationsForActiveDemands,
+        hasNewNotifications,
+        refreshTrigger,
+        refreshData
+    } = useOperatorActivity(30, 30, 5000); // 30s intervalo, 30s countdown, 5s delay
 
     // Extraer coordenadas de la localización para usePaginatedDemands
     const lat = operatorLocation?.latitude || null;
@@ -30,37 +34,7 @@ export default function OperatorActivity() {
     const takenDemands = usePaginatedDemands("TAKEN", refreshTrigger, 50, lat, lng);
 
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
-    console.log(userName);    // Iniciar el seguimiento de localización cuando se monta el componente
-    useEffect(() => {
-        startTracking();
-
-        // Cleanup: detener el seguimiento cuando se desmonta el componente
-        return () => {
-            stopTracking();
-        };
-    }, [startTracking, stopTracking]);
-
-    const handleNewDemand = (newCraneDemand) => {
-        setPendingNotificationsForActiveDemands(prev => [...prev, newCraneDemand]);
-        setHasNewNotifications(true);
-    };
-
-    useCraneNotifications(handleNewDemand);
-
-    useEffect(() => {
-        if (hasNewNotifications) {
-            const timer = setTimeout(() => {
-                refreshData();
-            }, 5000);
-            return () => clearTimeout(timer);
-        }
-    }, [hasNewNotifications]);
-
-    const refreshData = () => {
-        setRefreshTrigger(prev => prev + 1);
-        setPendingNotificationsForActiveDemands([]);
-        setHasNewNotifications(false);
-    };
+    console.log(userName);
 
     const openModal = (demand, modalType) => {
         setSelectedDemand(demand);
@@ -96,6 +70,77 @@ export default function OperatorActivity() {
     return (
         <>
             <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo {userName} !</h1>
+
+            {/* Panel flotante de coordenadas del operador */}
+            <div className="mt-4 bg-white bg-opacity-95 rounded-lg shadow-lg p-4 border border-gray-200">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h3 className="font-bold text-gray-700 text-sm mb-2">📍 Ubicación Actual del Operador</h3>
+                        
+                        {locationError ? (
+                            <div className="text-xs text-red-600 space-y-1">
+                                <div className="font-semibold">Error de ubicación:</div>
+                                <div>{locationError}</div>
+                                <div className="mt-2 pt-2 border-t border-red-200">
+                                    <div className="font-semibold text-red-700">
+                                        Próximo intento en: {countdown}s
+                                    </div>
+                                    <div className="w-full bg-red-200 rounded-full h-1 mt-1">
+                                        <div 
+                                            className="bg-red-500 h-1 rounded-full transition-all duration-1000"
+                                            style={{ width: `${((30 - countdown) / 30) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : !operatorLocation ? (
+                            <div className="text-xs text-gray-600 space-y-1">
+                                <div>Obteniendo ubicación...</div>
+                                <div className="flex items-center">
+                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500 mr-2"></div>
+                                    <span>Esperando GPS</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-xs text-gray-800 space-y-1">
+                                <div>
+                                    <span className="font-semibold">Latitud:</span> {operatorLocation.latitude.toFixed(6)}
+                                </div>
+                                <div>
+                                    <span className="font-semibold">Longitud:</span> {operatorLocation.longitude.toFixed(6)}
+                                </div>
+                                <div>
+                                    <span className="font-semibold">Precisión:</span> {operatorLocation.accuracy ? `${operatorLocation.accuracy.toFixed(1)}m` : 'N/A'}
+                                </div>
+                                <div>
+                                    <span className="font-semibold">Ubicación:</span> {operatorLocation.name}
+                                </div>
+                                <div>
+                                    <span className="font-semibold">Última actualización:</span> {new Date(operatorLocation.timestamp).toLocaleTimeString()}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <div className="text-right">
+                        {locationError ? (
+                            <>
+                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <p className="text-xs text-red-600 mt-1">Error</p>
+                            </>
+                        ) : !operatorLocation ? (
+                            <>
+                                <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></div>
+                                <p className="text-xs text-yellow-600 mt-1">Conectando</p>
+                            </>
+                        ) : (
+                            <>
+                                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                <p className="text-xs text-green-600 mt-1">En línea</p>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
                 <div className="bg-card p-4 rounded-lg shadow-md">
