@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useOperatorLocationInterval } from './useOperatorLocationInterval';
-import { useCraneNotifications } from './useCraneNotifications';
+import { useOperatorLocationInterval } from '../location/useOperatorLocationInterval';
+import { useCraneNotifications } from '../notifications/useCraneNotifications';
 
 /**
  * Hook personalizado que maneja toda la lógica de actividad del operador

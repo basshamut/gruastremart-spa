@@ -1,6 +1,6 @@
 import {useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {useAuth} from "../../hooks/useAuth";
+import {useAuth} from "../../hooks/auth/useAuth";
 import {ClipboardCheck, HardHat, Home, LogOut, Menu, MessageSquareWarning, Settings, User, X} from "lucide-react";
 
 import {clearLocalStorage} from "../../utils/Utils.js";

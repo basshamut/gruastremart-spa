@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
-import {supabase} from "../config/supabase/supabaseClient";
-import {clearLocalStorage} from "../utils/Utils.js";
+import {supabase} from "../../config/supabase/supabaseClient";
+import {clearLocalStorage} from "../../utils/Utils.js";
 
 export function useProvideAuth() {
     const [user, setUser] = useState(null);

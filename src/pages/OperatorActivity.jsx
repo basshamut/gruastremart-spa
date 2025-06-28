@@ -2,8 +2,8 @@ import React, {useState} from "react";
 
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
-import {usePaginatedDemands} from "../hooks/usePaginatedDemands";
-import {useOperatorActivity} from "../hooks/useOperatorActivity";
+import {usePaginatedDemands} from "../hooks/data/usePaginatedDemands";
+import {useOperatorActivity} from "../hooks/data/useOperatorActivity";
 import {assignCraneDemand} from "../services/CraneDemandService.js";
 import {formatDate} from "../utils/Utils.js";
 
@@ -75,7 +75,7 @@ export default function OperatorActivity() {
             <div className="mt-4 bg-white bg-opacity-95 rounded-lg shadow-lg p-4 border border-gray-200">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h3 className="font-bold text-gray-700 text-sm mb-2">📍 Ubicación Actual del Operador</h3>
+                        <h3 className="font-bold text-gray-700 text-sm mb-2">📍 Datos de tu Ubicación Actual</h3>
                         
                         {locationError ? (
                             <div className="text-xs text-red-600 space-y-1">
