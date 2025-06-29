@@ -38,92 +38,63 @@ export function useOperatorLocationInterval(intervalSeconds = 30) {
         }
 
         navigator.geolocation.getCurrentPosition(
-            async (position) => {
+            (position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
                 const timestamp = new Date().toISOString();
 
-                try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-                    );
-                    const data = await response.json();
+                // Crear ubicación básica
+                const currentLocation = {
+                    latitude: lat,
+                    longitude: lon,
+                    accuracy: position.coords.accuracy,
+                    timestamp: timestamp,
+                    name: "Ubicación GPS",
+                };
 
-                    const currentLocation = {
-                        latitude: lat,
-                        longitude: lon,
-                        accuracy: position.coords.accuracy,
+                setLocation(currentLocation);
+                setError(null);
+
+                // Enviar ubicación al servidor vía WebSocket
+                if (stompClientRef.current && stompClientRef.current.connected) {
+                    const locationData = {
+                        lat: lat,
+                        lng: lon,
                         timestamp: timestamp,
-                        name: data.display_name || "Ubicación desconocida",
+                        accuracy: position.coords.accuracy
                     };
-
-                    setLocation(currentLocation);
-                    setError(null);
-
-                    // Enviar ubicación al servidor vía WebSocket
-                    if (stompClientRef.current && stompClientRef.current.connected) {
-                        const locationData = {
-                            lat: lat,
-                            lng: lon,
-                            timestamp: timestamp,
-                            accuracy: position.coords.accuracy
-                        };
-                        
-                        // Enviar a todos los clientes suscritos (broadcast general)
-                        stompClientRef.current.publish({
-                            destination: `/app/operator-location/broadcast`,
-                            body: JSON.stringify(locationData)
-                        });
-                        
-                        console.log("📡 Ubicación enviada al servidor:", locationData);
-                    }
-
-                    // Log en consola con formato claro
-                    console.log("📍 Localización del Operador:", {
-                        Coordenadas: `${lat}, ${lon}`,
-                        Precisión: `${position.coords.accuracy}m`,
-                        Ubicación: currentLocation.name,
-                        Hora: new Date(timestamp).toLocaleString()
+                    
+                    stompClientRef.current.publish({
+                        destination: `/app/operator-location/broadcast`,
+                        body: JSON.stringify(locationData)
                     });
-
-                } catch (err) {
-                    const errorMsg = "No se pudo obtener el nombre de la ubicación.";
-                    setError(errorMsg);
-                    console.error("❌ Error obteniendo nombre de ubicación:", err);
-
-                    // Aún así guardamos las coordenadas
-                    const currentLocation = {
-                        latitude: lat,
-                        longitude: lon,
-                        accuracy: position.coords.accuracy,
-                        timestamp: timestamp,
-                        name: "Ubicación sin nombre",
-                    };
-                    setLocation(currentLocation);
-
-                    // Enviar ubicación al servidor vía WebSocket (sin nombre)
-                    if (stompClientRef.current && stompClientRef.current.connected) {
-                        const locationData = {
-                            lat: lat,
-                            lng: lon,
-                            timestamp: timestamp,
-                            accuracy: position.coords.accuracy
-                        };
-                        
-                        stompClientRef.current.publish({
-                            destination: `/app/operator-location/broadcast`,
-                            body: JSON.stringify(locationData)
-                        });
-                        
-                        console.log("📡 Ubicación enviada al servidor (sin nombre):", locationData);
-                    }
-
-                    console.log("📍 Localización del Operador (sin nombre):", {
-                        Coordenadas: `${lat}, ${lon}`,
-                        Precisión: `${position.coords.accuracy}m`,
-                        Hora: new Date(timestamp).toLocaleString()
-                    });
+                    
+                    console.log("📡 Ubicación enviada al servidor:", locationData);
                 }
+
+                // Log en consola
+                console.log("📍 Localización del Operador:", {
+                    Coordenadas: `${lat}, ${lon}`,
+                    Precisión: `${position.coords.accuracy}m`,
+                    Hora: new Date(timestamp).toLocaleString()
+                });
+
+                // Intentar obtener el nombre de la ubicación de forma asíncrona (opcional)
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.display_name) {
+                            setLocation(prev => ({
+                                ...prev,
+                                name: data.display_name
+                            }));
+                            console.log("📍 Nombre de ubicación obtenido:", data.display_name);
+                        }
+                    })
+                    .catch(err => {
+                        // Si falla, no pasa nada, el nombre queda como 'Ubicación GPS'
+                        console.warn("⚠️ No se pudo obtener el nombre de la ubicación (opcional):", err.message);
+                    });
             },
             (err) => {
                 let errorMsg = "Error obteniendo ubicación";
