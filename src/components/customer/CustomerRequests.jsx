@@ -6,6 +6,7 @@ import { DEMAND_POLL_INTERVAL } from "../../config/constants.js";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import React from "react";
 
 // Fix para los íconos de Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -45,6 +46,7 @@ const operatorIcon = new L.Icon({
 function MapUpdater({ operatorLocation, origin, destination, hasInitialized }) {
     const map = useMap();
     const prevLocationRef = useRef(null);
+    const updateTimeoutRef = useRef(null);
     
     useEffect(() => {
         if (operatorLocation && operatorLocation.lat && operatorLocation.lng) {
@@ -61,8 +63,15 @@ function MapUpdater({ operatorLocation, origin, destination, hasInitialized }) {
                 
                 // Solo mover si hay un cambio significativo (más de 10 metros)
                 if (distance > 10) {
-                    // Mover suavemente el marcador sin cambiar la vista del mapa
-                    console.log('🔄 Actualizando posición del operador:', newPosition, 'Distancia:', distance.toFixed(1) + 'm');
+                    // Usar debounce para evitar actualizaciones muy frecuentes
+                    if (updateTimeoutRef.current) {
+                        clearTimeout(updateTimeoutRef.current);
+                    }
+                    
+                    updateTimeoutRef.current = setTimeout(() => {
+                        // Mover suavemente el marcador sin cambiar la vista del mapa
+                        console.log('🔄 Actualizando posición del operador:', newPosition, 'Distancia:', distance.toFixed(1) + 'm');
+                    }, 100); // 100ms debounce
                 }
             }
             
@@ -74,14 +83,24 @@ function MapUpdater({ operatorLocation, origin, destination, hasInitialized }) {
         }
     }, [operatorLocation, origin, map, hasInitialized]);
 
+    // Limpiar timeout al desmontar
+    useEffect(() => {
+        return () => {
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+            }
+        };
+    }, []);
+
     return null;
 }
 
 // Componente del mapa con seguimiento del operador
-function TrackingMap({ demand, operatorLocation, operatorLoading }) {
+const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, operatorLoading }) {
     const [hasInitialized, setHasInitialized] = useState(false);
     const [mapCenter, setMapCenter] = useState(null);
     const [mapZoom, setMapZoom] = useState(13);
+    const [mapKey, setMapKey] = useState(null);
 
     const origin = demand.currentLocation ? {
         lat: demand.currentLocation.latitude,
@@ -93,26 +112,31 @@ function TrackingMap({ demand, operatorLocation, operatorLoading }) {
         lng: demand.destinationLocation.longitude
     } : null;
 
-    // Calcular el centro inicial del mapa
+    // Calcular el centro inicial del mapa (solo una vez)
     useEffect(() => {
-        if (operatorLocation && operatorLocation.lat && operatorLocation.lng) {
-            // Prioridad 1: Ubicación del operador
-            setMapCenter([operatorLocation.lat, operatorLocation.lng]);
-            setMapZoom(15);
-            setHasInitialized(true);
-            console.log('🎯 Mapa inicializado con ubicación del operador');
-        } else if (origin) {
-            // Prioridad 2: Origen
-            setMapCenter([origin.lat, origin.lng]);
-            setMapZoom(13);
-            console.log('🎯 Mapa inicializado con ubicación de origen');
-        } else {
-            // Prioridad 3: Coordenadas por defecto (Caracas)
-            setMapCenter([10.4806, -66.9036]);
-            setMapZoom(10);
-            console.log('🎯 Mapa inicializado con coordenadas por defecto');
+        if (!mapCenter) {
+            if (operatorLocation && operatorLocation.lat && operatorLocation.lng) {
+                // Prioridad 1: Ubicación del operador
+                setMapCenter([operatorLocation.lat, operatorLocation.lng]);
+                setMapZoom(15);
+                setHasInitialized(true);
+                setMapKey(`map-${operatorLocation.lat}-${operatorLocation.lng}-15`);
+                console.log('🎯 Mapa inicializado con ubicación del operador');
+            } else if (origin) {
+                // Prioridad 2: Origen
+                setMapCenter([origin.lat, origin.lng]);
+                setMapZoom(13);
+                setMapKey(`map-${origin.lat}-${origin.lng}-13`);
+                console.log('🎯 Mapa inicializado con ubicación de origen');
+            } else {
+                // Prioridad 3: Coordenadas por defecto (Caracas)
+                setMapCenter([10.4806, -66.9036]);
+                setMapZoom(10);
+                setMapKey('map-default-10');
+                console.log('🎯 Mapa inicializado con coordenadas por defecto');
+            }
         }
-    }, [operatorLocation, origin]);
+    }, [operatorLocation, origin, mapCenter]);
 
     // Si no hay centro calculado, mostrar loading
     if (!mapCenter) {
@@ -175,7 +199,7 @@ function TrackingMap({ demand, operatorLocation, operatorLoading }) {
                     center={mapCenter}
                     zoom={mapZoom}
                     style={{ height: "100%", width: "100%" }}
-                    key={`map-${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`}
+                    key={mapKey}
                 >
                     <TileLayer
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -257,7 +281,7 @@ function TrackingMap({ demand, operatorLocation, operatorLoading }) {
             </div>
         </div>
     );
-}
+});
 
 export default function CustomerRequests() {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
@@ -590,7 +614,7 @@ export default function CustomerRequests() {
                                             <div>
                                                 <span className="font-medium">Tipo de vehículo:</span> {req.carType}
                                             </div>
-                                <div>
+                                            <div>
                                                 <span className="font-medium">Fecha:</span> {formatDate(req.createdAt)}
                                             </div>
                                             {req.description && (
@@ -600,7 +624,7 @@ export default function CustomerRequests() {
                                                 </div>
                                             )}
                                         </div>
-                                </div>
+                                    </div>
                                     <div className="flex flex-col gap-2 ml-4">
                                         <button
                                             onClick={() => viewDetails(req)}
@@ -614,8 +638,8 @@ export default function CustomerRequests() {
                                                 className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm transition-colors"
                                             >
                                                 Cancelar
-                                        </button>
-                                    )}
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -781,14 +805,10 @@ export default function CustomerRequests() {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                // No hay información de ubicación
-                                                <div className="bg-gray-50 border border-gray-200 p-3 rounded-lg col-span-2">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <span className="text-gray-600">❓</span>
-                                                        <span className="font-medium text-gray-800">Información limitada</span>
-                                                    </div>
-                                                    <p className="text-sm text-gray-600">
-                                                        No hay información de ubicación disponible del operador en este momento.
+                                                <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg col-span-2">
+                                                    <p className="text-yellow-700 text-sm">⏳ Esperando información del operador...</p>
+                                                    <p className="text-xs text-yellow-600 mt-1">
+                                                        El operador puede estar iniciando su servicio o configurando su GPS.
                                                     </p>
                                                 </div>
                                             )}
@@ -848,10 +868,10 @@ export default function CustomerRequests() {
                                 <div><span className="font-medium">Fecha:</span> {formatDate(selectedRequest.createdAt)}</div>
                                 {selectedRequest.description && (
                                     <div><span className="font-medium">Descripción:</span> {selectedRequest.description}</div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
                 </Modal>
             )}
         </div>
