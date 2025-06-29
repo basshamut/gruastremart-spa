@@ -283,7 +283,7 @@ export default function CustomerRequests() {
             if (!response.ok) throw new Error("No se pudo cancelar");
 
             setRequests((prev) =>
-                prev.map((r) => (r.id === selectedRequest.id ? {...r, state: "INACTIVE"} : r))
+                prev.map((r) => (r.id === selectedRequest.id ? {...r, state: "CANCELLED"} : r))
             );
             setModalOpen(false);
         } catch (err) {
@@ -307,7 +307,7 @@ export default function CustomerRequests() {
         const badges = {
             ACTIVE: { text: "Activa", class: "bg-blue-100 text-blue-800" },
             TAKEN: { text: "En camino", class: "bg-green-100 text-green-800" },
-            INACTIVE: { text: "Cancelada", class: "bg-red-100 text-red-800" },
+            CANCELLED: { text: "Cancelada", class: "bg-red-100 text-red-800" },
             COMPLETED: { text: "Completada", class: "bg-gray-100 text-gray-800" }
         };
         const badge = badges[state] || { text: state, class: "bg-gray-100 text-gray-800" };
@@ -346,7 +346,7 @@ export default function CustomerRequests() {
                     <option value="">Todos los estados</option>
                     <option value="ACTIVE">Activas</option>
                     <option value="TAKEN">En camino</option>
-                    <option value="INACTIVE">Canceladas</option>
+                    <option value="CANCELLED">Canceladas</option>
                     <option value="COMPLETED">Completadas</option>
                 </select>
             </div>
