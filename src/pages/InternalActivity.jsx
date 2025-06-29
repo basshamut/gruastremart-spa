@@ -2,11 +2,9 @@ import React, { useState, useEffect } from "react";
 import { ReceiptText } from 'lucide-react';
 import Pagination from "../components/common/Pagination";
 import { usePaginatedDemands } from "../hooks/data/usePaginatedDemands";
-import { useCraneNotifications } from "../hooks/notifications/useCraneNotifications";
 
 export default function InternalActivity() {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
-    const [newNotificationsCount, setNewNotificationsCount] = useState(0);
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
     console.log(userName);
 
@@ -21,22 +19,6 @@ export default function InternalActivity() {
         handlePageSizeChange
     } = usePaginatedDemands(null, refreshTrigger, 10);
 
-    // WebSocket: recibir solicitudes nuevas en tiempo real
-    useCraneNotifications(() => {
-        setNewNotificationsCount(prev => prev + 1);
-    });
-
-    // Efecto para refrescar automáticamente al recibir nuevas
-    useEffect(() => {
-        if (newNotificationsCount > 0) {
-            const refreshTimer = setTimeout(() => {
-                setRefreshTrigger(prev => prev + 1);
-                setNewNotificationsCount(0);
-            }, 3000);
-            return () => clearTimeout(refreshTimer);
-        }
-    }, [newNotificationsCount]);
-
     return (
         <>
             <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo {userName} !</h1>
@@ -45,11 +27,6 @@ export default function InternalActivity() {
                 <div className="bg-card p-4 rounded-lg shadow-md">
                     <div className="flex justify-between items-center">
                         <h2 className="text-lg font-bold text-primary-foreground">Actividad Reciente</h2>
-                        {newNotificationsCount > 0 && (
-                            <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
-                                {newNotificationsCount} nueva{newNotificationsCount > 1 ? 's' : ''}
-                            </span>
-                        )}
                     </div>
                     <div className="mt-4">
                         {loading ? (

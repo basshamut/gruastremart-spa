@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useOperatorLocationInterval } from '../location/useOperatorLocationInterval';
-import { useCraneNotifications } from '../notifications/useCraneNotifications';
 
 /**
  * Hook personalizado que maneja toda la lógica de actividad del operador
@@ -46,18 +45,6 @@ export const useOperatorActivity = (
     } = useOperatorLocationInterval(locationInterval);
 
     /**
-     * Maneja nuevas notificaciones de grúas
-     * Se ejecuta cuando llega una nueva solicitud de grúa
-     */
-    const handleNewDemand = (newCraneDemand) => {
-        setPendingNotificationsForActiveDemands(prev => [...prev, newCraneDemand]);
-        setHasNewNotifications(true);
-    };
-
-    // Suscribirse a notificaciones de grúas
-    useCraneNotifications(handleNewDemand);
-
-    /**
      * Inicia el seguimiento de localización cuando se monta el componente
      * y lo detiene cuando se desmonta
      */
@@ -71,54 +58,30 @@ export const useOperatorActivity = (
     }, [startTracking, stopTracking]);
 
     /**
-     * Maneja el contador regresivo para errores de ubicación
-     * - Reinicia el contador cuando hay error y no hay ubicación
-     * - Resetea el contador cuando no hay error
-     * - El contador se reinicia automáticamente cada 30 segundos
+     * Maneja el contador regresivo para reintentos de localización
      */
     useEffect(() => {
-        let interval;
-        
-        if (locationError && !operatorLocation) {
-            // Reiniciar contador cuando hay error
-            setCountdown(errorCountdown);
-            
-            interval = setInterval(() => {
-                setCountdown(prev => {
+        if (locationError) {
+            const timer = setInterval(() => {
+                setCountdown((prev) => {
                     if (prev <= 1) {
-                        return errorCountdown; // Reiniciar al valor inicial
+                        // Reiniciar contador y intentar obtener ubicación nuevamente
+                        setCountdown(errorCountdown);
+                        startTracking();
+                        return errorCountdown;
                     }
                     return prev - 1;
                 });
             }, 1000);
+
+            return () => clearInterval(timer);
         } else {
-            // Resetear contador cuando no hay error
             setCountdown(errorCountdown);
         }
-
-        return () => {
-            if (interval) {
-                clearInterval(interval);
-            }
-        };
-    }, [locationError, operatorLocation, errorCountdown]);
+    }, [locationError, errorCountdown, startTracking]);
 
     /**
-     * Refresca automáticamente los datos cuando hay nuevas notificaciones
-     * Se ejecuta después de un delay configurable para evitar refrescos excesivos
-     */
-    useEffect(() => {
-        if (hasNewNotifications) {
-            const timer = setTimeout(() => {
-                refreshData();
-            }, notificationDelay);
-            return () => clearTimeout(timer);
-        }
-    }, [hasNewNotifications, notificationDelay]);
-
-    /**
-     * Función para refrescar manualmente los datos
-     * Limpia las notificaciones pendientes y incrementa el trigger de refresh
+     * Función para refrescar datos manualmente
      */
     const refreshData = () => {
         setRefreshTrigger(prev => prev + 1);
@@ -127,18 +90,13 @@ export const useOperatorActivity = (
     };
 
     return {
-        // Estados de ubicación
         operatorLocation,
         locationError,
         isTracking,
         countdown,
-        
-        // Estados de notificaciones
         pendingNotificationsForActiveDemands,
         hasNewNotifications,
         refreshTrigger,
-        
-        // Funciones
         refreshData,
         startTracking,
         stopTracking

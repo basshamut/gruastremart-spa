@@ -1,7 +1,6 @@
 import {useState, useEffect, useRef} from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useOperatorLocation } from "../../hooks/location/useOperatorLocation";
 
 const userIcon = L.icon({
     iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
@@ -29,14 +28,7 @@ export default function CustomerGeoLocation({onLocationChange, onDestinationChan
     const [searchLocation, setSearchLocation] = useState(null);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [operatorLocation, setOperatorLocation] = useState(null);
     const mapRef = useRef(null);
-
-    // Suscribirse a la ubicación del operador si la solicitud está tomada
-    useOperatorLocation(
-        takenState === "TAKEN" ? craneDemandId : null,
-        (location) => setOperatorLocation(location)
-    );
 
     useEffect(() => {
         if (!mapRef.current) {
@@ -69,22 +61,15 @@ export default function CustomerGeoLocation({onLocationChange, onDestinationChan
                     .openPopup();
             }
 
-            // Mostrar ubicación del operador si está disponible y la solicitud está tomada
-            if (takenState === "TAKEN" && operatorLocation) {
-                L.marker([operatorLocation.lat, operatorLocation.lng], {icon: operatorIcon}).addTo(map)
-                    .bindPopup("Ubicación actual del operador");
-            }
-
             // Ajustar el mapa para mostrar todos los puntos
             const bounds = [];
             if (location) bounds.push([location.latitude, location.longitude]);
             if (searchLocation) bounds.push([searchLocation.latitude, searchLocation.longitude]);
-            if (takenState === "TAKEN" && operatorLocation) bounds.push([operatorLocation.lat, operatorLocation.lng]);
             if (bounds.length > 1) {
                 map.fitBounds(bounds);
             }
         }
-    }, [location, searchLocation, operatorLocation, takenState]);
+    }, [location, searchLocation]);
 
     const getLocation = () => {
         if (!navigator.geolocation) {

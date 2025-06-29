@@ -9,7 +9,9 @@ export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize =
     const [pageSize, setPageSize] = useState(initialPageSize);
 
     const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
-    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;    useEffect(() => {
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
+
+    useEffect(() => {
         const fetchDemands = async (pageNumber, size) => {
             setLoading(true);
             const safePage = isNaN(pageNumber) ? 0 : Math.max(0, pageNumber);
@@ -57,14 +59,12 @@ export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize =
             }
         };
 
-        // Solo hacer la petición si las coordenadas están disponibles O si no las necesitamos
-        // Para el caso del operador, esperamos a tener coordenadas antes de hacer la petición
-        if (lat !== null && lng !== null) {
-            console.log("🚀 Fetching demands with coordinates:", { lat, lng, state });
+        // Para solicitudes tomadas (TAKEN) o activas (ACTIVE), no necesitamos coordenadas
+        // Para otras solicitudes, esperamos coordenadas si están configuradas
+        if (state === "TAKEN" || state === "ACTIVE" || (lat !== null && lng !== null)) {
             fetchDemands(page, pageSize);
-        } else {
-            // Si no tenemos coordenadas aún, mostrar loading pero no hacer petición
-            console.log("⏳ Waiting for coordinates before fetching demands...");
+        } else if (lat === null && lng === null) {
+            // Si no tenemos coordenadas y no son solicitudes tomadas o activas, mostrar loading pero no hacer petición
             setLoading(true);
         }
     }, [page, pageSize, token, apiDomain, refreshTrigger, initialPageSize, state, lat, lng]);

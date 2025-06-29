@@ -1,6 +1,4 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import { useLocationTracking } from "../../hooks/location/useLocationTracking";
-import { useOperatorLocation } from "../../hooks/location/useOperatorLocation";
 import { useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -40,83 +38,41 @@ const operatorIcon = L.icon({
 });
 
 export default function LocationTracker({ craneDemandId, initialLocation, origin, destination, onOperatorLocationUpdate }) {
-    const [operatorLocationEspecifica, setOperatorLocationEspecifica] = useState(null);
-    const { isTracking, setIsTracking, error } = useLocationTracking(craneDemandId);
-
     console.log('origin:', origin);
     console.log('destination:', destination);
     console.log('initialLocation:', initialLocation);
 
-    // Suscribirse a la ubicación del operador (específica)
-    useOperatorLocation(craneDemandId, (location) => {
-        console.log("Ubicación recibida en cliente (específica):", location);
-        setOperatorLocationEspecifica(location);
-        if (onOperatorLocationUpdate) onOperatorLocationUpdate(location, "especifica");
-    });
-
-    // Log en cada render
-    console.log("Renderizando operador específica:", operatorLocationEspecifica);
-
     // Calcular el centro del mapa basado en los puntos disponibles
     const calculateMapCenter = () => {
-        if (operatorLocationEspecifica) {
-            return [operatorLocationEspecifica.lat, operatorLocationEspecifica.lng];
-        }
-        if (origin) {
+        if (origin && typeof origin.lat === 'number' && typeof origin.lng === 'number') {
             return [origin.lat, origin.lng];
         }
-        if (initialLocation) {
+        if (initialLocation && typeof initialLocation.lat === 'number' && typeof initialLocation.lng === 'number') {
             return [initialLocation.lat, initialLocation.lng];
         }
-        return [19.4326, -99.1332];
+        return [19.4326, -99.1332]; // Coordenadas por defecto (CDMX)
     };
 
     return (
-        <div className="mt-6">
-            <div className="flex justify-between items-center mb-4">
-                <h4 className="text-lg font-semibold">Seguimiento de ubicación</h4>
-                <button
-                    onClick={() => setIsTracking(!isTracking)}
-                    className={`px-4 py-2 rounded font-medium ${
-                        isTracking
-                            ? 'bg-red-500 hover:bg-red-600 text-white'
-                            : 'bg-blue-500 hover:bg-blue-600 text-white'
-                    }`}
-                >
-                    {isTracking ? 'Detener seguimiento' : 'Iniciar seguimiento'}
-                </button>
-            </div>
+        <div className="mt-4">
             {/* Panel flotante de coordenadas */}
             <div className="absolute top-4 right-4 bg-white bg-opacity-90 rounded shadow-lg p-4 z-[1000] min-w-[220px]">
-                <h5 className="font-bold mb-2 text-gray-700 text-sm">Flujo de coordenadas</h5>
+                <h5 className="font-bold mb-2 text-gray-700 text-sm">Coordenadas</h5>
                 <div className="text-xs text-gray-800">
                     <div className="mb-1">
-                        <span className="font-semibold">Operador:</span> {operatorLocationEspecifica
-                            ? `${operatorLocationEspecifica.lat?.toFixed(6)}, ${operatorLocationEspecifica.lng?.toFixed(6)}`
-                            : <span className="text-yellow-600">Cargando ubicación...</span>}
-                    </div>
-                    <div className="mb-1">
-                        <span className="font-semibold">Destino:</span> {destination ? `${destination.lat.toFixed(6)}, ${destination.lng.toFixed(6)}` : 'Sin datos'}
+                        <span className="font-semibold">Destino:</span> {destination && typeof destination.lat === 'number' && typeof destination.lng === 'number' 
+                            ? `${destination.lat.toFixed(6)}, ${destination.lng.toFixed(6)}` 
+                            : 'Sin datos'}
                     </div>
                     <div>
-                        <span className="font-semibold">Origen:</span> {origin ? `${origin.lat.toFixed(6)}, ${origin.lng.toFixed(6)}` : 'Sin datos'}
+                        <span className="font-semibold">Origen:</span> {origin && typeof origin.lat === 'number' && typeof origin.lng === 'number'
+                            ? `${origin.lat.toFixed(6)}, ${origin.lng.toFixed(6)}` 
+                            : 'Sin datos'}
                     </div>
                 </div>
             </div>
 
-            {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                    {error}
-                </div>
-            )}
-
-            {isTracking && (
-                <p className="text-sm text-gray-600 mb-4">
-                    Compartiendo ubicación en tiempo real...
-                </p>
-            )}
-
-            <div className="h-[400px] w-full rounded-lg overflow-hidden">
+            <div className="h-[300px] w-full rounded-lg overflow-hidden border border-gray-200">
                 <MapContainer
                     center={calculateMapCenter()}
                     zoom={13}
@@ -127,7 +83,7 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
                     {/* Marcador de origen */}
-                    {origin && (
+                    {origin && typeof origin.lat === 'number' && typeof origin.lng === 'number' && (
                         <Marker
                             position={[origin.lat, origin.lng]}
                             icon={originIcon}
@@ -138,26 +94,13 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                         </Marker>
                     )}
                     {/* Marcador de destino */}
-                    {destination && (
+                    {destination && typeof destination.lat === 'number' && typeof destination.lng === 'number' && (
                         <Marker
                             position={[destination.lat, destination.lng]}
                             icon={destinationIcon}
                         >
                             <Popup>
                                 Punto de destino
-                            </Popup>
-                        </Marker>
-                    )}
-                    {/* Marcador del operador */}
-                    {operatorLocationEspecifica && (
-                        <Marker
-                            position={[operatorLocationEspecifica.lat, operatorLocationEspecifica.lng]}
-                            icon={operatorIcon}
-                        >
-                            <Popup>
-                                Ubicación actual del operador<br/>
-                                Lat: {operatorLocationEspecifica.lat.toFixed(6)}<br/>
-                                Lng: {operatorLocationEspecifica.lng.toFixed(6)}
                             </Popup>
                         </Marker>
                     )}

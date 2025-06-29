@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from "react";
 import CustomerGeoLocation from "../components/customer/CustomerGeoLocation";
 import CustomerForm from "../components/customer/CustormerForm";
-import {useTakenDemandNotification} from "../hooks/notifications/useCraneTakenNotifications";
 import CustomerRequests from "../components/customer/CustomerRequests.jsx";
 
 //TODO Verificar antes enviar el formulario si el cliente tiene solicitudes abiertas. No puede tener ni en estado ACTIVE ni en TAKEN
@@ -18,25 +17,10 @@ export default function CustomerActivity({view}) {
         destinationLocation: null,
     });
 
-    const [takenMessage, setTakenMessage] = useState(null);
     const [createdDemandId, setCreatedDemandId] = useState(null);
     const [requests, setRequests] = useState([]);
 
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
-    console.log(userName);
-
-    useTakenDemandNotification(
-        createdDemandId,
-        () => {
-            console.log("🚨 Tu solicitud ha sido tomada por un operador.");
-            setTakenMessage("🎉 Tu solicitud ha sido tomada por un operador.");
-            localStorage.removeItem("lastCreatedDemandId");
-            setCreatedDemandId(null);
-        },
-        (status) => {
-            console.log("📡 Estado del WebSocket:", status);
-        }
-    );
 
     const handleLocationChange = (location) => {
         setFormData((prev) => ({...prev, currentLocation: location}));
@@ -95,11 +79,6 @@ export default function CustomerActivity({view}) {
             <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo {userName} !</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
-                {takenMessage && (
-                    <div className="bg-green-100 text-green-700 p-2 rounded mb-4">
-                        {takenMessage}
-                    </div>
-                )}
                 <CustomerRequests/>
             </div>
 
