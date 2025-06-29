@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useState, useRef} from "react";
 import {formatDate} from "../../utils/Utils.js";
 import Modal from "../common/Modal";
 import {useOperatorLocationForDemand} from "../../hooks/location/useOperatorLocationForDemand";
@@ -42,24 +42,47 @@ const operatorIcon = new L.Icon({
 });
 
 // Componente para actualizar el mapa cuando cambia la ubicación del operador
-function MapUpdater({ operatorLocation, origin, destination }) {
+function MapUpdater({ operatorLocation, origin, destination, hasInitialized }) {
     const map = useMap();
+    const prevLocationRef = useRef(null);
     
     useEffect(() => {
         if (operatorLocation && operatorLocation.lat && operatorLocation.lng) {
-            // Centrar el mapa en la ubicación del operador
-            map.setView([operatorLocation.lat, operatorLocation.lng], 14);
-        } else if (origin && origin.lat && origin.lng) {
-            // Centrar en el origen si no hay ubicación del operador
+            const newPosition = [operatorLocation.lat, operatorLocation.lng];
+            
+            if (!hasInitialized) {
+                // Primera vez: centrar el mapa en la ubicación del operador
+                map.setView(newPosition, 15);
+                console.log('📍 Mapa centrado en ubicación del operador:', newPosition);
+            } else if (prevLocationRef.current) {
+                // Actualizaciones posteriores: solo mover el marcador suavemente
+                const prevPosition = prevLocationRef.current;
+                const distance = map.distance(prevPosition, newPosition);
+                
+                // Solo mover si hay un cambio significativo (más de 10 metros)
+                if (distance > 10) {
+                    // Mover suavemente el marcador sin cambiar la vista del mapa
+                    console.log('🔄 Actualizando posición del operador:', newPosition, 'Distancia:', distance.toFixed(1) + 'm');
+                }
+            }
+            
+            prevLocationRef.current = newPosition;
+        } else if (origin && origin.lat && origin.lng && !hasInitialized) {
+            // Si no hay operador, centrar en el origen
             map.setView([origin.lat, origin.lng], 13);
+            console.log('📍 Mapa centrado en ubicación de origen');
         }
-    }, [operatorLocation, origin, map]);
+    }, [operatorLocation, origin, map, hasInitialized]);
 
     return null;
 }
 
 // Componente del mapa con seguimiento del operador
 function TrackingMap({ demand, operatorLocation, operatorLoading }) {
+    const [hasInitialized, setHasInitialized] = useState(false);
+    const [mapCenter, setMapCenter] = useState(null);
+    const [mapZoom, setMapZoom] = useState(13);
+
     const origin = demand.currentLocation ? {
         lat: demand.currentLocation.latitude,
         lng: demand.currentLocation.longitude
@@ -70,16 +93,40 @@ function TrackingMap({ demand, operatorLocation, operatorLoading }) {
         lng: demand.destinationLocation.longitude
     } : null;
 
-    // Calcular el centro del mapa
-    const calculateMapCenter = () => {
+    // Calcular el centro inicial del mapa
+    useEffect(() => {
         if (operatorLocation && operatorLocation.lat && operatorLocation.lng) {
-            return [operatorLocation.lat, operatorLocation.lng];
+            // Prioridad 1: Ubicación del operador
+            setMapCenter([operatorLocation.lat, operatorLocation.lng]);
+            setMapZoom(15);
+            setHasInitialized(true);
+            console.log('🎯 Mapa inicializado con ubicación del operador');
+        } else if (origin) {
+            // Prioridad 2: Origen
+            setMapCenter([origin.lat, origin.lng]);
+            setMapZoom(13);
+            console.log('🎯 Mapa inicializado con ubicación de origen');
+        } else {
+            // Prioridad 3: Coordenadas por defecto (Caracas)
+            setMapCenter([10.4806, -66.9036]);
+            setMapZoom(10);
+            console.log('🎯 Mapa inicializado con coordenadas por defecto');
         }
-        if (origin) {
-            return [origin.lat, origin.lng];
-        }
-        return [10.4806, -66.9036]; // Coordenadas por defecto (Caracas)
-    };
+    }, [operatorLocation, origin]);
+
+    // Si no hay centro calculado, mostrar loading
+    if (!mapCenter) {
+        return (
+            <div className="mt-4">
+                <div className="h-[400px] w-full rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center bg-gray-100">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                        <p className="text-sm text-gray-600">Cargando mapa...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="mt-4">
@@ -88,11 +135,16 @@ function TrackingMap({ demand, operatorLocation, operatorLoading }) {
                 <h5 className="font-bold mb-2 text-gray-700 text-sm">Información de ruta</h5>
                 <div className="text-xs text-gray-800 space-y-1">
                     {operatorLocation && operatorLocation.lat && operatorLocation.lng ? (
-                        <div>
-                            <span className="font-semibold text-green-600">🚗 Operador:</span>
+                        <div className="p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                            <div className="font-semibold text-blue-700">🚛 Operador:</div>
                             <div className="text-gray-600">
                                 {operatorLocation.lat.toFixed(6)}, {operatorLocation.lng.toFixed(6)}
                             </div>
+                            {operatorLocation.accuracy && (
+                                <div className="text-[10px] text-blue-600">
+                                    Precisión: {operatorLocation.accuracy.toFixed(1)}m
+                                </div>
+                            )}
                         </div>
                     ) : operatorLoading ? (
                         <div className="text-blue-600">⏳ Obteniendo ubicación...</div>
@@ -120,9 +172,10 @@ function TrackingMap({ demand, operatorLocation, operatorLoading }) {
 
             <div className="h-[400px] w-full rounded-lg overflow-hidden border border-gray-200">
                 <MapContainer
-                    center={calculateMapCenter()}
-                    zoom={13}
+                    center={mapCenter}
+                    zoom={mapZoom}
                     style={{ height: "100%", width: "100%" }}
+                    key={`map-${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`}
                 >
                     <TileLayer
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -132,22 +185,32 @@ function TrackingMap({ demand, operatorLocation, operatorLoading }) {
                     <MapUpdater 
                         operatorLocation={operatorLocation} 
                         origin={origin} 
-                        destination={destination} 
+                        destination={destination}
+                        hasInitialized={hasInitialized}
                     />
 
-                    {/* Marcador del operador */}
+                    {/* Marcador del operador (prioridad máxima) */}
                     {operatorLocation && operatorLocation.lat && operatorLocation.lng && (
                         <Marker
                             position={[operatorLocation.lat, operatorLocation.lng]}
                             icon={operatorIcon}
+                            key={`operator-${operatorLocation.lat}-${operatorLocation.lng}`}
                         >
                             <Popup>
-                                <div className="text-sm">
-                                    <strong>🚗 Operador en ruta</strong><br/>
-                                    Última actualización: {new Date(operatorLocation.timestamp).toLocaleTimeString()}
+                                <div className="text-center">
+                                    <div className="font-bold text-blue-600">🚛 Operador</div>
+                                    <div className="text-xs text-gray-600">
+                                        Lat: {operatorLocation.lat.toFixed(6)}<br/>
+                                        Lng: {operatorLocation.lng.toFixed(6)}
+                                    </div>
                                     {operatorLocation.accuracy && (
-                                        <><br/>Precisión: {operatorLocation.accuracy.toFixed(1)}m</>
+                                        <div className="text-xs text-gray-500">
+                                            Precisión: {operatorLocation.accuracy.toFixed(1)}m
+                                        </div>
                                     )}
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        Última actualización: {new Date(operatorLocation.timestamp).toLocaleTimeString()}
+                                    </div>
                                 </div>
                             </Popup>
                         </Marker>
@@ -160,9 +223,13 @@ function TrackingMap({ demand, operatorLocation, operatorLoading }) {
                             icon={originIcon}
                         >
                             <Popup>
-                                <div className="text-sm">
-                                    <strong>📍 Punto de origen</strong><br/>
-                                    {demand.currentLocation?.name || 'Ubicación actual'}
+                                <div className="text-center">
+                                    <div className="font-bold text-green-600">📍 Punto de origen</div>
+                                    <div className="text-xs text-gray-600">
+                                        {demand.currentLocation?.name || 'Ubicación actual'}<br/>
+                                        Lat: {origin.lat.toFixed(6)}<br/>
+                                        Lng: {origin.lng.toFixed(6)}
+                                    </div>
                                 </div>
                             </Popup>
                         </Marker>
@@ -175,9 +242,13 @@ function TrackingMap({ demand, operatorLocation, operatorLoading }) {
                             icon={destinationIcon}
                         >
                             <Popup>
-                                <div className="text-sm">
-                                    <strong>🎯 Punto de destino</strong><br/>
-                                    {demand.destinationLocation?.name || 'Destino'}
+                                <div className="text-center">
+                                    <div className="font-bold text-red-600">🎯 Punto de destino</div>
+                                    <div className="text-xs text-gray-600">
+                                        {demand.destinationLocation?.name || 'Destino'}<br/>
+                                        Lat: {destination.lat.toFixed(6)}<br/>
+                                        Lng: {destination.lng.toFixed(6)}
+                                    </div>
                                 </div>
                             </Popup>
                         </Marker>
