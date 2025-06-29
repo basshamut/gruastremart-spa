@@ -16,6 +16,7 @@ export function useOperatorLocation(craneDemandId, onLocationUpdate) {
             const topic = `/topic/operator-location/${craneDemandId}`;
             stompClient.subscribe(topic, (message) => {
                 const location = JSON.parse(message.body);
+                console.log("📍 Ubicación del operador recibida:", location);
                 onLocationUpdate(location);
             });
         },
