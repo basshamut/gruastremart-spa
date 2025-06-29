@@ -40,34 +40,42 @@ const operatorIcon = L.icon({
 });
 
 export default function LocationTracker({ craneDemandId, initialLocation, origin, destination, onOperatorLocationUpdate }) {
-    const [operatorLocation, setOperatorLocation] = useState(null);
+    const [operatorLocationBroadcast, setOperatorLocationBroadcast] = useState(null);
+    const [operatorLocationEspecifica, setOperatorLocationEspecifica] = useState(null);
     const { isTracking, setIsTracking, error } = useLocationTracking(craneDemandId);
 
     console.log('origin:', origin);
     console.log('destination:', destination);
     console.log('initialLocation:', initialLocation);
 
-    // Suscribirse a la ubicación del operador (específica)
-    useOperatorLocation(craneDemandId, (location) => {
-        console.log("Ubicación recibida en cliente (específica):", location);
-        setOperatorLocation(location);
-        if (onOperatorLocationUpdate) onOperatorLocationUpdate(location);
-    });
-
     // Suscribirse a la ubicación del operador (broadcast)
     useOperatorLocation(null, (location) => {
         console.log("Ubicación recibida en cliente (broadcast):", location);
-        setOperatorLocation(location);
-        if (onOperatorLocationUpdate) onOperatorLocationUpdate(location);
+        setOperatorLocationBroadcast(location);
+        if (onOperatorLocationUpdate) onOperatorLocationUpdate(location, "broadcast");
+    });
+
+    // Suscribirse a la ubicación del operador (específica)
+    useOperatorLocation(craneDemandId, (location) => {
+        console.log("Ubicación recibida en cliente (específica):", location);
+        setOperatorLocationEspecifica(location);
+        if (onOperatorLocationUpdate) onOperatorLocationUpdate(location, "especifica");
     });
 
     // Log en cada render
-    console.log("Renderizando operador:", operatorLocation);
+    console.log("Renderizando operador broadcast:", operatorLocationBroadcast);
+    console.log("Renderizando operador específica:", operatorLocationEspecifica);
+
+    // Puedes priorizar cuál mostrar en la UI principal:
+    // const operatorLocation = operatorLocationBroadcast || operatorLocationEspecifica;
 
     // Calcular el centro del mapa basado en los puntos disponibles
     const calculateMapCenter = () => {
-        if (operatorLocation) {
-            return [operatorLocation.lat, operatorLocation.lng];
+        if (operatorLocationBroadcast) {
+            return [operatorLocationBroadcast.lat, operatorLocationBroadcast.lng];
+        }
+        if (operatorLocationEspecifica) {
+            return [operatorLocationEspecifica.lat, operatorLocationEspecifica.lng];
         }
         if (origin) {
             return [origin.lat, origin.lng];
@@ -75,7 +83,6 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
         if (initialLocation) {
             return [initialLocation.lat, initialLocation.lng];
         }
-        // Coordenadas por defecto (puedes ajustarlas según tu ubicación)
         return [19.4326, -99.1332];
     };
 
@@ -99,7 +106,10 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                 <h5 className="font-bold mb-2 text-gray-700 text-sm">Flujo de coordenadas</h5>
                 <div className="text-xs text-gray-800">
                     <div className="mb-1">
-                        <span className="font-semibold">Operador:</span> {operatorLocation ? `${operatorLocation.lat.toFixed(6)}, ${operatorLocation.lng.toFixed(6)}` : 'Sin datos'}
+                        <span className="font-semibold">Operador (broadcast):</span> {operatorLocationBroadcast ? `${operatorLocationBroadcast.lat?.toFixed(6)}, ${operatorLocationBroadcast.lng?.toFixed(6)}` : 'Sin datos'}
+                    </div>
+                    <div className="mb-1">
+                        <span className="font-semibold">Operador (específica):</span> {operatorLocationEspecifica ? `${operatorLocationEspecifica.lat?.toFixed(6)}, ${operatorLocationEspecifica.lng?.toFixed(6)}` : 'Sin datos'}
                     </div>
                     <div className="mb-1">
                         <span className="font-semibold">Destino:</span> {destination ? `${destination.lat.toFixed(6)}, ${destination.lng.toFixed(6)}` : 'Sin datos'}
@@ -155,15 +165,15 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                         </Marker>
                     )}
                     {/* Marcador del operador */}
-                    {operatorLocation && (
+                    {operatorLocationBroadcast && (
                         <Marker
-                            position={[operatorLocation.lat, operatorLocation.lng]}
+                            position={[operatorLocationBroadcast.lat, operatorLocationBroadcast.lng]}
                             icon={operatorIcon}
                         >
                             <Popup>
                                 Ubicación actual del operador<br/>
-                                Lat: {operatorLocation.lat.toFixed(6)}<br/>
-                                Lng: {operatorLocation.lng.toFixed(6)}
+                                Lat: {operatorLocationBroadcast.lat.toFixed(6)}<br/>
+                                Lng: {operatorLocationBroadcast.lng.toFixed(6)}
                             </Popup>
                         </Marker>
                     )}
