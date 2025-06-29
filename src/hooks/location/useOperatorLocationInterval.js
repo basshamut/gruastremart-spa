@@ -2,7 +2,7 @@ import {useState, useEffect, useRef, useCallback} from "react";
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
-export function useOperatorLocationInterval(intervalSeconds = 10) {
+export function useOperatorLocationInterval(intervalSeconds = 10, craneDemandId = null) {
     const [location, setLocation] = useState(null);
     const [error, setError] = useState(null);
     const [isTracking, setIsTracking] = useState(false);
@@ -55,8 +55,8 @@ export function useOperatorLocationInterval(intervalSeconds = 10) {
                 setLocation(currentLocation);
                 setError(null);
 
-                // Enviar ubicación al servidor vía WebSocket
-                if (stompClientRef.current && stompClientRef.current.connected) {
+                // Enviar ubicación al servidor vía WebSocket SOLO si hay craneDemandId
+                if (stompClientRef.current && stompClientRef.current.connected && craneDemandId) {
                     const locationData = {
                         lat: lat,
                         lng: lon,
@@ -64,10 +64,10 @@ export function useOperatorLocationInterval(intervalSeconds = 10) {
                         accuracy: position.coords.accuracy
                     };
                     stompClientRef.current.publish({
-                        destination: `/app/operator-location/broadcast`,
+                        destination: `/app/operator-location/${craneDemandId}`,
                         body: JSON.stringify(locationData)
                     });
-                    console.log("📡 Ubicación enviada al servidor:", locationData);
+                    console.log(`📡 Ubicación enviada al servidor para solicitud ${craneDemandId}:`, locationData);
                 }
 
                 console.log("📍 Localización del Operador:", {
@@ -104,7 +104,7 @@ export function useOperatorLocationInterval(intervalSeconds = 10) {
                 maximumAge: 0, // Forzar ubicación fresca - NO usar caché
             }
         );
-    }, []);
+    }, [craneDemandId]);
 
     const startTracking = useCallback(() => {
         if (isTracking) return;

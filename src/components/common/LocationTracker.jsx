@@ -40,20 +40,12 @@ const operatorIcon = L.icon({
 });
 
 export default function LocationTracker({ craneDemandId, initialLocation, origin, destination, onOperatorLocationUpdate }) {
-    const [operatorLocationBroadcast, setOperatorLocationBroadcast] = useState(null);
     const [operatorLocationEspecifica, setOperatorLocationEspecifica] = useState(null);
     const { isTracking, setIsTracking, error } = useLocationTracking(craneDemandId);
 
     console.log('origin:', origin);
     console.log('destination:', destination);
     console.log('initialLocation:', initialLocation);
-
-    // Suscribirse a la ubicación del operador (broadcast)
-    useOperatorLocation(null, (location) => {
-        console.log("Ubicación recibida en cliente (broadcast):", location);
-        setOperatorLocationBroadcast(location);
-        if (onOperatorLocationUpdate) onOperatorLocationUpdate(location, "broadcast");
-    });
 
     // Suscribirse a la ubicación del operador (específica)
     useOperatorLocation(craneDemandId, (location) => {
@@ -63,17 +55,10 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
     });
 
     // Log en cada render
-    console.log("Renderizando operador broadcast:", operatorLocationBroadcast);
     console.log("Renderizando operador específica:", operatorLocationEspecifica);
-
-    // Puedes priorizar cuál mostrar en la UI principal:
-    // const operatorLocation = operatorLocationBroadcast || operatorLocationEspecifica;
 
     // Calcular el centro del mapa basado en los puntos disponibles
     const calculateMapCenter = () => {
-        if (operatorLocationBroadcast) {
-            return [operatorLocationBroadcast.lat, operatorLocationBroadcast.lng];
-        }
         if (operatorLocationEspecifica) {
             return [operatorLocationEspecifica.lat, operatorLocationEspecifica.lng];
         }
@@ -106,12 +91,7 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                 <h5 className="font-bold mb-2 text-gray-700 text-sm">Flujo de coordenadas</h5>
                 <div className="text-xs text-gray-800">
                     <div className="mb-1">
-                        <span className="font-semibold">Operador (broadcast):</span> {operatorLocationBroadcast
-                            ? `${operatorLocationBroadcast.lat?.toFixed(6)}, ${operatorLocationBroadcast.lng?.toFixed(6)}`
-                            : <span className="text-yellow-600">Cargando ubicación...</span>}
-                    </div>
-                    <div className="mb-1">
-                        <span className="font-semibold">Operador (específica):</span> {operatorLocationEspecifica
+                        <span className="font-semibold">Operador:</span> {operatorLocationEspecifica
                             ? `${operatorLocationEspecifica.lat?.toFixed(6)}, ${operatorLocationEspecifica.lng?.toFixed(6)}`
                             : <span className="text-yellow-600">Cargando ubicación...</span>}
                     </div>
@@ -169,15 +149,15 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                         </Marker>
                     )}
                     {/* Marcador del operador */}
-                    {operatorLocationBroadcast && (
+                    {operatorLocationEspecifica && (
                         <Marker
-                            position={[operatorLocationBroadcast.lat, operatorLocationBroadcast.lng]}
+                            position={[operatorLocationEspecifica.lat, operatorLocationEspecifica.lng]}
                             icon={operatorIcon}
                         >
                             <Popup>
                                 Ubicación actual del operador<br/>
-                                Lat: {operatorLocationBroadcast.lat.toFixed(6)}<br/>
-                                Lng: {operatorLocationBroadcast.lng.toFixed(6)}
+                                Lat: {operatorLocationEspecifica.lat.toFixed(6)}<br/>
+                                Lng: {operatorLocationEspecifica.lng.toFixed(6)}
                             </Popup>
                         </Marker>
                     )}
