@@ -8,13 +8,13 @@
  */
 
 // Intervalo de actualización de ubicación del operador (en segundos)
-export const LOCATION_UPDATE_INTERVAL = 15;
+export const LOCATION_UPDATE_INTERVAL = 10;
 
 // Intervalo para consultar estado del operador (en segundos)
 export const OPERATOR_STATUS_POLL_INTERVAL = 10;
 
 // Intervalo para consultar demandas (en segundos)
-export const DEMAND_POLL_INTERVAL = 5;
+export const DEMAND_POLL_INTERVAL = 10;
 
 // Configuración de geolocalización
 export const GEOLOCATION_CONFIG = {

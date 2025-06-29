@@ -168,7 +168,7 @@ export default function OperatorActivity() {
             <div className="mt-4 bg-white bg-opacity-95 rounded-lg shadow-lg p-4 border border-gray-200">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h3 className="font-bold text-gray-700 text-sm mb-2">📍 Ubicación Actual del Operador</h3>
+                        <h3 className="font-bold text-gray-700 text-sm mb-2">📍 Ubicación Actual</h3>
                         <div className="text-[10px] text-green-600 mb-2">
                             ✅ Tracking activo desde el login - Ubicación se actualiza cada {LOCATION_UPDATE_INTERVAL}s
                         </div>
@@ -663,12 +663,12 @@ export default function OperatorActivity() {
                                 >
                                     Cancelar
                                 </button>
-                                <button
-                                    onClick={takeDemand}
+                            <button
+                                onClick={takeDemand}
                                     className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm"
-                                >
+                            >
                                     Confirmar asignación
-                                </button>
+                            </button>
                             </div>
                         )}
                     </div>

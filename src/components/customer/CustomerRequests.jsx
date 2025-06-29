@@ -272,6 +272,12 @@ export default function CustomerRequests() {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalType, setModalType] = useState("details"); // "details" o "cancel"
+    
+    // Estados para polling y notificaciones
+    const [pollingInterval, setPollingInterval] = useState(null);
+    const [lastUpdate, setLastUpdate] = useState(null);
+    const [hasActiveRequests, setHasActiveRequests] = useState(false);
+    const [notificationShown, setNotificationShown] = useState(false);
 
     // Hook para seguimiento del operador (solo para solicitudes tomadas)
     const takenRequest = requests.find(r => r.state === "TAKEN");
@@ -315,7 +321,33 @@ export default function CustomerRequests() {
             if (!response.ok) throw new Error("Error al obtener las solicitudes");
 
             const data = await response.json();
-            setRequests(data.content || []);
+            const newRequests = data.content || [];
+            
+            // Detectar cambios de estado para notificaciones
+            if (requests.length > 0) {
+                const previousTakenRequest = requests.find(r => r.state === "TAKEN");
+                const newTakenRequest = newRequests.find(r => r.state === "TAKEN");
+                
+                // Si no había solicitud tomada antes y ahora sí hay una
+                if (!previousTakenRequest && newTakenRequest && !notificationShown) {
+                    showNotification("¡Operador asignado!", "Un operador ha tomado tu solicitud y está en camino.");
+                    setNotificationShown(true);
+                }
+                
+                // Si había una solicitud tomada y ahora no hay (completada o cancelada)
+                if (previousTakenRequest && !newTakenRequest) {
+                    showNotification("Solicitud finalizada", "Tu solicitud ha sido completada o cancelada.");
+                    setNotificationShown(false);
+                }
+            }
+            
+            setRequests(newRequests);
+            setLastUpdate(new Date());
+            
+            // Verificar si hay solicitudes activas para determinar si continuar polling
+            const hasActive = newRequests.some(r => r.state === "ACTIVE" || r.state === "TAKEN");
+            setHasActiveRequests(hasActive);
+            
         } catch (err) {
             console.error(err);
             setError("Error cargando solicitudes.");
@@ -323,6 +355,81 @@ export default function CustomerRequests() {
             setLoading(false);
         }
     };
+
+    // Función para mostrar notificaciones
+    const showNotification = (title, message) => {
+        // Verificar si el navegador soporta notificaciones
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification(title, {
+                body: message,
+                icon: "/favicon.svg",
+                badge: "/favicon.svg"
+            });
+        }
+        
+        // También mostrar una notificación en la página
+        const notificationDiv = document.createElement('div');
+        notificationDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full';
+        notificationDiv.innerHTML = `
+            <div class="flex items-center">
+                <div class="mr-3">🚗</div>
+                <div>
+                    <div class="font-bold">${title}</div>
+                    <div class="text-sm">${message}</div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notificationDiv);
+        
+        // Animar entrada
+        setTimeout(() => {
+            notificationDiv.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Remover después de 5 segundos
+        setTimeout(() => {
+            notificationDiv.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (notificationDiv.parentNode) {
+                    notificationDiv.parentNode.removeChild(notificationDiv);
+                }
+            }, 300);
+        }, 5000);
+    };
+
+    // Solicitar permisos de notificación al cargar
+    useEffect(() => {
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+    }, []);
+
+    // Configurar polling automático
+    useEffect(() => {
+        // Limpiar intervalo anterior si existe
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+
+        // Solo hacer polling si hay solicitudes activas o tomadas
+        if (hasActiveRequests || requests.some(r => r.state === "ACTIVE" || r.state === "TAKEN")) {
+            const interval = setInterval(() => {
+                fetchRequests();
+            }, DEMAND_POLL_INTERVAL * 1000);
+            
+            setPollingInterval(interval);
+            console.log(`🔄 Polling iniciado cada ${DEMAND_POLL_INTERVAL} segundos`);
+        }
+
+        // Limpiar al desmontar
+        return () => {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                console.log('🔄 Polling detenido');
+            }
+        };
+    }, [hasActiveRequests, requests]);
 
     useEffect(() => {
         fetchRequests();
@@ -344,20 +451,20 @@ export default function CustomerRequests() {
 
         try {
             const response = await fetch(`${apiDomain}/v1/crane-demands/${selectedRequest.id}/cancel`, {
-                method: "PATCH",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
+                        method: "PATCH",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    });
 
-            if (!response.ok) throw new Error("No se pudo cancelar");
+                    if (!response.ok) throw new Error("No se pudo cancelar");
 
-            setRequests((prev) =>
+                    setRequests((prev) =>
                 prev.map((r) => (r.id === selectedRequest.id ? {...r, state: "CANCELLED"} : r))
-            );
-            setModalOpen(false);
-        } catch (err) {
+                    );
+                    setModalOpen(false);
+                } catch (err) {
             console.error("Error cancelando solicitud:", err);
             alert("Error al cancelar la solicitud");
         }
@@ -400,11 +507,24 @@ export default function CustomerRequests() {
                         </span>
                     )}
                 </h2>
-                {takenRequest && (
-                    <div className="text-xs text-green-600">
-                        🚗 Operador en camino
-                    </div>
-                )}
+                <div className="flex items-center gap-2">
+                    {takenRequest && (
+                        <div className="text-xs text-green-600">
+                            🚗 Operador en camino
+                        </div>
+                    )}
+                    {hasActiveRequests && (
+                        <div className="text-xs text-blue-600 flex items-center">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse mr-1"></div>
+                            Actualizando cada {DEMAND_POLL_INTERVAL}s
+                        </div>
+                    )}
+                    {lastUpdate && (
+                        <div className="text-xs text-gray-500">
+                            Última actualización: {lastUpdate.toLocaleTimeString()}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Filtro de estado */}
@@ -470,7 +590,7 @@ export default function CustomerRequests() {
                                             <div>
                                                 <span className="font-medium">Tipo de vehículo:</span> {req.carType}
                                             </div>
-                                            <div>
+                                <div>
                                                 <span className="font-medium">Fecha:</span> {formatDate(req.createdAt)}
                                             </div>
                                             {req.description && (
@@ -480,7 +600,7 @@ export default function CustomerRequests() {
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
+                                </div>
                                     <div className="flex flex-col gap-2 ml-4">
                                         <button
                                             onClick={() => viewDetails(req)}
@@ -494,8 +614,8 @@ export default function CustomerRequests() {
                                                 className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm transition-colors"
                                             >
                                                 Cancelar
-                                            </button>
-                                        )}
+                                        </button>
+                                    )}
                                     </div>
                                 </div>
                             </div>
@@ -728,10 +848,10 @@ export default function CustomerRequests() {
                                 <div><span className="font-medium">Fecha:</span> {formatDate(selectedRequest.createdAt)}</div>
                                 {selectedRequest.description && (
                                     <div><span className="font-medium">Descripción:</span> {selectedRequest.description}</div>
-                                )}
-                            </div>
+                            )}
                         </div>
                     </div>
+                </div>
                 </Modal>
             )}
         </div>
