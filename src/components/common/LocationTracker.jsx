@@ -47,9 +47,16 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
     console.log('destination:', destination);
     console.log('initialLocation:', initialLocation);
 
-    // Suscribirse a la ubicación del operador
+    // Suscribirse a la ubicación del operador (específica)
     useOperatorLocation(craneDemandId, (location) => {
-        console.log("Ubicación recibida en cliente:", location);
+        console.log("Ubicación recibida en cliente (específica):", location);
+        setOperatorLocation(location);
+        if (onOperatorLocationUpdate) onOperatorLocationUpdate(location);
+    });
+
+    // Suscribirse a la ubicación del operador (broadcast)
+    useOperatorLocation(null, (location) => {
+        console.log("Ubicación recibida en cliente (broadcast):", location);
         setOperatorLocation(location);
         if (onOperatorLocationUpdate) onOperatorLocationUpdate(location);
     });
