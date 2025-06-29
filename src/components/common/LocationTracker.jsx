@@ -49,9 +49,13 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
 
     // Suscribirse a la ubicación del operador
     useOperatorLocation(craneDemandId, (location) => {
+        console.log("Ubicación recibida en cliente:", location);
         setOperatorLocation(location);
         if (onOperatorLocationUpdate) onOperatorLocationUpdate(location);
     });
+
+    // Log en cada render
+    console.log("Renderizando operador:", operatorLocation);
 
     // Calcular el centro del mapa basado en los puntos disponibles
     const calculateMapCenter = () => {
