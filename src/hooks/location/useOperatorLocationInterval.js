@@ -8,31 +8,9 @@ export function useOperatorLocationInterval(intervalSeconds = 30) {
     const [isTracking, setIsTracking] = useState(false);
     const intervalRef = useRef(null);
     const stompClientRef = useRef(null);
-    const [activeDemandIds, setActiveDemandIds] = useState([]);
     
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
     const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
-
-    // Obtener las demandas activas del operador
-    const fetchActiveDemands = useCallback(async () => {
-        try {
-            const userId = JSON.parse(localStorage.getItem("userDetail")).id;
-            const response = await fetch(`${apiDomain}/v1/crane-demands?state=TAKEN&assignedToUserId=${userId}&page=0&size=100`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                const demandIds = data.content?.map(demand => demand.id) || [];
-                setActiveDemandIds(demandIds);
-                console.log("📋 Demandas activas del operador:", demandIds);
-            }
-        } catch (err) {
-            console.error("❌ Error obteniendo demandas activas:", err);
-        }
-    }, [apiDomain, token]);
 
     // Inicializar cliente WebSocket
     useEffect(() => {
@@ -82,8 +60,8 @@ export function useOperatorLocationInterval(intervalSeconds = 30) {
                     setLocation(currentLocation);
                     setError(null);
 
-                    // Enviar ubicación al servidor vía WebSocket a todas las demandas activas
-                    if (stompClientRef.current && stompClientRef.current.connected && activeDemandIds.length > 0) {
+                    // Enviar ubicación al servidor vía WebSocket
+                    if (stompClientRef.current && stompClientRef.current.connected) {
                         const locationData = {
                             lat: lat,
                             lng: lon,
@@ -91,15 +69,13 @@ export function useOperatorLocationInterval(intervalSeconds = 30) {
                             accuracy: position.coords.accuracy
                         };
                         
-                        // Enviar a cada demanda activa
-                        activeDemandIds.forEach(demandId => {
-                            stompClientRef.current.publish({
-                                destination: `/app/operator-location/${demandId}`,
-                                body: JSON.stringify(locationData)
-                            });
+                        // Enviar a todos los clientes suscritos (broadcast general)
+                        stompClientRef.current.publish({
+                            destination: `/app/operator-location/broadcast`,
+                            body: JSON.stringify(locationData)
                         });
                         
-                        console.log("📡 Ubicación enviada a demandas activas:", activeDemandIds, locationData);
+                        console.log("📡 Ubicación enviada al servidor:", locationData);
                     }
 
                     // Log en consola con formato claro
@@ -126,7 +102,7 @@ export function useOperatorLocationInterval(intervalSeconds = 30) {
                     setLocation(currentLocation);
 
                     // Enviar ubicación al servidor vía WebSocket (sin nombre)
-                    if (stompClientRef.current && stompClientRef.current.connected && activeDemandIds.length > 0) {
+                    if (stompClientRef.current && stompClientRef.current.connected) {
                         const locationData = {
                             lat: lat,
                             lng: lon,
@@ -134,15 +110,12 @@ export function useOperatorLocationInterval(intervalSeconds = 30) {
                             accuracy: position.coords.accuracy
                         };
                         
-                        // Enviar a cada demanda activa
-                        activeDemandIds.forEach(demandId => {
-                            stompClientRef.current.publish({
-                                destination: `/app/operator-location/${demandId}`,
-                                body: JSON.stringify(locationData)
-                            });
+                        stompClientRef.current.publish({
+                            destination: `/app/operator-location/broadcast`,
+                            body: JSON.stringify(locationData)
                         });
                         
-                        console.log("📡 Ubicación enviada a demandas activas (sin nombre):", activeDemandIds, locationData);
+                        console.log("📡 Ubicación enviada al servidor (sin nombre):", locationData);
                     }
 
                     console.log("📍 Localización del Operador (sin nombre):", {
@@ -183,16 +156,13 @@ export function useOperatorLocationInterval(intervalSeconds = 30) {
                 maximumAge: 0, // Forzar ubicación fresca - NO usar caché
             }
         );
-    }, [activeDemandIds]);
+    }, []);
 
     const startTracking = useCallback(() => {
         if (isTracking) return;
 
         console.log(`🚀 Iniciando seguimiento de localización del operador cada ${intervalSeconds} segundo(s)`);
         setIsTracking(true);
-
-        // Obtener demandas activas antes de iniciar el tracking
-        fetchActiveDemands();
 
         // Activar WebSocket
         if (stompClientRef.current) {
@@ -204,11 +174,9 @@ export function useOperatorLocationInterval(intervalSeconds = 30) {
 
         // Configurar intervalo
         intervalRef.current = setInterval(() => {
-            // Actualizar demandas activas y obtener ubicación
-            fetchActiveDemands();
             getLocation();
         }, intervalSeconds * 1000); // Convertir segundos a milisegundos
-    }, [isTracking, intervalSeconds, getLocation, fetchActiveDemands]);
+    }, [isTracking, intervalSeconds, getLocation]);
 
     const stopTracking = useCallback(() => {
         if (!isTracking) return;
