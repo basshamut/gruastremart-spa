@@ -43,7 +43,7 @@ export function useOperatorLocationInterval(intervalSeconds = 10, craneDemandId 
                 const lon = position.coords.longitude;
                 const timestamp = new Date().toISOString();
 
-                // Crear ubicación básica
+                // Crear ubicación real
                 const currentLocation = {
                     latitude: lat,
                     longitude: lon,
@@ -100,8 +100,8 @@ export function useOperatorLocationInterval(intervalSeconds = 10, craneDemandId 
             },
             {
                 enableHighAccuracy: true,
-                timeout: 15000, // Aumentar timeout a 15 segundos
-                maximumAge: 0, // Forzar ubicación fresca - NO usar caché
+                timeout: 15000, // 15 segundos
+                maximumAge: 0, // Forzar ubicación fresca
             }
         );
     }, [craneDemandId]);
