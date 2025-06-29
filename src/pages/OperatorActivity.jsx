@@ -4,6 +4,7 @@ import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
 import {usePaginatedDemands} from "../hooks/data/usePaginatedDemands";
 import {useOperatorActivity} from "../hooks/data/useOperatorActivity";
+import {useOperatorLocationInterval} from "../hooks/location/useOperatorLocationInterval";
 import {assignCraneDemand} from "../services/CraneDemandService.js";
 import {formatDate} from "../utils/Utils.js";
 
@@ -17,22 +18,34 @@ export default function OperatorActivity() {
 
     // Hook personalizado que maneja toda la lógica de actividad del operador
     const {
-        operatorLocation,
-        locationError,
-        isTracking,
         countdown,
         pendingNotificationsForActiveDemands,
         hasNewNotifications,
         refreshTrigger,
-        refreshData
+        refreshData,
+        startTracking,
+        stopTracking
     } = useOperatorActivity(30, 30, 5000); // 30s intervalo, 30s countdown, 5s delay
 
     // Extraer coordenadas de la localización para usePaginatedDemands
-    const lat = operatorLocation?.latitude || null;
-    const lng = operatorLocation?.longitude || null;
+    // (La ubicación ahora la obtendremos del hook de ubicación, no de useOperatorActivity)
+    // const lat = operatorLocation?.latitude || null;
+    // const lng = operatorLocation?.longitude || null;
 
-    const activeDemands = usePaginatedDemands("ACTIVE", refreshTrigger, 50, lat, lng);
-    const takenDemands = usePaginatedDemands("TAKEN", refreshTrigger, 50, lat, lng);
+    const activeDemands = usePaginatedDemands("ACTIVE", refreshTrigger, 50);
+    const takenDemands = usePaginatedDemands("TAKEN", refreshTrigger, 50);
+
+    // Obtener el ID de la primera solicitud tomada (si existe)
+    const takenDemandId = takenDemands.demands.length > 0 ? takenDemands.demands[0].id : null;
+
+    // Hook para seguimiento de ubicación del operador SOLO para la solicitud tomada
+    const {
+        location: operatorLocation,
+        error: locationError,
+        isTracking,
+        startTracking: startLocationTracking,
+        stopTracking: stopLocationTracking
+    } = useOperatorLocationInterval(10, takenDemandId);
 
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
     console.log(userName);
