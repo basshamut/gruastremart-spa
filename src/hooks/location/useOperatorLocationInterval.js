@@ -30,103 +30,42 @@ export function useOperatorLocationInterval(intervalSeconds = 30) {
     }, [apiDomain, token]);
 
     const getLocation = useCallback(() => {
-        if (!navigator.geolocation) {
-            const errorMsg = "La geolocalización no es compatible con este navegador.";
-            setError(errorMsg);
-            console.error("❌ Operador Location Error:", errorMsg);
-            return;
+        // HARDCODE: ubicación fija para pruebas
+        const lat = 41.4036299; // Ejemplo: Sagrada Familia, Barcelona
+        const lon = 2.1743558;
+        const timestamp = new Date().toISOString();
+
+        const currentLocation = {
+            latitude: lat,
+            longitude: lon,
+            accuracy: 5,
+            timestamp: timestamp,
+            name: "Ubicación Hardcodeada",
+        };
+
+        setLocation(currentLocation);
+        setError(null);
+
+        // Enviar ubicación al servidor vía WebSocket
+        if (stompClientRef.current && stompClientRef.current.connected) {
+            const locationData = {
+                lat: lat,
+                lng: lon,
+                timestamp: timestamp,
+                accuracy: 5
+            };
+            stompClientRef.current.publish({
+                destination: `/app/operator-location/broadcast`,
+                body: JSON.stringify(locationData)
+            });
+            console.log("📡 Ubicación HARDCODEADA enviada al servidor:", locationData);
         }
 
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                const timestamp = new Date().toISOString();
-
-                // Crear ubicación básica
-                const currentLocation = {
-                    latitude: lat,
-                    longitude: lon,
-                    accuracy: position.coords.accuracy,
-                    timestamp: timestamp,
-                    name: "Ubicación GPS",
-                };
-
-                setLocation(currentLocation);
-                setError(null);
-
-                // Enviar ubicación al servidor vía WebSocket
-                if (stompClientRef.current && stompClientRef.current.connected) {
-                    const locationData = {
-                        lat: lat,
-                        lng: lon,
-                        timestamp: timestamp,
-                        accuracy: position.coords.accuracy
-                    };
-                    
-                    stompClientRef.current.publish({
-                        destination: `/app/operator-location/broadcast`,
-                        body: JSON.stringify(locationData)
-                    });
-                    
-                    console.log("📡 Ubicación enviada al servidor:", locationData);
-                }
-
-                // Log en consola
-                console.log("📍 Localización del Operador:", {
-                    Coordenadas: `${lat}, ${lon}`,
-                    Precisión: `${position.coords.accuracy}m`,
-                    Hora: new Date(timestamp).toLocaleString()
-                });
-
-                // Intentar obtener el nombre de la ubicación de forma asíncrona (opcional)
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data && data.display_name) {
-                            setLocation(prev => ({
-                                ...prev,
-                                name: data.display_name
-                            }));
-                            console.log("📍 Nombre de ubicación obtenido:", data.display_name);
-                        }
-                    })
-                    .catch(err => {
-                        // Si falla, no pasa nada, el nombre queda como 'Ubicación GPS'
-                        console.warn("⚠️ No se pudo obtener el nombre de la ubicación (opcional):", err.message);
-                    });
-            },
-            (err) => {
-                let errorMsg = "Error obteniendo ubicación";
-                
-                // Manejar diferentes tipos de errores de geolocalización
-                switch(err.code) {
-                    case err.PERMISSION_DENIED:
-                        errorMsg = "Permiso de ubicación denegado por el usuario";
-                        break;
-                    case err.POSITION_UNAVAILABLE:
-                        errorMsg = "Información de ubicación no disponible";
-                        break;
-                    case err.TIMEOUT:
-                        errorMsg = "Tiempo de espera agotado al obtener ubicación";
-                        break;
-                    default:
-                        errorMsg = `Error desconocido obteniendo ubicación: ${err.message}`;
-                        break;
-                }
-                
-                setError(errorMsg);
-                console.warn("⚠️ Geolocation Warning:", errorMsg);
-                
-                // No detener el tracking por errores temporales
-                console.log("🔄 Continuando con el siguiente intento de localización...");
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 15000, // Aumentar timeout a 15 segundos
-                maximumAge: 0, // Forzar ubicación fresca - NO usar caché
-            }
-        );
+        console.log("📍 Localización del Operador (HARDCODEADA):", {
+            Coordenadas: `${lat}, ${lon}`,
+            Precisión: `5m`,
+            Hora: new Date(timestamp).toLocaleString()
+        });
     }, []);
 
     const startTracking = useCallback(() => {
