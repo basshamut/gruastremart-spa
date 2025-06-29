@@ -106,10 +106,14 @@ export default function LocationTracker({ craneDemandId, initialLocation, origin
                 <h5 className="font-bold mb-2 text-gray-700 text-sm">Flujo de coordenadas</h5>
                 <div className="text-xs text-gray-800">
                     <div className="mb-1">
-                        <span className="font-semibold">Operador (broadcast):</span> {operatorLocationBroadcast ? `${operatorLocationBroadcast.lat?.toFixed(6)}, ${operatorLocationBroadcast.lng?.toFixed(6)}` : 'Sin datos'}
+                        <span className="font-semibold">Operador (broadcast):</span> {operatorLocationBroadcast
+                            ? `${operatorLocationBroadcast.lat?.toFixed(6)}, ${operatorLocationBroadcast.lng?.toFixed(6)}`
+                            : <span className="text-yellow-600">Cargando ubicación...</span>}
                     </div>
                     <div className="mb-1">
-                        <span className="font-semibold">Operador (específica):</span> {operatorLocationEspecifica ? `${operatorLocationEspecifica.lat?.toFixed(6)}, ${operatorLocationEspecifica.lng?.toFixed(6)}` : 'Sin datos'}
+                        <span className="font-semibold">Operador (específica):</span> {operatorLocationEspecifica
+                            ? `${operatorLocationEspecifica.lat?.toFixed(6)}, ${operatorLocationEspecifica.lng?.toFixed(6)}`
+                            : <span className="text-yellow-600">Cargando ubicación...</span>}
                     </div>
                     <div className="mb-1">
                         <span className="font-semibold">Destino:</span> {destination ? `${destination.lat.toFixed(6)}, ${destination.lng.toFixed(6)}` : 'Sin datos'}
