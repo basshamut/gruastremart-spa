@@ -21,10 +21,6 @@ export default function OperatorActivity() {
     // Obtener el ID del usuario desde localStorage
     const userId = JSON.parse(localStorage.getItem("userDetail"))?.id;
     
-    // Debug: verificar qué ID se está usando
-    console.log("🔍 Debug - userDetail:", JSON.parse(localStorage.getItem("userDetail")));
-    console.log("🔍 Debug - userId:", userId);
-
     // Función para obtener el assignedOperatorId de las demandas tomadas
     const fetchAssignedOperatorId = async () => {
         try {

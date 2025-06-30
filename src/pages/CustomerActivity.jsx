@@ -3,8 +3,6 @@ import CustomerGeoLocation from "../components/customer/CustomerGeoLocation";
 import CustomerForm from "../components/customer/CustormerForm";
 import CustomerRequests from "../components/customer/CustomerRequests.jsx";
 
-//TODO Verificar antes enviar el formulario si el cliente tiene solicitudes abiertas. No puede tener ni en estado ACTIVE ni en TAKEN
-
 export default function CustomerActivity({view}) {
     const [formData, setFormData] = useState({
         description: "",
@@ -59,7 +57,9 @@ export default function CustomerActivity({view}) {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                if (!response.ok) throw new Error("Error al obtener las solicitudes");
+                if (!response.ok) {
+                    throw new Error("Error al obtener las solicitudes");
+                }
                 const data = await response.json();
                 setRequests(data.content || []);
             } catch (err) {
@@ -68,11 +68,6 @@ export default function CustomerActivity({view}) {
         };
         fetchRequests();
     }, []);
-
-    // Buscar la solicitud en estado TAKEN
-    const takenRequest = requests.find(r => r.state === "TAKEN");
-    const takenDemandId = takenRequest?.id || null;
-    const takenState = takenRequest?.state || null;
 
     return (
         <>
@@ -87,8 +82,6 @@ export default function CustomerActivity({view}) {
                     <CustomerGeoLocation
                         onLocationChange={handleLocationChange}
                         onDestinationChange={handleDestinationChange}
-                        craneDemandId={takenDemandId}
-                        takenState={takenState}
                     />
                     <CustomerForm
                         formData={formData}
