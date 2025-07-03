@@ -153,46 +153,6 @@ const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, 
 
     return (
         <div className="mt-4">
-            {/* Panel flotante de información */}
-            <div className="absolute top-4 right-4 bg-white bg-opacity-95 rounded-lg shadow-lg p-3 z-[1000] min-w-[200px]">
-                <h5 className="font-bold mb-2 text-gray-700 text-sm">Información de ruta</h5>
-                <div className="text-xs text-gray-800 space-y-1">
-                    {operatorLocation && operatorLocation.lat && operatorLocation.lng ? (
-                        <div className="p-2 bg-blue-50 rounded border-l-4 border-blue-400">
-                            <div className="font-semibold text-blue-700">🚛 Operador:</div>
-                            <div className="text-gray-600">
-                                {operatorLocation.lat.toFixed(6)}, {operatorLocation.lng.toFixed(6)}
-                            </div>
-                            {operatorLocation.accuracy && (
-                                <div className="text-[10px] text-blue-600">
-                                    Precisión: {operatorLocation.accuracy.toFixed(1)}m
-                                </div>
-                            )}
-                        </div>
-                    ) : operatorLoading ? (
-                        <div className="text-blue-600">⏳ Obteniendo ubicación...</div>
-                    ) : (
-                        <div className="text-gray-500">❓ Sin ubicación</div>
-                    )}
-                    {origin && (
-                        <div>
-                            <span className="font-semibold text-green-600">📍 Origen:</span>
-                            <div className="text-gray-600">
-                                {origin.lat.toFixed(6)}, {origin.lng.toFixed(6)}
-                            </div>
-                        </div>
-                    )}
-                    {destination && (
-                        <div>
-                            <span className="font-semibold text-red-600">🎯 Destino:</span>
-                            <div className="text-gray-600">
-                                {destination.lat.toFixed(6)}, {destination.lng.toFixed(6)}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
             <div className="h-[400px] w-full rounded-lg overflow-hidden border border-gray-200">
                 <MapContainer
                     center={mapCenter}
@@ -240,7 +200,7 @@ const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, 
                     )}
 
                     {/* Marcador de origen */}
-                    {origin && (
+                    {origin && origin.lat !== undefined && origin.lng !== undefined && (
                         <Marker
                             position={[origin.lat, origin.lng]}
                             icon={originIcon}
@@ -259,7 +219,7 @@ const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, 
                     )}
 
                     {/* Marcador de destino */}
-                    {destination && (
+                    {destination && destination.lat !== undefined && destination.lng !== undefined && (
                         <Marker
                             position={[destination.lat, destination.lng]}
                             icon={destinationIcon}
@@ -435,12 +395,19 @@ export default function CustomerRequests() {
             clearInterval(pollingInterval);
         }
 
-        // Solo hacer polling si hay solicitudes activas o tomadas
-        if (hasActiveRequests || requests.some(r => r.state === "ACTIVE" || r.state === "TAKEN")) {
+        // Si hay una solicitud en TAKEN, detener el polling
+        const hasTaken = requests.some(r => r.state === "TAKEN");
+        if (hasTaken) {
+            console.log('⏸️ Polling detenido: solicitud en TAKEN');
+            setPollingInterval(null);
+            return;
+        }
+
+        // Solo hacer polling si hay solicitudes activas
+        if (hasActiveRequests || requests.some(r => r.state === "ACTIVE")) {
             const interval = setInterval(() => {
                 fetchRequests();
             }, DEMAND_POLL_INTERVAL * 1000);
-            
             setPollingInterval(interval);
             console.log(`🔄 Polling iniciado cada ${DEMAND_POLL_INTERVAL} segundos`);
         }
@@ -731,15 +698,40 @@ export default function CustomerRequests() {
                         {selectedRequest.state === "TAKEN" && (
                             <div className="border-t border-gray-200 pt-4">
                                 <h4 className="font-medium text-gray-700 mb-3">🚗 Seguimiento del operador</h4>
-                                
+                                {/* Información adicional del operador: Operador en ruta antes del mapa */}
+                                <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {operatorLocation && operatorLocation.lat && operatorLocation.lng && (
+                                        <div className="bg-green-50 border border-green-200 p-3 rounded-lg col-span-2">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-green-600">📍</span>
+                                                <span className="font-medium text-green-800">Operador en ruta</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                                                <div>
+                                                    <span className="font-medium text-gray-700">Latitud:</span> {operatorLocation.lat.toFixed(6)}
+                                                </div>
+                                                <div>
+                                                    <span className="font-medium text-gray-700">Longitud:</span> {operatorLocation.lng.toFixed(6)}
+                                                </div>
+                                                <div>
+                                                    <span className="font-medium text-gray-700">Última actualización:</span> {new Date(operatorLocation.timestamp).toLocaleTimeString()}
+                                                </div>
+                                                {operatorLocation.accuracy && (
+                                                    <div>
+                                                        <span className="font-medium text-gray-700">Precisión:</span> {operatorLocation.accuracy.toFixed(1)}m
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 {/* Mapa con seguimiento del operador */}
                                 <TrackingMap 
                                     demand={selectedRequest}
                                     operatorLocation={operatorLocation}
                                     operatorLoading={operatorLoading}
                                 />
-
-                                {/* Información adicional del operador */}
+                                {/* El resto de la información adicional del operador (loading, error, etc.) */}
                                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {operatorLoading ? (
                                         <div className="flex items-center justify-center py-4 col-span-2">
@@ -779,39 +771,7 @@ export default function CustomerRequests() {
                                                         </p>
                                                     </div>
                                                 </div>
-                                            ) : operatorLocation.lat && operatorLocation.lng ? (
-                                                // Tenemos coordenadas reales
-                                                <div className="bg-green-50 border border-green-200 p-3 rounded-lg col-span-2">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <span className="text-green-600">📍</span>
-                                                        <span className="font-medium text-green-800">Operador en ruta</span>
-                                                    </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                                                        <div>
-                                                            <span className="font-medium text-gray-700">Latitud:</span> {operatorLocation.lat.toFixed(6)}
-                                                        </div>
-                                                        <div>
-                                                            <span className="font-medium text-gray-700">Longitud:</span> {operatorLocation.lng.toFixed(6)}
-                                                        </div>
-                                                        <div>
-                                                            <span className="font-medium text-gray-700">Última actualización:</span> {new Date(operatorLocation.timestamp).toLocaleTimeString()}
-                                                        </div>
-                                                        {operatorLocation.accuracy && (
-                                                            <div>
-                                                                <span className="font-medium text-gray-700">Precisión:</span> {operatorLocation.accuracy.toFixed(1)}m
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg col-span-2">
-                                                    <p className="text-yellow-700 text-sm">⏳ Esperando información del operador...</p>
-                                                    <p className="text-xs text-yellow-600 mt-1">
-                                                        El operador puede estar iniciando su servicio o configurando su GPS.
-                                                    </p>
-                                                </div>
-                                            )}
-
+                                            ) : null}
                                             {/* Información adicional del estado del operador */}
                                             {operatorStatus && (
                                                 <div className="mt-3 p-2 bg-gray-50 rounded border border-gray-200 col-span-2">
