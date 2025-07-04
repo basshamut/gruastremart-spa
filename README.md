@@ -169,6 +169,81 @@ A partir de la versión móvil, la aplicación puede ejecutarse como app nativa 
 - Probar la app en diferentes dispositivos y versiones de Android para asegurar compatibilidad.
 - Consultar la [documentación oficial de Capacitor](https://capacitorjs.com/docs) para detalles avanzados.
 
+## 📦 Cómo firmar e instalar el APK de release (paso a paso)
+
+0. **Crea tu keystore (Solo la primera vez )**
+
+Si aún no tienes una keystore para firmar tus APKs, genera una con el siguiente comando:
+
+```bash
+keytool -genkey -v -keystore gruas-key.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000
+```
+
+- **-keystore gruas-key.keystore**: nombre del archivo que se creará (puedes poner la ruta completa si quieres).
+- **-alias my-key-alias**: alias de la clave (debe coincidir con el que uses en apksigner).
+- **-keyalg RSA -keysize 2048**: tipo y tamaño de clave recomendados.
+- **-validity 10000**: años de validez (puedes cambiarlo).
+
+El comando te pedirá una contraseña y algunos datos (nombre, organización, etc.).
+
+Guarda bien el archivo y la contraseña, los necesitarás para firmar futuras versiones del APK.
+
+1. **Compila el APK de release**
+
+   Ejecuta desde la raíz del proyecto:
+   ```bash
+   cd android
+   ./gradlew assembleRelease
+   ```
+   El APK sin firmar se generará en:
+   `android/app/build/outputs/apk/release/app-release-unsigned.apk`
+
+2. **Alinea el APK con zipalign**
+
+   ```bash
+   <ruta-a-build-tools>/zipalign -v 4 \
+     android/app/build/outputs/apk/release/app-release-unsigned.apk \
+     android/app/build/outputs/apk/release/app-release-aligned.apk
+   ```
+   > Cambia `<ruta-a-build-tools>` por la ruta real de tu Android SDK, por ejemplo: `C:/Users/tu_usuario/AppData/Local/Android/Sdk/build-tools/34.0.0`
+
+3. **Firma el APK alineado con apksigner**
+
+   ```bash
+   <ruta-a-build-tools>/apksigner sign \
+     --ks /ruta/a/tu/keystore.jks \
+     --ks-key-alias tu-alias \
+     --out android/app/build/outputs/apk/release/app-release-signed.apk \
+     android/app/build/outputs/apk/release/app-release-aligned.apk
+   ```
+   > Cambia `/ruta/a/tu/keystore.jks` y `tu-alias` por los datos de tu keystore.
+
+4. **Verifica la firma del APK**
+
+   ```bash
+   <ruta-a-build-tools>/apksigner verify android/app/build/outputs/apk/release/app-release-signed.apk
+   ```
+   Debe mostrar: `Verified` o `Verification successful`.
+
+5. **Desinstala versiones anteriores de la app en el dispositivo**
+
+   ```bash
+   adb uninstall com.gruastremart.app
+   ```
+
+6. **Copia el APK firmado al dispositivo y ábrelo para instalar**
+   - Usa el explorador de archivos o:
+   ```bash
+   adb install -r android/app/build/outputs/apk/release/app-release-signed.apk
+   ```
+
+---
+
+**Notas:**
+- No modifiques el APK después de firmarlo.
+- Si tienes problemas de instalación, revisa la versión mínima de Android y la arquitectura.
+- Si ves errores de firma, repite el proceso asegurando el orden: zipalign → apksigner.
+
 ## Licencia
 
 Este proyecto está bajo la licencia MIT. Consulta el archivo LICENSE para más detalles.

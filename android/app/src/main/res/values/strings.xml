@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">gruastremart-spa</string>
-    <string name="title_activity_main">gruastremart-spa</string>
+    <string name="app_name">Grúas TreMart</string>
+    <string name="title_activity_main">Grúas TreMart</string>
     <string name="package_name">com.gruastremart.app</string>
     <string name="custom_url_scheme">com.gruastremart.app</string>
 </resources>
