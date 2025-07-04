@@ -17,6 +17,7 @@ export default function CustomerActivity({view}) {
 
     const [createdDemandId, setCreatedDemandId] = useState(null);
     const [requests, setRequests] = useState([]);
+    const [activeTab, setActiveTab] = useState("solicitudes");
 
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
 
@@ -73,23 +74,43 @@ export default function CustomerActivity({view}) {
         <>
             <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo {userName} !</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
-                <CustomerRequests/>
+            {/* Panel de tabs */}
+            <div className="mt-6 mb-4 flex border-b border-gray-200">
+                <button
+                    className={`px-4 py-2 font-semibold focus:outline-none transition-colors duration-200 border-b-2 ${activeTab === "solicitudes" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-blue-600"}`}
+                    onClick={() => setActiveTab("solicitudes")}
+                >
+                    Solicitudes
+                </button>
+                <button
+                    className={`ml-4 px-4 py-2 font-semibold focus:outline-none transition-colors duration-200 border-b-2 ${activeTab === "formulario" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-blue-600"}`}
+                    onClick={() => setActiveTab("formulario")}
+                >
+                    Nueva solicitud
+                </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
-                <div className="bg-card p-4 rounded-lg shadow-md">
-                    <CustomerGeoLocation
-                        onLocationChange={handleLocationChange}
-                        onDestinationChange={handleDestinationChange}
-                    />
-                    <CustomerForm
-                        formData={formData}
-                        setFormData={setFormData}
-                        onDemandCreated={handleCreatedDemand}
-                    />
+            {/* Contenido de los tabs */}
+            {activeTab === "solicitudes" && (
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
+                    <CustomerRequests/>
                 </div>
-            </div>
+            )}
+            {activeTab === "formulario" && (
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
+                    <div className="bg-card p-4 rounded-lg shadow-md">
+                        <CustomerGeoLocation
+                            onLocationChange={handleLocationChange}
+                            onDestinationChange={handleDestinationChange}
+                        />
+                        <CustomerForm
+                            formData={formData}
+                            setFormData={setFormData}
+                            onDemandCreated={handleCreatedDemand}
+                        />
+                    </div>
+                </div>
+            )}
         </>
     );
 }
