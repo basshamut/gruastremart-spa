@@ -1,31 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useOperatorLocationInterval } from '../location/useOperatorLocationInterval';
 
-/**
- * Hook personalizado que maneja toda la lógica de actividad del operador
- * 
- * @param {number} locationInterval - Intervalo en segundos para actualizar la ubicación (default: 30)
- * @param {number} errorCountdown - Tiempo en segundos para el contador regresivo de errores (default: 30)
- * @param {number} notificationDelay - Delay en ms antes de refrescar datos tras nuevas notificaciones (default: 5000)
- * @returns {Object} Objeto con toda la información y funciones necesarias para el operador
- * 
- * @example
- * const {
- *   operatorLocation,
- *   locationError,
- *   isTracking,
- *   countdown,
- *   pendingNotifications,
- *   hasNewNotifications,
- *   refreshData,
- *   startTracking,
- *   stopTracking
- * } = useOperatorActivity();
- */
 export const useOperatorActivity = (
     locationInterval = 30,
-    errorCountdown = 30,
-    notificationDelay = 5000
+    errorCountdown = 30
 ) => {
     // Estados para notificaciones
     const [pendingNotificationsForActiveDemands, setPendingNotificationsForActiveDemands] = useState([]);
@@ -97,8 +75,6 @@ export const useOperatorActivity = (
         pendingNotificationsForActiveDemands,
         hasNewNotifications,
         refreshTrigger,
-        refreshData,
-        startTracking,
-        stopTracking
+        refreshData
     };
 }; 

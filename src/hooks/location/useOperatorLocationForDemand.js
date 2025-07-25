@@ -25,9 +25,6 @@ export function useOperatorLocationForDemand(demandId, pollInterval = OPERATOR_S
         try {
             const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
             const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
-
-            console.log("🔍 Debug - Obteniendo assignedOperatorId de la demanda:", demandId);
-
             const response = await fetch(`${apiDomain}/v1/crane-demands/${demandId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -39,9 +36,6 @@ export function useOperatorLocationForDemand(demandId, pollInterval = OPERATOR_S
             }
 
             const demandData = await response.json();
-            console.log("🔍 Debug - Datos de la demanda:", demandData);
-            console.log("🔍 Debug - assignedOperatorId:", demandData.assignedOperatorId);
-            
             return demandData.assignedOperatorId || null;
         } catch (err) {
             console.error("❌ Error obteniendo ID del operador:", err);

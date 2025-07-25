@@ -15,9 +15,12 @@ export async function getUserDetailByEmail(email) {
 
         const data = await response.json();
 
+        console.log("Datos obtenidos:", data);
+
         if (data.content?.length > 0) {
             return {
                 id: data.content[0].id,
+                operatorId: data.content[0].operatorId,
                 name: data.content[0].name,
                 email: data.content[0].email,
                 role: data.content[0].role
