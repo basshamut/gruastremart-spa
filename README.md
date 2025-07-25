@@ -141,7 +141,7 @@ A partir de la versión móvil, la aplicación puede ejecutarse como app nativa 
    npx cap copy android
    ```
 
-3. **Abrir el proyecto en Android Studio:**
+3. **Abrir el proyecto en Android Studio (opcional, se puede hacer todo por consola):**
    ```bash
    npx cap open android
    ```
@@ -225,7 +225,7 @@ Guarda bien el archivo y la contraseña, los necesitarás para firmar futuras ve
      android/app/build/outputs/apk/release/app-release-unsigned.apk \
      android/app/build/outputs/apk/release/app-release-aligned.apk
    ```
-   > Cambia `<ruta-a-build-tools>` por la ruta real de tu Android SDK, por ejemplo: `C:/Users/tu_usuario/AppData/Local/Android/Sdk/build-tools/34.0.0`
+   > Cambia `<ruta-a-build-tools>` por la ruta real de tu Android SDK, por ejemplo en windows sería: `C:/Users/tu_usuario/AppData/Local/Android/Sdk/build-tools/34.0.0`
 
 3. **Firma el APK alineado con apksigner**
 
@@ -263,6 +263,7 @@ Guarda bien el archivo y la contraseña, los necesitarás para firmar futuras ve
 - No modifiques el APK después de firmarlo.
 - Si tienes problemas de instalación, revisa la versión mínima de Android y la arquitectura.
 - Si ves errores de firma, repite el proceso asegurando el orden: zipalign → apksigner.
+- Para mas informacion consulta el fichero [README_APK_GENERATION.md](README_APK_GENERATION.md).
 
 ## Licencia
 
