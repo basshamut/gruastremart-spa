@@ -30,22 +30,42 @@ src/
 ├── main.jsx           # Punto de entrada de la aplicación
 ```
 
-## Tecnologías Utilizadas
+## Arquitectura y Tecnologías
+
+### Arquitectura
+
+La aplicación sigue una arquitectura moderna basada en componentes con las siguientes características:
+
+- **Arquitectura de Componentes**: Organización modular con componentes reutilizables y específicos por dominio.
+- **Gestión de Estado**: Uso de React Hooks para manejar el estado de la aplicación sin necesidad de librerías externas.
+- **Patrón de Servicios**: Separación clara entre la lógica de negocio y la interfaz de usuario mediante servicios.
+- **Enrutamiento**: Sistema de rutas basado en React Router para la navegación entre páginas.
+- **Autenticación**: Implementación de un sistema de autenticación basado en tokens con Supabase.
+- **Geolocalización**: Integración de mapas y servicios de ubicación en tiempo real.
+
+### Tecnologías Utilizadas
 
 - **Frontend**:
-  - [React](https://reactjs.org/) para la construcción de la interfaz de usuario.
-  - [React Router](https://reactrouter.com/) para la navegación entre páginas.
+  - [React 19](https://reactjs.org/) para la construcción de la interfaz de usuario.
+  - [React Router 7](https://reactrouter.com/) para la navegación entre páginas.
   - [TailwindCSS](https://tailwindcss.com/) para estilos rápidos y responsivos.
   - [Leaflet](https://leafletjs.com/) para mapas interactivos.
+  - [Lucide React](https://lucide.dev/) para iconos modernos y personalizables.
+  - [HeroIcons](https://heroicons.com/) como biblioteca complementaria de iconos.
 
 - **Backend**:
   - [Supabase](https://supabase.com/) para autenticación y gestión de usuarios.
-  - API REST para la gestión de datos de solicitudes y roles.
+  - API REST para la gestión de datos de solicitudes, operadores y ubicaciones.
+
+- **Aplicación Móvil**:
+  - [Capacitor](https://capacitorjs.com/) para convertir la aplicación web en una aplicación móvil nativa.
+  - Configuración específica para Android con soporte para geolocalización.
 
 - **Herramientas de Desarrollo**:
-  - [Vite](https://vitejs.dev/) para un entorno de desarrollo rápido.
-  - [ESLint](https://eslint.org/) para mantener la calidad del código.
-  - [PostCSS](https://postcss.org/) para procesamiento de estilos.
+  - [Vite 6](https://vitejs.dev/) para un entorno de desarrollo rápido y eficiente.
+  - [ESLint 9](https://eslint.org/) para mantener la calidad del código.
+  - [PostCSS](https://postcss.org/) para procesamiento avanzado de estilos.
+  - [SWC](https://swc.rs/) como compilador rápido para React a través de @vitejs/plugin-react-swc.
 
 ## Instalación y Configuración
 
