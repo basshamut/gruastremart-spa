@@ -5,7 +5,7 @@ Este proyecto es una aplicación web desarrollada con **React** y **Vite** que p
 ## Características
 
 - **Autenticación**: Registro, inicio de sesión y cierre de sesión utilizando Supabase como backend de autenticación.
-- **Gestión de roles**: Los usuarios tienen roles como `ADMIN`, `OPERATOR` o `CLIENT`, que determinan las funcionalidades disponibles.
+- **Gestión de roles**: Los usuarios tienen roles que determinan las funcionalidades disponibles.
 - **Solicitudes de grúas**: Los clientes pueden realizar solicitudes de grúas proporcionando información detallada y ubicaciones.
 - **Geolocalización**: Uso de mapas interactivos con Leaflet para seleccionar ubicaciones actuales y destinos.
 - **Tablas de actividades**: Visualización de actividades recientes con paginación para operadores y administradores.
@@ -110,7 +110,7 @@ La aplicación sigue una arquitectura moderna basada en componentes con las sigu
 
 ### Gestión de Roles
 
-- Los roles (`ADMIN`, `OPERATOR`, `CLIENT`) determinan las vistas y funcionalidades disponibles.
+- Los roles determinan las vistas y funcionalidades disponibles.
 - El hook `useGetRole` obtiene el rol del usuario autenticado.
 
 ### Geolocalización
