@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import {useState, useEffect} from "react";
 
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
@@ -6,6 +6,7 @@ import {usePaginatedDemands} from "../hooks/data/usePaginatedDemands";
 import {useOperatorActivity} from "../hooks/data/useOperatorActivity";
 import {useOperatorLocationService} from "../hooks/location/useOperatorLocationService";
 import {assignCraneDemand} from "../services/CraneDemandService.js";
+import {fetchAssignedOperatorId} from "../services/OperatorService.js";
 import {formatDate} from "../utils/Utils.js";
 import { LOCATION_UPDATE_INTERVAL } from "../config/constants.js";
 
@@ -21,46 +22,15 @@ export default function OperatorActivity() {
     // Obtener el ID del usuario desde localStorage
     const userId = JSON.parse(localStorage.getItem("userDetail"))?.id;
     
-    // Función para obtener el assignedOperatorId de las demandas tomadas
-    const fetchAssignedOperatorId = async () => {
-        try {
-            const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-            const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
-
-            // Buscar demandas tomadas por este operador
-            const response = await fetch(`${apiDomain}/v1/crane-demands?page=0&size=10&state=TAKEN&assignedOperatorId=${userId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.content && data.content.length > 0) {
-                    const takenDemand = data.content[0];
-                    console.log("🔍 Debug - Demanda tomada encontrada:", takenDemand);
-                    console.log("🔍 Debug - assignedOperatorId:", takenDemand.assignedOperatorId);
-                    return takenDemand.assignedOperatorId;
-                }
-            }
-            
-            // Si no hay demandas tomadas, usar el ID del usuario como fallback
-            console.log("⚠️ No hay demandas tomadas, usando ID de usuario como fallback:", userId);
-            return userId;
-        } catch (err) {
-            console.error("❌ Error obteniendo assignedOperatorId:", err);
-            return userId;
-        }
-    };
+    // La función fetchAssignedOperatorId ha sido movida al servicio OperatorService.js
 
     // Obtener el assignedOperatorId cuando se monta el componente
     useEffect(() => {
         const getAssignedOperatorId = async () => {
-            const id = await fetchAssignedOperatorId();
+            const id = await fetchAssignedOperatorId(userId);
             setAssignedOperatorId(id);
-            console.log("🔍 Debug - assignedOperatorId final:", id);
         };
-        
+
         if (userId) {
             getAssignedOperatorId();
         }
@@ -70,18 +40,9 @@ export default function OperatorActivity() {
     const {
         countdown,
         pendingNotificationsForActiveDemands,
-        hasNewNotifications,
         refreshTrigger,
         refreshData,
-        startTracking,
-        stopTracking
-    } = useOperatorActivity(30, 30, 5000); // 30s intervalo, 30s countdown, 5s delay
-
-    const activeDemands = usePaginatedDemands("ACTIVE", refreshTrigger, 50);
-    const takenDemands = usePaginatedDemands("TAKEN", refreshTrigger, 50);
-
-    // Obtener el ID de la primera solicitud tomada (si existe)
-    const takenDemandId = takenDemands.demands.length > 0 ? takenDemands.demands[0].id : null;
+    } = useOperatorActivity(30, 30); // 30s intervalo, 30s countdown, 5s delay
 
     // Hook para seguimiento de ubicación del operador usando endpoints REST
     const {
@@ -90,10 +51,12 @@ export default function OperatorActivity() {
         error: locationError,
         isLoading: locationLoading,
         isUpdating: locationUpdating,
-        updateLocationFromGPS,
         startAutoUpdate,
         stopAutoUpdate
-    } = useOperatorLocationService(assignedOperatorId, LOCATION_UPDATE_INTERVAL, assignedOperatorId ? true : false); // Usar variable configurable
+    } = useOperatorLocationService(assignedOperatorId, LOCATION_UPDATE_INTERVAL, !!assignedOperatorId); // Usar variable configurable
+
+    const activeDemands = usePaginatedDemands("ACTIVE", refreshTrigger, 50,location?.latitude || null, location?.longitude || null);
+    const takenDemands = usePaginatedDemands("TAKEN", refreshTrigger, 50);
 
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
 

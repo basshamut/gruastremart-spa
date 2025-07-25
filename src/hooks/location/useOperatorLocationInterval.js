@@ -1,6 +1,6 @@
 import {useState, useEffect, useRef, useCallback} from "react";
 
-export function useOperatorLocationInterval(intervalSeconds = 10, craneDemandId = null) {
+export function useOperatorLocationInterval(intervalSeconds = 10) {
     const [location, setLocation] = useState(null);
     const [error, setError] = useState(null);
     const [isTracking, setIsTracking] = useState(false);
@@ -17,8 +17,6 @@ export function useOperatorLocationInterval(intervalSeconds = 10, craneDemandId 
         }
 
         setIsLoading(true);
-        console.log("🔍 Solicitando ubicación GPS...");
-
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const lat = position.coords.latitude;
@@ -38,11 +36,6 @@ export function useOperatorLocationInterval(intervalSeconds = 10, craneDemandId 
                 setError(null);
                 setIsLoading(false);
 
-                console.log("📍 Localización del Operador:", {
-                    Coordenadas: `${lat}, ${lon}`,
-                    Precisión: `${position.coords.accuracy}m`,
-                    Hora: new Date(timestamp).toLocaleString()
-                });
             },
             (err) => {
                 let errorMsg = "Error obteniendo ubicación";
@@ -63,9 +56,8 @@ export function useOperatorLocationInterval(intervalSeconds = 10, craneDemandId 
                 }
                 setError(errorMsg);
                 setIsLoading(false);
-                console.warn("⚠️ Geolocation Warning:", errorMsg);
                 // No detener el tracking por errores temporales
-                console.log("🔄 Continuando con el siguiente intento de localización...");
+                console.warn("⚠️ Geolocation Warning:", errorMsg);
             },
             {
                 enableHighAccuracy: true,
@@ -78,7 +70,6 @@ export function useOperatorLocationInterval(intervalSeconds = 10, craneDemandId 
     const startTracking = useCallback(() => {
         if (isTracking) return;
 
-        console.log(`🚀 Iniciando seguimiento de localización del operador cada ${intervalSeconds} segundo(s)`);
         setIsTracking(true);
         setIsLoading(true);
 
@@ -94,7 +85,6 @@ export function useOperatorLocationInterval(intervalSeconds = 10, craneDemandId 
     const stopTracking = useCallback(() => {
         if (!isTracking) return;
 
-        console.log("⏹️ Deteniendo seguimiento de localización del operador");
         setIsTracking(false);
         setIsLoading(false);
 

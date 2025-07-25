@@ -54,7 +54,6 @@ function MapUpdater({ operatorLocation, origin, destination, hasInitialized }) {
             if (!hasInitialized) {
                 // Primera vez: centrar el mapa en la ubicación del operador
                 map.setView(newPosition, 15);
-                console.log('📍 Mapa centrado en ubicación del operador:', newPosition);
             } else if (prevLocationRef.current) {
                 // Actualizaciones posteriores: solo mover el marcador suavemente
                 const prevPosition = prevLocationRef.current;
@@ -69,7 +68,6 @@ function MapUpdater({ operatorLocation, origin, destination, hasInitialized }) {
                     
                     updateTimeoutRef.current = setTimeout(() => {
                         // Mover suavemente el marcador sin cambiar la vista del mapa
-                        console.log('🔄 Actualizando posición del operador:', newPosition, 'Distancia:', distance.toFixed(1) + 'm');
                     }, 100); // 100ms debounce
                 }
             }
@@ -78,7 +76,6 @@ function MapUpdater({ operatorLocation, origin, destination, hasInitialized }) {
         } else if (origin && origin.lat && origin.lng && !hasInitialized) {
             // Si no hay operador, centrar en el origen
             map.setView([origin.lat, origin.lng], 13);
-            console.log('📍 Mapa centrado en ubicación de origen');
         }
     }, [operatorLocation, origin, map, hasInitialized]);
 
@@ -120,19 +117,16 @@ const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, 
                 setMapZoom(15);
                 setHasInitialized(true);
                 setMapKey(`map-${operatorLocation.lat}-${operatorLocation.lng}-15`);
-                console.log('🎯 Mapa inicializado con ubicación del operador');
             } else if (origin) {
                 // Prioridad 2: Origen
                 setMapCenter([origin.lat, origin.lng]);
                 setMapZoom(13);
                 setMapKey(`map-${origin.lat}-${origin.lng}-13`);
-                console.log('🎯 Mapa inicializado con ubicación de origen');
             } else {
                 // Prioridad 3: Coordenadas por defecto (Caracas)
                 setMapCenter([10.4806, -66.9036]);
                 setMapZoom(10);
                 setMapKey('map-default-10');
-                console.log('🎯 Mapa inicializado con coordenadas por defecto');
             }
         }
     }, [operatorLocation, origin, mapCenter]);
@@ -398,7 +392,6 @@ export default function CustomerRequests() {
         // Si hay una solicitud en TAKEN, detener el polling
         const hasTaken = requests.some(r => r.state === "TAKEN");
         if (hasTaken) {
-            console.log('⏸️ Polling detenido: solicitud en TAKEN');
             setPollingInterval(null);
             return;
         }
@@ -409,14 +402,12 @@ export default function CustomerRequests() {
                 fetchRequests();
             }, DEMAND_POLL_INTERVAL * 1000);
             setPollingInterval(interval);
-            console.log(`🔄 Polling iniciado cada ${DEMAND_POLL_INTERVAL} segundos`);
         }
 
         // Limpiar al desmontar
         return () => {
             if (pollingInterval) {
                 clearInterval(pollingInterval);
-                console.log('🔄 Polling detenido');
             }
         };
     }, [hasActiveRequests, requests]);
