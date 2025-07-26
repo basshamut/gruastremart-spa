@@ -33,14 +33,14 @@ export default function NavBar({role}) {
         {
             label: "Perfil",
             icon: <User className="w-5 h-5 mr-2"/>,
-            onClick: (e) => goTo(e, "#"),
+            onClick: (e) => goTo(e, "/profiles"),
             show: true
         },
 
         {
             label: "Configuraciones",
             icon: <Settings className="w-5 h-5 mr-2"/>,
-            onClick: (e) => goTo(e, "#"),
+            onClick: (e) => goTo(e, "/configurations"),
             show: role === "ADMIN"
         },
         {
