@@ -59,3 +59,96 @@ export async function registerUserInDb(userData) {
         throw err;
     }
 }
+
+export async function getUsersWithFilters(filters = {}) {
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
+    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+
+    // Construir los parámetros de la URL
+    const params = new URLSearchParams();
+    
+    // Parámetros obligatorios
+    params.append('page', filters.page || 0);
+    params.append('size', filters.size || 10);
+    
+    // Parámetros opcionales
+    if (filters.email) {
+        params.append('email', filters.email);
+    }
+    if (filters.supabaseId) {
+        params.append('supabaseId', filters.supabaseId);
+    }
+    if (filters.role) {
+        params.append('role', filters.role);
+    }
+
+    try {
+        const response = await fetch(`${apiDomain}/v1/users?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (err) {
+        console.error("Error al obtener usuarios:", err);
+        throw err;
+    }
+}
+
+export async function updateUser(userId, userData) {
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
+    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+
+    try {
+        const response = await fetch(`${apiDomain}/v1/users/${userId}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(userData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (err) {
+        console.error("Error al actualizar usuario:", err);
+        throw err;
+    }
+}
+
+export async function deleteUser(userId) {
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
+    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+
+    try {
+        const response = await fetch(`${apiDomain}/v1/users/${userId}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        return response.ok;
+    } catch (err) {
+        console.error("Error al eliminar usuario:", err);
+        throw err;
+    }
+}
