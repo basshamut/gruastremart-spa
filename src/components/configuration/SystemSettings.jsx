@@ -71,6 +71,25 @@ export default function SystemSettings() {
             </div>
 
             <div className="space-y-6">
+                {/* Información del Sistema */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-medium mb-4">Información del Sistema</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <p className="text-sm text-gray-600">Versión</p>
+                            <p className="text-lg font-semibold">1.0.0</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Última Actualización</p>
+                            <p className="text-lg font-semibold">26/07/2025</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Estado del Sistema</p>
+                            <p className="text-lg font-semibold text-green-600">Operativo</p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Configuraciones Generales */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="text-lg font-medium mb-4">Configuraciones Generales</h3>
@@ -158,25 +177,6 @@ export default function SystemSettings() {
                             <label htmlFor="smsNotifications" className="ml-2 block text-sm text-gray-900">
                                 Notificaciones por SMS
                             </label>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Información del Sistema */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-medium mb-4">Información del Sistema</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <p className="text-sm text-gray-600">Versión</p>
-                            <p className="text-lg font-semibold">1.0.0</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600">Última Actualización</p>
-                            <p className="text-lg font-semibold">26/07/2025</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600">Estado del Sistema</p>
-                            <p className="text-lg font-semibold text-green-600">Operativo</p>
                         </div>
                     </div>
                 </div>

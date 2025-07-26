@@ -104,12 +104,22 @@ export function useUsers() {
         }
     }, []);
 
-    // Función para buscar usuarios
-    const searchUsers = useCallback((searchTerm) => {
+    // Función para buscar usuarios con filtros múltiples
+    const searchUsers = useCallback((searchTerm, additionalFilters = {}) => {
         const filters = {};
-        if (searchTerm) {
-            filters.email = searchTerm;
+        
+        // Solo agregar filtros que tengan valor
+        if (searchTerm && searchTerm.trim()) {
+            filters.email = searchTerm.trim();
         }
+        if (additionalFilters.role && additionalFilters.role !== "") {
+            filters.role = additionalFilters.role;
+        }
+        if (additionalFilters.active !== undefined && additionalFilters.active !== "") {
+            filters.active = additionalFilters.active === "true";
+        }
+        
+        console.log('🔍 Filtros enviados:', filters);
         loadUsers(filters, 0, pagination.size);
     }, [pagination.size]);
 
@@ -119,10 +129,11 @@ export function useUsers() {
         loadUsers(filters, 0, pagination.size);
     }, [pagination.size]);
 
-    // Función para refrescar con filtros actuales
+    // Función para refrescar sin filtros (todos los usuarios)  
     const refresh = useCallback(() => {
-        loadUsers(currentFiltersRef.current, pagination.page, pagination.size);
-    }, [pagination.page, pagination.size]);
+        console.log('🔄 Refrescando sin filtros');
+        loadUsers({}, 0, pagination.size);
+    }, [pagination.size]);
 
     // Cargar usuarios inicialmente
     useEffect(() => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Users, Trash2, Search, Edit, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, Trash2, Search, Edit, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { useUsers } from "../../hooks/data/useUsers.js";
 
 export default function UserSettings() {
@@ -16,6 +16,8 @@ export default function UserSettings() {
     } = useUsers();
 
     const [searchTerm, setSearchTerm] = useState("");
+    const [roleFilter, setRoleFilter] = useState("");
+    const [statusFilter, setStatusFilter] = useState("");
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [editFormData, setEditFormData] = useState({
@@ -23,27 +25,45 @@ export default function UserSettings() {
         lastName: "",
         email: "",
         role: "",
-        status: ""
+        active: true
     });
 
-    // Efecto para realizar búsqueda cuando cambia el término de búsqueda
+    // Efecto para realizar búsqueda cuando cambian los filtros
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (searchTerm.trim()) {
-                searchUsers(searchTerm);
+            // Construir filtros activos
+            const hasSearchTerm = searchTerm.trim() !== "";
+            const hasRoleFilter = roleFilter !== "";
+            const hasStatusFilter = statusFilter !== "";
+
+            console.log('📊 Estado de filtros:', {
+                searchTerm: searchTerm,
+                roleFilter: roleFilter,
+                statusFilter: statusFilter,
+                hasSearchTerm,
+                hasRoleFilter,
+                hasStatusFilter
+            });
+
+            if (hasSearchTerm || hasRoleFilter || hasStatusFilter) {
+                // Si hay cualquier filtro activo, usar el endpoint de búsqueda
+                console.log('✅ Aplicando filtros');
+                searchUsers(searchTerm, {
+                    role: hasRoleFilter ? roleFilter : undefined,
+                    active: hasStatusFilter ? statusFilter : undefined
+                });
             } else {
+                // Si no hay filtros activos, mostrar todos los usuarios
+                console.log('🔄 Sin filtros - mostrando todos');
                 refresh();
             }
         }, 500); // Debounce de 500ms
 
         return () => clearTimeout(timeoutId);
-    }, [searchTerm, searchUsers, refresh]);
+    }, [searchTerm, roleFilter, statusFilter, searchUsers, refresh]);
 
-    const filteredUsers = users.filter(user => {
-        const fullName = `${user.name} ${user.lastName}`.toLowerCase();
-        const searchLower = searchTerm.toLowerCase();
-        return fullName.includes(searchLower) || user.email.toLowerCase().includes(searchLower);
-    });
+    // Ya no necesitamos filtrado local, los filtros se manejan en el backend
+    const filteredUsers = users;
 
     const handleDeleteUser = async (userId) => {
         if (window.confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
@@ -63,7 +83,7 @@ export default function UserSettings() {
             lastName: user.lastName,
             email: user.email,
             role: user.role,
-            status: user.status
+            active: user.active
         });
         setShowEditModal(true);
     };
@@ -76,7 +96,7 @@ export default function UserSettings() {
             lastName: "",
             email: "",
             role: "",
-            status: ""
+            active: true
         });
     };
 
@@ -90,9 +110,9 @@ export default function UserSettings() {
             name: editFormData.name,
             lastName: editFormData.lastName,
             role: editFormData.role,
-            status: editFormData.status
+            active: editFormData.active
         });
-        
+
         if (result.success) {
             handleCloseModal();
             alert("Usuario actualizado exitosamente");
@@ -108,6 +128,13 @@ export default function UserSettings() {
         }));
     };
 
+    // Función para limpiar todos los filtros
+    const clearAllFilters = () => {
+        setRoleFilter("");
+        setStatusFilter("");
+        setSearchTerm("");
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
@@ -117,16 +144,64 @@ export default function UserSettings() {
                 </h2>
             </div>
 
-            {/* Barra de búsqueda */}
-            <div className="mb-4 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                    type="text"
-                    placeholder="Buscar usuarios..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+            {/* Barra de búsqueda y filtros */}
+            <div className="mb-6 space-y-4">
+                {/* Barra de búsqueda */}
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                        type="text"
+                        placeholder="Buscar por email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+
+                {/* Filtros en una sola línea */}
+                <div className="flex flex-wrap gap-4 items-center">
+                    <div className="flex items-center">
+                        <Filter className="w-4 h-4 mr-2 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700 mr-3">Filtros:</span>
+                    </div>
+                    
+                    <div className="flex items-center">
+                        <label className="text-sm font-medium text-gray-700 mr-2">Rol:</label>
+                        <select
+                            value={roleFilter}
+                            onChange={(e) => setRoleFilter(e.target.value)}
+                            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Todos</option>
+                            <option value="ADMIN">Administrador</option>
+                            <option value="OPERATOR">Operador</option>
+                            <option value="CLIENT">Cliente</option>
+                        </select>
+                    </div>
+                    
+                    <div className="flex items-center">
+                        <label className="text-sm font-medium text-gray-700 mr-2">Estado:</label>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Todos</option>
+                            <option value="true">Activo</option>
+                            <option value="false">Inactivo</option>
+                        </select>
+                    </div>
+                    
+                    {/* Botón para limpiar filtros */}
+                    {(roleFilter || statusFilter) && (
+                        <button
+                            onClick={clearAllFilters}
+                            className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
+                        >
+                            Limpiar filtros
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Lista de usuarios */}
@@ -135,7 +210,7 @@ export default function UserSettings() {
                     Error al cargar usuarios: {error}
                 </div>
             )}
-            
+
             {loading ? (
                 <div className="text-center py-8">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -143,6 +218,16 @@ export default function UserSettings() {
                 </div>
             ) : (
                 <>
+                    {/* Indicador de resultados filtrados */}
+                    <div className="mb-4 flex justify-between items-center">
+                        <div className="text-sm text-gray-600">
+                            Mostrando {filteredUsers.length} usuarios
+                            {(roleFilter || statusFilter || searchTerm) && (
+                                <span className="ml-2 text-blue-600">(filtrado)</span>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse border border-gray-300">
                             <thead>
@@ -160,19 +245,17 @@ export default function UserSettings() {
                                         <td className="border border-gray-300 px-4 py-2">{user.name} {user.lastName}</td>
                                         <td className="border border-gray-300 px-4 py-2">{user.email}</td>
                                         <td className="border border-gray-300 px-4 py-2">
-                                            <span className={`px-2 py-1 rounded-full text-xs ${
-                                                user.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
-                                                user.role === 'OPERATOR' ? 'bg-blue-100 text-blue-800' :
-                                                'bg-green-100 text-green-800'
-                                            }`}>
+                                            <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
+                                                    user.role === 'OPERATOR' ? 'bg-blue-100 text-blue-800' :
+                                                        'bg-green-100 text-green-800'
+                                                }`}>
                                                 {user.role === 'ADMIN' ? 'Administrador' :
-                                                 user.role === 'OPERATOR' ? 'Operador' : 'Cliente'}
+                                                    user.role === 'OPERATOR' ? 'Operador' : 'Cliente'}
                                             </span>
                                         </td>
                                         <td className="border border-gray-300 px-4 py-2">
-                                            <span className={`px-2 py-1 rounded-full text-xs ${
-                                                user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                            }`}>
+                                            <span className={`px-2 py-1 rounded-full text-xs ${user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                                }`}>
                                                 {user.active ? 'Activo' : 'Inactivo'}
                                             </span>
                                         </td>
@@ -240,7 +323,7 @@ export default function UserSettings() {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
                         <h3 className="text-lg font-semibold mb-4">Editar Usuario</h3>
-                        
+
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
@@ -268,7 +351,7 @@ export default function UserSettings() {
                                     />
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Email
@@ -281,7 +364,7 @@ export default function UserSettings() {
                                 />
                                 <p className="text-xs text-gray-500 mt-1">El email no puede ser modificado</p>
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Rol
@@ -296,14 +379,14 @@ export default function UserSettings() {
                                     <option value="CLIENT">Cliente</option>
                                 </select>
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Estado
                                 </label>
                                 <select
-                                    value={editFormData.status}
-                                    onChange={(e) => handleInputChange('status', e.target.value)}
+                                    value={editFormData.active.toString()}
+                                    onChange={(e) => handleInputChange('active', e.target.value === 'true')}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="true">Activo</option>
@@ -311,7 +394,7 @@ export default function UserSettings() {
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div className="flex gap-3 mt-6">
                             <button
                                 onClick={handleSaveUser}

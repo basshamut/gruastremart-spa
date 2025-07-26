@@ -81,9 +81,15 @@ export async function getUsersWithFilters(filters = {}) {
     if (filters.role) {
         params.append('role', filters.role);
     }
+    if (filters.active !== undefined) {
+        params.append('active', filters.active);
+    }
+
+    const finalUrl = `${apiDomain}/v1/users?${params.toString()}`;
+    console.log('🌐 URL construida:', finalUrl);
 
     try {
-        const response = await fetch(`${apiDomain}/v1/users?${params.toString()}`, {
+        const response = await fetch(finalUrl, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
