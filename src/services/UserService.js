@@ -15,8 +15,6 @@ export async function getUserDetailByEmail(email) {
 
         const data = await response.json();
 
-        console.log("Datos obtenidos:", data);
-
         if (data.content?.length > 0) {
             return {
                 id: data.content[0].id,
@@ -86,7 +84,6 @@ export async function getUsersWithFilters(filters = {}) {
     }
 
     const finalUrl = `${apiDomain}/v1/users?${params.toString()}`;
-    console.log('🌐 URL construida:', finalUrl);
 
     try {
         const response = await fetch(finalUrl, {

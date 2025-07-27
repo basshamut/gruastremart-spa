@@ -360,6 +360,32 @@ export default function OperatorActivity() {
                                                                 <span className="font-medium">Avería:</span> {demand.breakdown}
                                                             </div>
                                                         )}
+                                                        {/* Información del vehículo */}
+                                                        {demand.vehicleBrand && (
+                                                            <div>
+                                                                <span className="font-medium">Marca:</span> {demand.vehicleBrand}
+                                                            </div>
+                                                        )}
+                                                        {demand.vehicleModel && (
+                                                            <div>
+                                                                <span className="font-medium">Modelo:</span> {demand.vehicleModel}
+                                                            </div>
+                                                        )}
+                                                        {demand.vehicleYear && (
+                                                            <div>
+                                                                <span className="font-medium">Año:</span> {demand.vehicleYear}
+                                                            </div>
+                                                        )}
+                                                        {demand.vehiclePlate && (
+                                                            <div>
+                                                                <span className="font-medium">Placa:</span> {demand.vehiclePlate}
+                                                            </div>
+                                                        )}
+                                                        {demand.vehicleColor && (
+                                                            <div>
+                                                                <span className="font-medium">Color:</span> {demand.vehicleColor}
+                                                            </div>
+                                                        )}
                                                         {demand.description && (
                                                             <div className="md:col-span-2">
                                                                 <span className="font-medium">Descripción:</span> 
@@ -475,6 +501,32 @@ export default function OperatorActivity() {
                                                                  `${Math.floor(timeAgo / 60)}h ${timeAgo % 60}min`}
                                                             </span>
                                                         </div>
+                                                        {/* Información del vehículo */}
+                                                        {demand.vehicleBrand && (
+                                                            <div>
+                                                                <span className="font-medium">Marca:</span> {demand.vehicleBrand}
+                                                            </div>
+                                                        )}
+                                                        {demand.vehicleModel && (
+                                                            <div>
+                                                                <span className="font-medium">Modelo:</span> {demand.vehicleModel}
+                                                            </div>
+                                                        )}
+                                                        {demand.vehicleYear && (
+                                                            <div>
+                                                                <span className="font-medium">Año:</span> {demand.vehicleYear}
+                                                            </div>
+                                                        )}
+                                                        {demand.vehiclePlate && (
+                                                            <div>
+                                                                <span className="font-medium">Placa:</span> {demand.vehiclePlate}
+                                                            </div>
+                                                        )}
+                                                        {demand.vehicleColor && (
+                                                            <div>
+                                                                <span className="font-medium">Color:</span> {demand.vehicleColor}
+                                                            </div>
+                                                        )}
                                                         {demand.description && (
                                                             <div className="md:col-span-2">
                                                                 <span className="font-medium">Descripción:</span> 
@@ -555,6 +607,46 @@ export default function OperatorActivity() {
                                 )}
                             </div>
                         </div>
+
+                        {/* Información del vehículo */}
+                        {(selectedDemand.vehicleBrand || selectedDemand.vehicleModel || selectedDemand.vehicleYear || 
+                          selectedDemand.vehiclePlate || selectedDemand.vehicleColor) && (
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                                <h4 className="font-bold text-md text-gray-800 mb-3">Datos del Vehículo</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                    {selectedDemand.vehicleBrand && (
+                                        <div>
+                                            <span className="font-medium text-gray-700">Marca:</span>
+                                            <p className="text-gray-800">{selectedDemand.vehicleBrand}</p>
+                                        </div>
+                                    )}
+                                    {selectedDemand.vehicleModel && (
+                                        <div>
+                                            <span className="font-medium text-gray-700">Modelo:</span>
+                                            <p className="text-gray-800">{selectedDemand.vehicleModel}</p>
+                                        </div>
+                                    )}
+                                    {selectedDemand.vehicleYear && (
+                                        <div>
+                                            <span className="font-medium text-gray-700">Año:</span>
+                                            <p className="text-gray-800">{selectedDemand.vehicleYear}</p>
+                                        </div>
+                                    )}
+                                    {selectedDemand.vehiclePlate && (
+                                        <div>
+                                            <span className="font-medium text-gray-700">Placa:</span>
+                                            <p className="text-gray-800">{selectedDemand.vehiclePlate}</p>
+                                        </div>
+                                    )}
+                                    {selectedDemand.vehicleColor && (
+                                        <div>
+                                            <span className="font-medium text-gray-700">Color:</span>
+                                            <p className="text-gray-800">{selectedDemand.vehicleColor}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Descripción y avería */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

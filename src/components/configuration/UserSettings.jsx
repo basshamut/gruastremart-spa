@@ -36,25 +36,14 @@ export default function UserSettings() {
             const hasRoleFilter = roleFilter !== "";
             const hasStatusFilter = statusFilter !== "";
 
-            console.log('📊 Estado de filtros:', {
-                searchTerm: searchTerm,
-                roleFilter: roleFilter,
-                statusFilter: statusFilter,
-                hasSearchTerm,
-                hasRoleFilter,
-                hasStatusFilter
-            });
-
             if (hasSearchTerm || hasRoleFilter || hasStatusFilter) {
                 // Si hay cualquier filtro activo, usar el endpoint de búsqueda
-                console.log('✅ Aplicando filtros');
                 searchUsers(searchTerm, {
                     role: hasRoleFilter ? roleFilter : undefined,
                     active: hasStatusFilter ? statusFilter : undefined
                 });
             } else {
                 // Si no hay filtros activos, mostrar todos los usuarios
-                console.log('🔄 Sin filtros - mostrando todos');
                 refresh();
             }
         }, 500); // Debounce de 500ms
@@ -137,7 +126,7 @@ export default function UserSettings() {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                 <h2 className="text-xl font-semibold flex items-center">
                     <Users className="w-5 h-5 mr-2" />
                     Gestión de Usuarios
@@ -158,49 +147,51 @@ export default function UserSettings() {
                     />
                 </div>
 
-                {/* Filtros en una sola línea */}
-                <div className="flex flex-wrap gap-4 items-center">
+                {/* Filtros responsive */}
+                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 items-start sm:items-center">
                     <div className="flex items-center">
                         <Filter className="w-4 h-4 mr-2 text-gray-500" />
                         <span className="text-sm font-medium text-gray-700 mr-3">Filtros:</span>
                     </div>
                     
-                    <div className="flex items-center">
-                        <label className="text-sm font-medium text-gray-700 mr-2">Rol:</label>
-                        <select
-                            value={roleFilter}
-                            onChange={(e) => setRoleFilter(e.target.value)}
-                            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">Todos</option>
-                            <option value="ADMIN">Administrador</option>
-                            <option value="OPERATOR">Operador</option>
-                            <option value="CLIENT">Cliente</option>
-                        </select>
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
+                        <div className="flex items-center">
+                            <label className="text-sm font-medium text-gray-700 mr-2 w-12 sm:w-auto">Rol:</label>
+                            <select
+                                value={roleFilter}
+                                onChange={(e) => setRoleFilter(e.target.value)}
+                                className="flex-1 sm:flex-none px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Todos</option>
+                                <option value="ADMIN">Administrador</option>
+                                <option value="OPERATOR">Operador</option>
+                                <option value="CLIENT">Cliente</option>
+                            </select>
+                        </div>
+                        
+                        <div className="flex items-center">
+                            <label className="text-sm font-medium text-gray-700 mr-2 w-12 sm:w-auto">Estado:</label>
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="flex-1 sm:flex-none px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Todos</option>
+                                <option value="true">Activo</option>
+                                <option value="false">Inactivo</option>
+                            </select>
+                        </div>
+                        
+                        {/* Botón para limpiar filtros */}
+                        {(roleFilter || statusFilter) && (
+                            <button
+                                onClick={clearAllFilters}
+                                className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors w-full sm:w-auto"
+                            >
+                                Limpiar filtros
+                            </button>
+                        )}
                     </div>
-                    
-                    <div className="flex items-center">
-                        <label className="text-sm font-medium text-gray-700 mr-2">Estado:</label>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">Todos</option>
-                            <option value="true">Activo</option>
-                            <option value="false">Inactivo</option>
-                        </select>
-                    </div>
-                    
-                    {/* Botón para limpiar filtros */}
-                    {(roleFilter || statusFilter) && (
-                        <button
-                            onClick={clearAllFilters}
-                            className="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
-                        >
-                            Limpiar filtros
-                        </button>
-                    )}
                 </div>
             </div>
 
@@ -228,73 +219,94 @@ export default function UserSettings() {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-collapse border border-gray-300">
-                            <thead>
-                                <tr className="bg-gray-50">
-                                    <th className="border border-gray-300 px-4 py-2 text-left">Nombre</th>
-                                    <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
-                                    <th className="border border-gray-300 px-4 py-2 text-left">Rol</th>
-                                    <th className="border border-gray-300 px-4 py-2 text-left">Estado</th>
-                                    <th className="border border-gray-300 px-4 py-2 text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredUsers.map((user) => (
-                                    <tr key={user.id} className="hover:bg-gray-50">
-                                        <td className="border border-gray-300 px-4 py-2">{user.name} {user.lastName}</td>
-                                        <td className="border border-gray-300 px-4 py-2">{user.email}</td>
-                                        <td className="border border-gray-300 px-4 py-2">
-                                            <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
+                    {/* Lista de usuarios en formato card responsive */}
+                    <div className="space-y-4">
+                        {filteredUsers.map((user) => (
+                            <div key={user.id} className="border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow bg-white">
+                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                                    <div className="flex-1">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+                                            <h3 className="font-bold text-gray-800 text-lg">
+                                                {user.name} {user.lastName}
+                                            </h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                    user.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
                                                     user.role === 'OPERATOR' ? 'bg-blue-100 text-blue-800' :
-                                                        'bg-green-100 text-green-800'
+                                                    'bg-green-100 text-green-800'
                                                 }`}>
-                                                {user.role === 'ADMIN' ? 'Administrador' :
-                                                    user.role === 'OPERATOR' ? 'Operador' : 'Cliente'}
-                                            </span>
-                                        </td>
-                                        <td className="border border-gray-300 px-4 py-2">
-                                            <span className={`px-2 py-1 rounded-full text-xs ${user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                                    {user.role === 'ADMIN' ? 'Administrador' :
+                                                     user.role === 'OPERATOR' ? 'Operador' : 'Cliente'}
+                                                </span>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                    user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                                 }`}>
-                                                {user.active ? 'Activo' : 'Inactivo'}
-                                            </span>
-                                        </td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">
-                                            <div className="flex justify-center gap-2">
-                                                <button
-                                                    onClick={() => handleEditUser(user)}
-                                                    className="p-1 text-blue-600 hover:bg-blue-100 rounded"
-                                                    title="Editar"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteUser(user.id)}
-                                                    className="p-1 text-red-600 hover:bg-red-100 rounded"
-                                                    title="Eliminar"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                    {user.active ? 'Activo' : 'Inactivo'}
+                                                </span>
                                             </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                                            <div>
+                                                <span className="font-medium">Email:</span>
+                                                <span className="text-gray-800 ml-1 break-words">{user.email}</span>
+                                            </div>
+                                            {user.operatorId && (
+                                                <div>
+                                                    <span className="font-medium">ID Operador:</span>
+                                                    <span className="text-gray-800 ml-1">{user.operatorId}</span>
+                                                </div>
+                                            )}
+                                            <div>
+                                                <span className="font-medium">ID Usuario:</span>
+                                                <span className="text-gray-800 ml-1">{user.id}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex flex-row sm:flex-col gap-2 justify-end">
+                                        <button
+                                            onClick={() => handleEditUser(user)}
+                                            className="flex items-center justify-center px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm transition-colors gap-1"
+                                            title="Editar usuario"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                            <span className="hidden sm:inline">Editar</span>
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteUser(user.id)}
+                                            className="flex items-center justify-center px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm transition-colors gap-1"
+                                            title="Eliminar usuario"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            <span className="hidden sm:inline">Eliminar</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        
                         {filteredUsers.length === 0 && !loading && (
-                            <p className="text-center py-8 text-gray-500">
-                                No se encontraron usuarios
-                            </p>
+                            <div className="text-center py-8">
+                                <div className="text-gray-400 mb-2">👥</div>
+                                <p className="text-sm text-gray-500">No se encontraron usuarios</p>
+                                <p className="text-xs text-gray-400 mt-1">Intenta ajustar los filtros de búsqueda.</p>
+                            </div>
                         )}
                     </div>
 
-                    {/* Paginación */}
+                    {/* Paginación responsive */}
                     {pagination && pagination.totalPages > 1 && (
-                        <div className="flex items-center justify-between mt-4">
-                            <div className="text-sm text-gray-700">
-                                Mostrando {(pagination.page * pagination.size) + 1} - {Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)} de {pagination.totalElements} usuarios
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4">
+                            <div className="text-sm text-gray-700 order-2 sm:order-1">
+                                <span className="hidden sm:inline">
+                                    Mostrando {(pagination.page * pagination.size) + 1} - {Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)} de {pagination.totalElements} usuarios
+                                </span>
+                                <span className="sm:hidden">
+                                    {(pagination.page * pagination.size) + 1}-{Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)} de {pagination.totalElements}
+                                </span>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-center gap-2 order-1 sm:order-2">
                                 <button
                                     onClick={() => changePage(pagination.page - 1)}
                                     disabled={pagination.first}
@@ -302,7 +314,7 @@ export default function UserSettings() {
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
-                                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md">
+                                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-sm">
                                     {pagination.page + 1} de {pagination.totalPages}
                                 </span>
                                 <button
@@ -385,7 +397,7 @@ export default function UserSettings() {
                                     Estado
                                 </label>
                                 <select
-                                    value={editFormData.active.toString()}
+                                    value={editFormData.active}
                                     onChange={(e) => handleInputChange('active', e.target.value === 'true')}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >

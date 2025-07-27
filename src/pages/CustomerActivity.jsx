@@ -3,7 +3,7 @@ import CustomerGeoLocation from "../components/customer/CustomerGeoLocation";
 import CustomerForm from "../components/customer/CustormerForm";
 import CustomerRequests from "../components/customer/CustomerRequests.jsx";
 
-export default function CustomerActivity({view}) {
+export default function CustomerActivity() {
     const [formData, setFormData] = useState({
         description: "",
         origin: "",
@@ -11,12 +11,17 @@ export default function CustomerActivity({view}) {
         breakdown: "",
         referenceSource: "",
         recommendedBy: "",
+        vehicleBrand: "",
+        vehicleModel: "",
+        vehicleYear: 0,
+        vehiclePlate: "",
+        vehicleColor: "",
         currentLocation: null,
         destinationLocation: null,
     });
 
-    const [createdDemandId, setCreatedDemandId] = useState(null);
-    const [requests, setRequests] = useState([]);
+    const [, setCreatedDemandId] = useState(null);
+    const [, setRequests] = useState([]);
     const [activeTab, setActiveTab] = useState("solicitudes");
 
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
@@ -64,6 +69,7 @@ export default function CustomerActivity({view}) {
                 const data = await response.json();
                 setRequests(data.content || []);
             } catch (err) {
+                console.error(err);
                 setRequests([]);
             }
         };
