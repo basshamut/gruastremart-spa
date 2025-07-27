@@ -119,7 +119,6 @@ export function useUsers() {
             filters.active = additionalFilters.active === "true";
         }
         
-        console.log('🔍 Filtros enviados:', filters);
         loadUsers(filters, 0, pagination.size);
     }, [pagination.size]);
 
@@ -131,7 +130,6 @@ export function useUsers() {
 
     // Función para refrescar sin filtros (todos los usuarios)  
     const refresh = useCallback(() => {
-        console.log('🔄 Refrescando sin filtros');
         loadUsers({}, 0, pagination.size);
     }, [pagination.size]);
 
