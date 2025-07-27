@@ -18,6 +18,8 @@ createRoot(document.getElementById('root')).render(
                     <Route path="/home" element={<App/>}/>
                     <Route path="/customers" element={<App/>}/>
                     <Route path="/operators" element={<App/>}/>
+                    <Route path="/configurations" element={<App/>}/>
+                    <Route path="/profiles" element={<App/>}/>
                 </Routes>
             </BrowserRouter>
         </AuthProvider>

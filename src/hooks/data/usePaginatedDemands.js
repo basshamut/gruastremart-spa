@@ -59,12 +59,9 @@ export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize =
             }
         };
 
-        // Para solicitudes tomadas (TAKEN) o activas (ACTIVE), no necesitamos coordenadas
-        // Para otras solicitudes, esperamos coordenadas si están configuradas
-        if (state === "TAKEN" || state === "ACTIVE" || (lat !== null && lng !== null)) {
+        if (state === "TAKEN" || state === "ACTIVE" || state === "CANCELLED" || state === "COMPLETED" || (lat !== null && lng !== null)) {
             fetchDemands(page, pageSize);
         } else if (lat === null && lng === null) {
-            // Si no tenemos coordenadas y no son solicitudes tomadas o activas, mostrar loading pero no hacer petición
             setLoading(true);
         }
     }, [page, pageSize, token, apiDomain, refreshTrigger, initialPageSize, state, lat, lng]);
