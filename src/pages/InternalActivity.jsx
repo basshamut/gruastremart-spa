@@ -34,6 +34,7 @@ export default function InternalActivity() {
                                         <th className="p-2">Descripción</th>
                                         <th className="p-2">Origen</th>
                                         <th className="p-2">Destino</th>
+                                        <th className="p-2">Vehículo</th>
                                         <th className="p-2">Fecha</th>
                                         <th className="p-2">Estado</th>
                                         <th className="p-2">Detalles</th>
@@ -45,6 +46,20 @@ export default function InternalActivity() {
                                             <td className="p-2">{demand.description}</td>
                                             <td className="p-2">{demand.currentLocation.name}</td>
                                             <td className="p-2">{demand.destinationLocation.name}</td>
+                                            <td className="p-2">
+                                                <div className="text-sm">
+                                                    {demand.vehicleBrand && demand.vehicleModel ? (
+                                                        <>
+                                                            <div className="font-medium">{demand.vehicleBrand} {demand.vehicleModel}</div>
+                                                            {demand.vehicleYear && <div className="text-xs text-gray-600">{demand.vehicleYear}</div>}
+                                                            {demand.vehiclePlate && <div className="text-xs text-gray-600">Placa: {demand.vehiclePlate}</div>}
+                                                            {demand.vehicleColor && <div className="text-xs text-gray-600">{demand.vehicleColor}</div>}
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-gray-400">No especificado</span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td className="p-2">{new Date(demand.createdAt).toLocaleDateString()}</td>
                                             <td className="p-2">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -103,6 +118,25 @@ export default function InternalActivity() {
                                             </span>
                                         </div>
                                     </div>
+                                    
+                                    {/* Información del vehículo en tarjetas móviles */}
+                                    {(demand.vehicleBrand || demand.vehicleModel || demand.vehicleYear || 
+                                      demand.vehiclePlate || demand.vehicleColor) && (
+                                        <div className="mt-2 pt-2 border-t border-gray-200">
+                                            <span className="font-medium text-xs block text-muted-foreground mb-1">Vehículo</span>
+                                            <div className="text-sm">
+                                                {demand.vehicleBrand && demand.vehicleModel && (
+                                                    <div className="font-medium">{demand.vehicleBrand} {demand.vehicleModel}</div>
+                                                )}
+                                                <div className="text-xs text-gray-600 flex flex-wrap gap-2">
+                                                    {demand.vehicleYear && <span>Año: {demand.vehicleYear}</span>}
+                                                    {demand.vehiclePlate && <span>Placa: {demand.vehiclePlate}</span>}
+                                                    {demand.vehicleColor && <span>Color: {demand.vehicleColor}</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
                                     <div className="flex justify-end mt-1">
                                         <ReceiptText className="h-5 w-5 text-primary" />
                                     </div>
