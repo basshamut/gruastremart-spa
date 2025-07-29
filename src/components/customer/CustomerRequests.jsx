@@ -236,7 +236,7 @@ const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, 
     );
 });
 
-export default function CustomerRequests() {
+export default function CustomerRequests({ refreshTrigger = 0 }) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
     const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
 
@@ -416,6 +416,13 @@ export default function CustomerRequests() {
         fetchRequests();
     }, [page, size, stateFilter]);
 
+    // Efecto para refrescar automáticamente cuando cambia refreshTrigger
+    useEffect(() => {
+        if (refreshTrigger > 0) {
+            fetchRequests();
+        }
+    }, [refreshTrigger]);
+
     const handleFilterChange = (e) => {
         setStateFilter(e.target.value);
         setPage(0);
@@ -494,10 +501,13 @@ export default function CustomerRequests() {
                             🚗 Operador en camino
                         </div>
                     )}
-                    {hasActiveRequests && (
-                        <div className="text-xs text-blue-600 flex items-center">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse mr-1"></div>
-                            Actualizando cada {DEMAND_POLL_INTERVAL}s
+                    {requests.length > 0 && (
+                        <div className="text-xs text-gray-500 space-y-1">
+                            <div>Última actualización: {new Date().toLocaleTimeString()}</div>
+                            <div className="flex items-center text-green-600">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                                Actualización cada 30s
+                            </div>
                         </div>
                     )}
                     {lastUpdate && (

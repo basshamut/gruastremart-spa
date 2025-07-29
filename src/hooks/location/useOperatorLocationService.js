@@ -7,12 +7,12 @@ import {
 
 /**
  * Hook para manejar la ubicación del operador usando endpoints REST
- * @param {string} assignedOperatorId - ID del operador asignado (assignedOperatorId de la demanda)
+ * @param {string} operatorUserId - ID del operador asignado (operatorUserId de la demanda)
  * @param {number} updateInterval - Intervalo en segundos para actualizar ubicación (default: 30)
  * @param {boolean} autoUpdate - Si debe actualizar automáticamente (default: true)
  * @returns {Object} - Estado y funciones para manejar la ubicación
  */
-export function useOperatorLocationService(assignedOperatorId, updateInterval = 30, autoUpdate = true) {
+export function useOperatorLocationService(operatorUserId, updateInterval = 30, autoUpdate = true) {
     const [location, setLocation] = useState(null);
     const [status, setStatus] = useState(null);
     const [error, setError] = useState(null);
@@ -24,13 +24,13 @@ export function useOperatorLocationService(assignedOperatorId, updateInterval = 
      * Obtiene la ubicación actual del operador
      */
     const fetchLocation = useCallback(async () => {
-        if (!assignedOperatorId) return;
+        if (!operatorUserId) return;
 
         setIsLoading(true);
         setError(null);
 
         try {
-            const locationData = await getOperatorLocation(assignedOperatorId);
+            const locationData = await getOperatorLocation(operatorUserId);
             
             // Convertir de latitude/longitude a lat/lng para compatibilidad con el frontend
             if (locationData && (locationData.latitude || locationData.longitude)) {
@@ -50,19 +50,19 @@ export function useOperatorLocationService(assignedOperatorId, updateInterval = 
         } finally {
             setIsLoading(false);
         }
-    }, [assignedOperatorId]);
+    }, [operatorUserId]);
 
     /**
      * Actualiza la ubicación del operador
      */
     const updateLocation = useCallback(async (newLocation) => {
-        if (!assignedOperatorId) return;
+        if (!operatorUserId) return;
 
         setIsUpdating(true);
         setError(null);
 
         try {
-            const response = await updateOperatorLocation(assignedOperatorId, newLocation);
+            const response = await updateOperatorLocation(operatorUserId, newLocation);
             
             // Convertir la respuesta del backend si contiene latitude/longitude
             let locationWithCoords = newLocation;
@@ -86,23 +86,23 @@ export function useOperatorLocationService(assignedOperatorId, updateInterval = 
         } finally {
             setIsUpdating(false);
         }
-    }, [assignedOperatorId]);
+    }, [operatorUserId]);
 
     /**
      * Obtiene el estado de la ubicación del operador
      */
     const fetchStatus = useCallback(async () => {
-        if (!assignedOperatorId) return;
+        if (!operatorUserId) return;
 
         try {
-            const statusData = await getOperatorLocationStatus(assignedOperatorId);
+            const statusData = await getOperatorLocationStatus(operatorUserId);
             setStatus(statusData);
             return statusData;
         } catch (err) {
             console.error("❌ Error obteniendo estado de ubicación:", err);
             throw err;
         }
-    }, [assignedOperatorId]);
+    }, [operatorUserId]);
 
     /**
      * Actualiza la ubicación usando GPS del navegador
@@ -190,24 +190,24 @@ export function useOperatorLocationService(assignedOperatorId, updateInterval = 
      * Efecto para actualización automática
      */
     useEffect(() => {
-        if (autoUpdate && assignedOperatorId) {
+        if (autoUpdate && operatorUserId) {
             startAutoUpdate();
         }
 
         return () => {
             stopAutoUpdate();
         };
-    }, [autoUpdate, assignedOperatorId, startAutoUpdate, stopAutoUpdate]);
+    }, [autoUpdate, operatorUserId, startAutoUpdate, stopAutoUpdate]);
 
     /**
      * Efecto para obtener ubicación inicial y estado
      */
     useEffect(() => {
-        if (assignedOperatorId) {
+        if (operatorUserId) {
             fetchLocation();
             fetchStatus();
         }
-    }, [assignedOperatorId, fetchLocation, fetchStatus]);
+    }, [operatorUserId, fetchLocation, fetchStatus]);
 
     return {
         // Estados
