@@ -1,14 +1,16 @@
-import {useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
-import {usePaginatedDemands} from "../hooks/data/usePaginatedDemands";
-import {useOperatorActivity} from "../hooks/data/useOperatorActivity";
-import {useOperatorLocationService} from "../hooks/location/useOperatorLocationService";
-import {assignCraneDemand} from "../services/CraneDemandService.js";
-import {fetchAssignedOperatorId} from "../services/OperatorService.js";
-import {formatDate} from "../utils/Utils.js";
+import { usePaginatedDemands } from "../hooks/data/usePaginatedDemands";
+import { useOperatorActivity } from "../hooks/data/useOperatorActivity";
+import { useOperatorLocationService } from "../hooks/location/useOperatorLocationService";
+import { assignCraneDemand } from "../services/CraneDemandService.js";
+import { fetchAssignedOperatorId } from "../services/OperatorService.js";
+import { formatDate } from "../utils/Utils.js";
 import { LOCATION_UPDATE_INTERVAL } from "../config/constants.js";
+import { useCranePricingDropdown } from "../hooks/data/useCranePricing.js";
+import { calculateServicePrice } from "../services/CranePricingService.js";
 
 export default function OperatorActivity() {
     // Estados específicos del componente
@@ -18,10 +20,15 @@ export default function OperatorActivity() {
     const [showConfirmButton, setShowConfirmButton] = useState(true);
     const [previousLocation, setPreviousLocation] = useState(null);
     const [assignedOperatorId, setAssignedOperatorId] = useState(null);
+    const [selectedWeightCategory, setSelectedWeightCategory] = useState('');
+    const [priceCalculation, setPriceCalculation] = useState(null);
+
+    // Hook para obtener las opciones de pricing
+    const { pricingOptions, loading: loadingPricing } = useCranePricingDropdown();
 
     // Obtener el ID del usuario desde localStorage
     const userId = JSON.parse(localStorage.getItem("userDetail"))?.id;
-    
+
     // La función fetchAssignedOperatorId ha sido movida al servicio OperatorService.js
 
     // Obtener el assignedOperatorId cuando se monta el componente
@@ -42,7 +49,7 @@ export default function OperatorActivity() {
         pendingNotificationsForActiveDemands,
         refreshTrigger,
         refreshData,
-    } = useOperatorActivity(30, 30); // 30s intervalo, 30s countdown, 5s delay
+    } = useOperatorActivity(30, 30, 30); // 30s ubicación, 30s countdown, 30s actualización de solicitudes
 
     // Hook para seguimiento de ubicación del operador usando endpoints REST
     const {
@@ -55,7 +62,7 @@ export default function OperatorActivity() {
         stopAutoUpdate
     } = useOperatorLocationService(assignedOperatorId, LOCATION_UPDATE_INTERVAL, !!assignedOperatorId); // Usar variable configurable
 
-    const activeDemands = usePaginatedDemands("ACTIVE", refreshTrigger, 50,location?.latitude || null, location?.longitude || null);
+    const activeDemands = usePaginatedDemands("ACTIVE", refreshTrigger, 50, location?.latitude || null, location?.longitude || null);
     const takenDemands = usePaginatedDemands("TAKEN", refreshTrigger, 50);
 
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
@@ -92,12 +99,25 @@ export default function OperatorActivity() {
     const openModal = (demand, modalType) => {
         setSelectedDemand(demand);
         setIsModalOpen(true);
+        setSelectedWeightCategory('');
+        setPriceCalculation(null);
+
         if (modalType === "SHOW") {
             setShowConfirmButton(false);
         }
 
         if (modalType === "ASSIGN") {
             setShowConfirmButton(true);
+            // Sugerir categoría basada en el peso del vehículo si está disponible
+            if (demand.vehicleWeight && pricingOptions.length > 0) {
+                const suggested = pricingOptions.find(option =>
+                    demand.vehicleWeight >= option.minWeightKg &&
+                    demand.vehicleWeight <= option.maxWeightKg
+                );
+                if (suggested) {
+                    setSelectedWeightCategory(suggested.weightCategory);
+                }
+            }
         }
     };
 
@@ -105,17 +125,59 @@ export default function OperatorActivity() {
         setSelectedDemand(null);
         setIsModalOpen(false);
         setModalError(null);
+        setSelectedWeightCategory('');
+        setPriceCalculation(null);
     };
 
     const takeDemand = async () => {
+        if (!selectedWeightCategory) {
+            setModalError('Debe seleccionar una categoría de peso');
+            return;
+        }
+
         try {
-            await assignCraneDemand(selectedDemand)
+            // Convertir la categoría a enum
+            const weightCategoryEnum = getWeightCategoryEnum(selectedWeightCategory);
+            await assignCraneDemand(selectedDemand, weightCategoryEnum);
             setModalError(null);
             closeModal();
             document.location.reload();
         } catch (error) {
             console.error(error);
             setModalError(`${error}`);
+        }
+    };
+
+    const getWeightCategoryEnum = (weightCategory) => {
+        const enumMap = {
+            'Peso 1': 'PESO_1',
+            'Peso 2': 'PESO_2',
+            'Peso 3': 'PESO_3',
+            'Peso 4': 'PESO_4'
+        };
+        return enumMap[weightCategory] || weightCategory;
+    };
+
+    const handleWeightCategoryChange = (category) => {
+        setSelectedWeightCategory(category);
+
+        // Calcular precio si hay distancia disponible
+        if (category && selectedDemand && selectedDemand.distance) {
+            const selectedPricing = pricingOptions.find(option =>
+                option.weightCategory === category
+            );
+
+            if (selectedPricing) {
+                try {
+                    const calculation = calculateServicePrice(selectedPricing, selectedDemand.distance);
+                    setPriceCalculation(calculation);
+                } catch (error) {
+                    console.error('Error calculating price:', error);
+                    setPriceCalculation(null);
+                }
+            }
+        } else {
+            setPriceCalculation(null);
         }
     };
 
@@ -131,7 +193,7 @@ export default function OperatorActivity() {
                         <div className="text-[10px] text-green-600 mb-2">
                             ✅ Tracking activo desde el login - Ubicación se actualiza cada {LOCATION_UPDATE_INTERVAL}s
                         </div>
-                        
+
                         {locationError ? (
                             <div className="text-xs text-red-600 space-y-1">
                                 <div className="font-semibold">Error de ubicación:</div>
@@ -141,7 +203,7 @@ export default function OperatorActivity() {
                                         Próximo intento en: {countdown}s
                                     </div>
                                     <div className="w-full bg-red-200 rounded-full h-1 mt-1">
-                                        <div 
+                                        <div
                                             className="bg-red-500 h-1 rounded-full transition-all duration-1000"
                                             style={{ width: `${((LOCATION_UPDATE_INTERVAL - countdown) / LOCATION_UPDATE_INTERVAL) * 100}%` }}
                                         ></div>
@@ -168,31 +230,29 @@ export default function OperatorActivity() {
                             <div className="text-xs text-gray-800 space-y-1 mt-2">
                                 {operatorLocation.lat && operatorLocation.lng ? (
                                     <>
-                                <div>
+                                        <div>
                                             <span className="font-semibold">Latitud:</span> {operatorLocation.lat.toFixed(6)}
-                                </div>
-                                <div>
+                                        </div>
+                                        <div>
                                             <span className="font-semibold">Longitud:</span> {operatorLocation.lng.toFixed(6)}
-                                </div>
-                                <div>
-                                    <span className="font-semibold">Precisión:</span> {operatorLocation.accuracy ? `${operatorLocation.accuracy.toFixed(1)}m` : 'N/A'}
-                                </div>
-                                <div>
-                                    <span className="font-semibold">Última actualización:</span> {new Date(operatorLocation.timestamp).toLocaleTimeString()}
-                                </div>
-                                        {locationUpdating && (
-                                            <div className="text-[10px] text-blue-600 mt-1">
-                                                🔄 Actualizando ubicación...
-                                            </div>
-                                        )}
-                                {previousLocation &&
+                                        </div>
+                                        <div>
+                                            <span className="font-semibold">Precisión:</span> {operatorLocation.accuracy ? `${operatorLocation.accuracy.toFixed(1)}m` : 'N/A'}
+                                        </div>
+                                        <div>
+                                            <span className="font-semibold">Última actualización:</span> {new Date(operatorLocation.timestamp).toLocaleTimeString()}
+                                        </div>
+                                        <div className={`text-[10px] mt-1 h-4 ${locationUpdating ? 'text-blue-600' : 'text-transparent'}`}>
+                                            🔄 Actualizando ubicación...
+                                        </div>
+                                        {previousLocation &&
                                             previousLocation.lat && previousLocation.lng &&
                                             (previousLocation.lat !== operatorLocation.lat || previousLocation.lng !== operatorLocation.lng) && (
-                                        <div className="text-[11px] text-gray-400 mt-1">
+                                                <div className="text-[11px] text-gray-400 mt-1">
                                                     <span className="font-semibold">Anterior:</span> {previousLocation.lat.toFixed(6)}, {previousLocation.lng.toFixed(6)}
-                                        </div>
-                                    )
-                                }
+                                                </div>
+                                            )
+                                        }
                                     </>
                                 ) : (
                                     <div className="text-xs text-gray-600 space-y-1">
@@ -267,18 +327,22 @@ export default function OperatorActivity() {
                             )}
                         </h2>
                         <div className="flex items-center gap-2">
-                        {pendingNotificationsForActiveDemands.length > 0 && (
-                            <button
-                                onClick={refreshData}
+                            {pendingNotificationsForActiveDemands.length > 0 && (
+                                <button
+                                    onClick={refreshData}
                                     className="bg-orange-500 text-white text-xs px-3 py-1 rounded-full flex items-center hover:bg-orange-600 transition-colors"
-                            >
-                                {pendingNotificationsForActiveDemands.length} nueva{pendingNotificationsForActiveDemands.length > 1 ? 's' : ''} •
+                                >
+                                    {pendingNotificationsForActiveDemands.length} nueva{pendingNotificationsForActiveDemands.length > 1 ? 's' : ''} •
                                     Actualizar
-                            </button>
-                        )}
+                                </button>
+                            )}
                             {activeDemands.demands.length > 0 && (
-                                <div className="text-xs text-gray-500">
-                                    Última actualización: {new Date().toLocaleTimeString()}
+                                <div className="text-xs text-gray-500 space-y-1">
+                                    <div>Última actualización: {new Date().toLocaleTimeString()}</div>
+                                    <div className="flex items-center text-green-600">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                                        Auto-actualización cada 30s
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -292,8 +356,8 @@ export default function OperatorActivity() {
                     ) : activeDemands.error ? (
                         <div className="text-center py-8">
                             <p className="text-sm text-red-500 mb-2">{activeDemands.error}</p>
-                            <button 
-                                onClick={() => window.location.reload()} 
+                            <button
+                                onClick={() => window.location.reload()}
                                 className="text-xs text-blue-600 hover:text-blue-800 underline"
                             >
                                 Reintentar
@@ -311,16 +375,15 @@ export default function OperatorActivity() {
                                 {activeDemands.demands.map((demand) => {
                                     const createdAt = new Date(demand.createdAt);
                                     const timeAgo = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60)); // minutos
-                                    
+
                                     // Determinar prioridad basada en el tiempo transcurrido
                                     const isUrgent = timeAgo > 30; // Más de 30 minutos
                                     const isHighPriority = timeAgo > 15; // Más de 15 minutos
-                                    
+
                                     return (
-                                        <div key={demand.id} className={`border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow ${
-                                            isUrgent ? 'border-orange-300 bg-orange-50' : 
-                                            isHighPriority ? 'border-yellow-300 bg-yellow-50' : ''
-                                        }`}>
+                                        <div key={demand.id} className={`border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow ${isUrgent ? 'border-orange-300 bg-orange-50' :
+                                                isHighPriority ? 'border-yellow-300 bg-yellow-50' : ''
+                                            }`}>
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2 mb-2">
@@ -347,16 +410,16 @@ export default function OperatorActivity() {
                                                             <span className="font-medium">Fecha:</span> {formatDate(demand.createdAt)}
                                                         </div>
                                                         <div>
-                                                            <span className="font-medium">Tiempo transcurrido:</span> 
-                                                            <span className={isUrgent ? 'text-red-600 font-semibold' : 
-                                                                           isHighPriority ? 'text-yellow-600' : 'text-gray-600'}>
-                                                                {timeAgo < 1 ? 'Menos de 1 min' : 
-                                                                 timeAgo < 60 ? `${timeAgo} min` : 
-                                                                 `${Math.floor(timeAgo / 60)}h ${timeAgo % 60}min`}
+                                                            <span className="font-medium">Tiempo transcurrido:</span>
+                                                            <span className={isUrgent ? 'text-red-600 font-semibold' :
+                                                                isHighPriority ? 'text-yellow-600' : 'text-gray-600'}>
+                                                                {timeAgo < 1 ? 'Menos de 1 min' :
+                                                                    timeAgo < 60 ? `${timeAgo} min` :
+                                                                        `${Math.floor(timeAgo / 60)}h ${timeAgo % 60}min`}
                                                             </span>
                                                         </div>
                                                         {demand.breakdown && (
-                                            <div>
+                                                            <div>
                                                                 <span className="font-medium">Avería:</span> {demand.breakdown}
                                                             </div>
                                                         )}
@@ -388,24 +451,23 @@ export default function OperatorActivity() {
                                                         )}
                                                         {demand.description && (
                                                             <div className="md:col-span-2">
-                                                                <span className="font-medium">Descripción:</span> 
+                                                                <span className="font-medium">Descripción:</span>
                                                                 <span className="text-gray-700 ml-1">{demand.description}</span>
                                                             </div>
                                                         )}
                                                     </div>
-                                            </div>
+                                                </div>
                                                 <div className="flex flex-col gap-2 ml-4">
-                                            <button
-                                                onClick={() => openModal(demand, "ASSIGN")}
-                                                        className={`px-4 py-2 text-white rounded text-sm transition-colors ${
-                                                            isUrgent ? 'bg-red-500 hover:bg-red-600' :
-                                                            isHighPriority ? 'bg-yellow-500 hover:bg-yellow-600' :
-                                                            'bg-blue-500 hover:bg-blue-600'
-                                                        }`}
+                                                    <button
+                                                        onClick={() => openModal(demand, "ASSIGN")}
+                                                        className={`px-4 py-2 text-white rounded text-sm transition-colors ${isUrgent ? 'bg-red-500 hover:bg-red-600' :
+                                                                isHighPriority ? 'bg-yellow-500 hover:bg-yellow-600' :
+                                                                    'bg-blue-500 hover:bg-blue-600'
+                                                            }`}
                                                     >
-                                                        {isUrgent ? '🚨 Tomar Urgente' : 
-                                                         isHighPriority ? '⏰ Tomar Ahora' : 'Tomar'}
-                                            </button>
+                                                        {isUrgent ? '🚨 Tomar Urgente' :
+                                                            isHighPriority ? '⏰ Tomar Ahora' : 'Tomar'}
+                                                    </button>
                                                     {demand.currentLocation && (
                                                         <div className="text-xs text-gray-500 text-center">
                                                             📍 Con ubicación
@@ -442,8 +504,12 @@ export default function OperatorActivity() {
                             )}
                         </h2>
                         {takenDemands.demands.length > 0 && (
-                            <div className="text-xs text-gray-500">
-                                Última actualización: {new Date().toLocaleTimeString()}
+                            <div className="text-xs text-gray-500 space-y-1">
+                                <div>Última actualización: {new Date().toLocaleTimeString()}</div>
+                                <div className="flex items-center text-green-600">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                                    Auto-actualización cada 30s
+                                </div>
                             </div>
                         )}
                     </div>
@@ -456,8 +522,8 @@ export default function OperatorActivity() {
                     ) : takenDemands.error ? (
                         <div className="text-center py-8">
                             <p className="text-sm text-red-500 mb-2">{takenDemands.error}</p>
-                            <button 
-                                onClick={() => window.location.reload()} 
+                            <button
+                                onClick={() => window.location.reload()}
                                 className="text-xs text-blue-600 hover:text-blue-800 underline"
                             >
                                 Reintentar
@@ -475,7 +541,7 @@ export default function OperatorActivity() {
                                 {takenDemands.demands.map((demand) => {
                                     const createdAt = new Date(demand.createdAt);
                                     const timeAgo = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60)); // minutos
-                                    
+
                                     return (
                                         <div key={demand.id} className="border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow">
                                             <div className="flex justify-between items-start">
@@ -493,12 +559,12 @@ export default function OperatorActivity() {
                                                         <div>
                                                             <span className="font-medium">Fecha:</span> {formatDate(demand.createdAt)}
                                                         </div>
-                                            <div>
-                                                            <span className="font-medium">Tiempo transcurrido:</span> 
+                                                        <div>
+                                                            <span className="font-medium">Tiempo transcurrido:</span>
                                                             <span className={timeAgo > 60 ? 'text-orange-600' : 'text-gray-600'}>
-                                                                {timeAgo < 1 ? 'Menos de 1 min' : 
-                                                                 timeAgo < 60 ? `${timeAgo} min` : 
-                                                                 `${Math.floor(timeAgo / 60)}h ${timeAgo % 60}min`}
+                                                                {timeAgo < 1 ? 'Menos de 1 min' :
+                                                                    timeAgo < 60 ? `${timeAgo} min` :
+                                                                        `${Math.floor(timeAgo / 60)}h ${timeAgo % 60}min`}
                                                             </span>
                                                         </div>
                                                         {/* Información del vehículo */}
@@ -529,19 +595,19 @@ export default function OperatorActivity() {
                                                         )}
                                                         {demand.description && (
                                                             <div className="md:col-span-2">
-                                                                <span className="font-medium">Descripción:</span> 
+                                                                <span className="font-medium">Descripción:</span>
                                                                 <span className="text-gray-700 ml-1">{demand.description}</span>
                                                             </div>
                                                         )}
                                                     </div>
-                                            </div>
+                                                </div>
                                                 <div className="flex flex-col gap-2 ml-4">
-                                                <button
-                                                    onClick={() => openModal(demand, "SHOW")}
+                                                    <button
+                                                        onClick={() => openModal(demand, "SHOW")}
                                                         className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm transition-colors"
-                                                >
+                                                    >
                                                         Ver detalles
-                                                </button>
+                                                    </button>
                                                     {timeAgo > 60 && (
                                                         <div className="text-xs text-orange-600 text-center">
                                                             ⚠️ Pendiente
@@ -584,14 +650,13 @@ export default function OperatorActivity() {
                                 <div>
                                     <span className="font-medium text-gray-700">Estado:</span>
                                     <p className="text-gray-800">
-                                        <span className={`px-2 py-1 rounded-full text-xs ${
-                                            selectedDemand.state === 'TAKEN' ? 'bg-green-100 text-green-800' :
-                                            selectedDemand.state === 'ACTIVE' ? 'bg-blue-100 text-blue-800' :
-                                            'bg-gray-100 text-gray-800'
-                                        }`}>
+                                        <span className={`px-2 py-1 rounded-full text-xs ${selectedDemand.state === 'TAKEN' ? 'bg-green-100 text-green-800' :
+                                                selectedDemand.state === 'ACTIVE' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-gray-100 text-gray-800'
+                                            }`}>
                                             {selectedDemand.state === 'TAKEN' ? 'Asignada' :
-                                             selectedDemand.state === 'ACTIVE' ? 'Activa' :
-                                             selectedDemand.state}
+                                                selectedDemand.state === 'ACTIVE' ? 'Activa' :
+                                                    selectedDemand.state}
                                         </span>
                                     </p>
                                 </div>
@@ -609,44 +674,44 @@ export default function OperatorActivity() {
                         </div>
 
                         {/* Información del vehículo */}
-                        {(selectedDemand.vehicleBrand || selectedDemand.vehicleModel || selectedDemand.vehicleYear || 
-                          selectedDemand.vehiclePlate || selectedDemand.vehicleColor) && (
-                            <div className="bg-blue-50 p-4 rounded-lg">
-                                <h4 className="font-bold text-md text-gray-800 mb-3">Datos del Vehículo</h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                                    {selectedDemand.vehicleBrand && (
-                                        <div>
-                                            <span className="font-medium text-gray-700">Marca:</span>
-                                            <p className="text-gray-800">{selectedDemand.vehicleBrand}</p>
-                                        </div>
-                                    )}
-                                    {selectedDemand.vehicleModel && (
-                                        <div>
-                                            <span className="font-medium text-gray-700">Modelo:</span>
-                                            <p className="text-gray-800">{selectedDemand.vehicleModel}</p>
-                                        </div>
-                                    )}
-                                    {selectedDemand.vehicleYear && (
-                                        <div>
-                                            <span className="font-medium text-gray-700">Año:</span>
-                                            <p className="text-gray-800">{selectedDemand.vehicleYear}</p>
-                                        </div>
-                                    )}
-                                    {selectedDemand.vehiclePlate && (
-                                        <div>
-                                            <span className="font-medium text-gray-700">Placa:</span>
-                                            <p className="text-gray-800">{selectedDemand.vehiclePlate}</p>
-                                        </div>
-                                    )}
-                                    {selectedDemand.vehicleColor && (
-                                        <div>
-                                            <span className="font-medium text-gray-700">Color:</span>
-                                            <p className="text-gray-800">{selectedDemand.vehicleColor}</p>
-                                        </div>
-                                    )}
+                        {(selectedDemand.vehicleBrand || selectedDemand.vehicleModel || selectedDemand.vehicleYear ||
+                            selectedDemand.vehiclePlate || selectedDemand.vehicleColor) && (
+                                <div className="bg-blue-50 p-4 rounded-lg">
+                                    <h4 className="font-bold text-md text-gray-800 mb-3">Datos del Vehículo</h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                        {selectedDemand.vehicleBrand && (
+                                            <div>
+                                                <span className="font-medium text-gray-700">Marca:</span>
+                                                <p className="text-gray-800">{selectedDemand.vehicleBrand}</p>
+                                            </div>
+                                        )}
+                                        {selectedDemand.vehicleModel && (
+                                            <div>
+                                                <span className="font-medium text-gray-700">Modelo:</span>
+                                                <p className="text-gray-800">{selectedDemand.vehicleModel}</p>
+                                            </div>
+                                        )}
+                                        {selectedDemand.vehicleYear && (
+                                            <div>
+                                                <span className="font-medium text-gray-700">Año:</span>
+                                                <p className="text-gray-800">{selectedDemand.vehicleYear}</p>
+                                            </div>
+                                        )}
+                                        {selectedDemand.vehiclePlate && (
+                                            <div>
+                                                <span className="font-medium text-gray-700">Placa:</span>
+                                                <p className="text-gray-800">{selectedDemand.vehiclePlate}</p>
+                                            </div>
+                                        )}
+                                        {selectedDemand.vehicleColor && (
+                                            <div>
+                                                <span className="font-medium text-gray-700">Color:</span>
+                                                <p className="text-gray-800">{selectedDemand.vehicleColor}</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
                         {/* Descripción y avería */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -667,6 +732,93 @@ export default function OperatorActivity() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Selección de categoría de peso para asignación */}
+                        {showConfirmButton && (
+                            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                <h4 className="font-bold text-md text-gray-800 mb-3">⚖️ Categoría de Peso</h4>
+
+                                {/* Peso del vehículo si está disponible */}
+                                {selectedDemand.vehicleWeight && (
+                                    <div className="mb-3 p-2 bg-blue-50 rounded text-sm">
+                                        <span className="font-medium text-blue-800">
+                                            Peso informado: {selectedDemand.vehicleWeight} kg
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Selector de categoría */}
+                                <div className="mb-3">
+                                    <label htmlFor="weightCategory" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Seleccionar categoría de peso *
+                                    </label>
+                                    {loadingPricing ? (
+                                        <div className="text-sm text-gray-500">Cargando categorías...</div>
+                                    ) : (
+                                        <select
+                                            id="weightCategory"
+                                            value={selectedWeightCategory}
+                                            onChange={(e) => handleWeightCategoryChange(e.target.value)}
+                                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                            required
+                                        >
+                                            <option value="">Seleccionar categoría...</option>
+                                            {pricingOptions.map((option) => (
+                                                <option key={option.id} value={option.weightCategory}>
+                                                    {option.displayName} - Urbano: ${option.urbanPrice} | Extra: ${option.extraUrbanBasePrice} + ${option.extraUrbanPricePerKm}/km
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+
+                                {/* Información detallada de la categoría seleccionada */}
+                                {selectedWeightCategory && (
+                                    <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+                                        <h5 className="text-sm font-semibold text-blue-800 mb-2">
+                                            📋 Detalles de la Categoría
+                                        </h5>
+                                        {(() => {
+                                            const selectedPricing = pricingOptions.find(option =>
+                                                option.weightCategory === selectedWeightCategory
+                                            );
+                                            return selectedPricing ? (
+                                                <div className="text-sm text-blue-700 space-y-1">
+                                                    <p><strong>Categoría:</strong> {selectedPricing.weightCategory}</p>
+                                                    <p><strong>Rango de peso:</strong> {selectedPricing.minWeightKg} - {selectedPricing.maxWeightKg} kg</p>
+                                                    <p><strong>Servicio urbano (≤{selectedPricing.maxDistanceKm}km):</strong> ${selectedPricing.urbanPrice} USD</p>
+                                                    <p><strong>Servicio extra urbano (&gt;{selectedPricing.maxDistanceKm}km):</strong> ${selectedPricing.extraUrbanBasePrice} USD base + ${selectedPricing.extraUrbanPricePerKm} USD/km adicional</p>
+                                                    {selectedPricing.description && (
+                                                        <p><strong>Descripción:</strong> {selectedPricing.description}</p>
+                                                    )}
+                                                </div>
+                                            ) : null;
+                                        })()}
+                                    </div>
+                                )}
+
+                                {/* Cálculo de precio */}
+                                {priceCalculation && (
+                                    <div className="p-3 bg-green-50 border border-green-200 rounded">
+                                        <h5 className="text-sm font-semibold text-green-800 mb-2">
+                                            💰 Cálculo de Precio
+                                        </h5>
+                                        <div className="text-sm text-green-700">
+                                            <p><strong>Tipo de servicio:</strong> {priceCalculation.serviceType}</p>
+                                            <p><strong>Distancia:</strong> {priceCalculation.distance} km</p>
+                                            <p><strong>Precio total:</strong> ${priceCalculation.totalPrice.toFixed(2)} USD</p>
+
+                                            {priceCalculation.serviceType === 'extra_urbano' && (
+                                                <div className="text-xs text-green-600 mt-1 space-y-1">
+                                                    <p>• Base: ${priceCalculation.breakdown.basePrice}</p>
+                                                    <p>• Extra ({priceCalculation.breakdown.extraDistance} km × ${priceCalculation.breakdown.pricePerKm}): ${priceCalculation.breakdown.extraCost.toFixed(2)}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Ubicaciones */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -714,12 +866,12 @@ export default function OperatorActivity() {
                                 >
                                     Cancelar
                                 </button>
-                            <button
-                                onClick={takeDemand}
+                                <button
+                                    onClick={takeDemand}
                                     className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm"
-                            >
+                                >
                                     Confirmar asignación
-                            </button>
+                                </button>
                             </div>
                         )}
                     </div>
