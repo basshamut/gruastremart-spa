@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react";
 import CustomerGeoLocation from "../components/customer/CustomerGeoLocation";
 import CustomerForm from "../components/customer/CustormerForm";
 import CustomerRequests from "../components/customer/CustomerRequests.jsx";
+import { useAutoRefresh } from "../hooks/data/useAutoRefresh";
 
 export default function CustomerActivity() {
     const [formData, setFormData] = useState({
@@ -23,6 +24,9 @@ export default function CustomerActivity() {
     const [, setCreatedDemandId] = useState(null);
     const [, setRequests] = useState([]);
     const [activeTab, setActiveTab] = useState("solicitudes");
+
+    // Hook para auto-refresh cada 30 segundos
+    const { refreshTrigger } = useAutoRefresh(30);
 
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
 
@@ -99,7 +103,7 @@ export default function CustomerActivity() {
             {/* Contenido de los tabs */}
             {activeTab === "solicitudes" && (
                 <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
-                    <CustomerRequests/>
+                    <CustomerRequests refreshTrigger={refreshTrigger} />
                 </div>
             )}
             {activeTab === "formulario" && (

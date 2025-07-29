@@ -5,8 +5,8 @@ import Modal from "../components/common/Modal";
 import { usePaginatedDemands } from "../hooks/data/usePaginatedDemands";
 import { useOperatorActivity } from "../hooks/data/useOperatorActivity";
 import { useOperatorLocationService } from "../hooks/location/useOperatorLocationService";
-import { assignCraneDemand } from "../services/CraneDemandService.js";
-import { fetchAssignedOperatorId } from "../services/OperatorService.js";
+import { assignCraneDemandToOperator } from "../services/CraneDemandService.js";
+import { updateOperatorLocation } from "../services/OperatorLocationService.js";
 import { formatDate } from "../utils/Utils.js";
 import { LOCATION_UPDATE_INTERVAL } from "../config/constants.js";
 import { useCranePricingDropdown } from "../hooks/data/useCranePricing.js";
@@ -19,29 +19,14 @@ export default function OperatorActivity() {
     const [modalError, setModalError] = useState(null);
     const [showConfirmButton, setShowConfirmButton] = useState(true);
     const [previousLocation, setPreviousLocation] = useState(null);
-    const [assignedOperatorId, setAssignedOperatorId] = useState(null);
     const [selectedWeightCategory, setSelectedWeightCategory] = useState('');
     const [priceCalculation, setPriceCalculation] = useState(null);
 
+    // Obtener el ID del operador directamente desde localStorage (no cambia durante la sesión)
+    const assignedOperatorId = JSON.parse(localStorage.getItem("userDetail"))?.id;
+
     // Hook para obtener las opciones de pricing
     const { pricingOptions, loading: loadingPricing } = useCranePricingDropdown();
-
-    // Obtener el ID del usuario desde localStorage
-    const userId = JSON.parse(localStorage.getItem("userDetail"))?.id;
-
-    // La función fetchAssignedOperatorId ha sido movida al servicio OperatorService.js
-
-    // Obtener el assignedOperatorId cuando se monta el componente
-    useEffect(() => {
-        const getAssignedOperatorId = async () => {
-            const id = await fetchAssignedOperatorId(userId);
-            setAssignedOperatorId(id);
-        };
-
-        if (userId) {
-            getAssignedOperatorId();
-        }
-    }, [userId]);
 
     // Hook personalizado que maneja toda la lógica de actividad del operador
     const {
@@ -135,15 +120,29 @@ export default function OperatorActivity() {
             return;
         }
 
+        // Validar que el operador tenga ubicación antes de tomar la demanda
+        if (!operatorLocation || !operatorLocation.lat || !operatorLocation.lng) {
+            setModalError('No se puede tomar la demanda sin ubicación GPS activa. Por favor, espera a que se obtenga tu ubicación.');
+            return;
+        }
+
         try {
             // Convertir la categoría a enum
             const weightCategoryEnum = getWeightCategoryEnum(selectedWeightCategory);
-            await assignCraneDemand(selectedDemand, weightCategoryEnum);
+            
+            // Paso 1: Asignar la demanda
+            await assignCraneDemandToOperator(selectedDemand, weightCategoryEnum, operatorLocation, assignedOperatorId);
+
+            // Paso 2: Actualizar la ubicación del operador usando el servicio existente
+            if (assignedOperatorId && operatorLocation.lat && operatorLocation.lng) {
+                await updateOperatorLocation(assignedOperatorId, operatorLocation);
+            }
+            
             setModalError(null);
             closeModal();
             document.location.reload();
         } catch (error) {
-            console.error(error);
+            console.error("❌ takeDemand: Error occurred", error);
             setModalError(`${error}`);
         }
     };
@@ -341,7 +340,7 @@ export default function OperatorActivity() {
                                     <div>Última actualización: {new Date().toLocaleTimeString()}</div>
                                     <div className="flex items-center text-green-600">
                                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
-                                        Auto-actualización cada 30s
+                                        Actualización cada 30s
                                     </div>
                                 </div>
                             )}
@@ -508,7 +507,7 @@ export default function OperatorActivity() {
                                 <div>Última actualización: {new Date().toLocaleTimeString()}</div>
                                 <div className="flex items-center text-green-600">
                                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
-                                    Auto-actualización cada 30s
+                                    Actualización cada 30s
                                 </div>
                             </div>
                         )}
@@ -858,6 +857,34 @@ export default function OperatorActivity() {
                             </div>
                         )}
 
+                        {/* Indicador de estado de ubicación del operador */}
+                        {showConfirmButton && (
+                            <div className={`p-3 rounded-lg border ${operatorLocation && operatorLocation.lat && operatorLocation.lng 
+                                ? 'bg-green-50 border-green-200' 
+                                : 'bg-yellow-50 border-yellow-200'
+                            }`}>
+                                <div className="flex items-center gap-2">
+                                    {operatorLocation && operatorLocation.lat && operatorLocation.lng ? (
+                                        <>
+                                            <span className="text-green-600">📍</span>
+                                            <span className="text-sm font-medium text-green-800">Ubicación GPS activa</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-yellow-600">⚠️</span>
+                                            <span className="text-sm font-medium text-yellow-800">Esperando ubicación GPS</span>
+                                        </>
+                                    )}
+                                </div>
+                                {operatorLocation && operatorLocation.lat && operatorLocation.lng && (
+                                    <div className="text-xs text-green-600 mt-1">
+                                        📍 {operatorLocation.lat.toFixed(6)}, {operatorLocation.lng.toFixed(6)}
+                                        {operatorLocation.accuracy && ` (±${operatorLocation.accuracy.toFixed(1)}m)`}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {showConfirmButton && (
                             <div className="flex gap-3 pt-4 border-t border-gray-200">
                                 <button
@@ -868,9 +895,17 @@ export default function OperatorActivity() {
                                 </button>
                                 <button
                                     onClick={takeDemand}
-                                    className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm"
+                                    disabled={!operatorLocation || !operatorLocation.lat || !operatorLocation.lng}
+                                    className={`flex-1 py-2 px-4 rounded-md transition-colors text-sm ${
+                                        operatorLocation && operatorLocation.lat && operatorLocation.lng
+                                            ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
                                 >
-                                    Confirmar asignación
+                                    {operatorLocation && operatorLocation.lat && operatorLocation.lng
+                                        ? 'Confirmar asignación'
+                                        : 'Esperando GPS...'
+                                    }
                                 </button>
                             </div>
                         )}

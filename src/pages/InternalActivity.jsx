@@ -2,13 +2,18 @@ import { ReceiptText, TrendingUp, TrendingDown, Calendar, CheckCircle, Clock, XC
 import Pagination from "../components/common/Pagination";
 import { usePaginatedDemands } from "../hooks/data/usePaginatedDemands";
 import { useMonthlyStats } from "../hooks/data/useMonthlyStats";
+import { useAutoRefresh } from "../hooks/data/useAutoRefresh";
 
 export default function InternalActivity() {
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
-    const activeList = usePaginatedDemands("ACTIVE", null, 10);
-    const takenList = usePaginatedDemands("TAKEN", null, 10);
-    const cancelledList = usePaginatedDemands("CANCELLED", null, 10);
-    const completedList = usePaginatedDemands("COMPLETED", null, 10);
+    
+    // Hook para auto-refresh cada 30 segundos
+    const { refreshTrigger } = useAutoRefresh(30);
+    
+    const activeList = usePaginatedDemands("ACTIVE", refreshTrigger, 10);
+    const takenList = usePaginatedDemands("TAKEN", refreshTrigger, 10);
+    const cancelledList = usePaginatedDemands("CANCELLED", refreshTrigger, 10);
+    const completedList = usePaginatedDemands("COMPLETED", refreshTrigger, 10);
     const { stats, loading: statsLoading, error: statsError } = useMonthlyStats();
 
     // Función helper para renderizar tabla de solicitudes
@@ -16,6 +21,15 @@ export default function InternalActivity() {
         <div className="bg-card p-4 rounded-lg shadow-md">
             <div className="flex justify-between items-center">
                 <h2 className="text-lg font-bold text-primary-foreground">{title}</h2>
+                {demandList.demands.length > 0 && (
+                    <div className="text-xs text-gray-500 space-y-1">
+                        <div>Última actualización: {new Date().toLocaleTimeString()}</div>
+                        <div className="flex items-center text-green-600">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                            Actualización cada 30s
+                        </div>
+                    </div>
+                )}
             </div>
             <div className="mt-4">
                 {demandList.loading ? (
