@@ -3,7 +3,8 @@ import { useOperatorLocationInterval } from '../location/useOperatorLocationInte
 
 export const useOperatorActivity = (
     locationInterval = 30,
-    errorCountdown = 30
+    errorCountdown = 30,
+    demandsRefreshInterval = 30 // Nueva opción para el intervalo de actualización de solicitudes
 ) => {
     // Estados para notificaciones
     const [pendingNotificationsForActiveDemands, setPendingNotificationsForActiveDemands] = useState([]);
@@ -57,6 +58,17 @@ export const useOperatorActivity = (
             setCountdown(errorCountdown);
         }
     }, [locationError, errorCountdown, startTracking]);
+
+    /**
+     * Actualización automática de solicitudes cada 30 segundos
+     */
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setRefreshTrigger(prev => prev + 1);
+        }, demandsRefreshInterval * 1000); // Convertir segundos a milisegundos
+
+        return () => clearInterval(interval);
+    }, [demandsRefreshInterval]);
 
     /**
      * Función para refrescar datos manualmente
