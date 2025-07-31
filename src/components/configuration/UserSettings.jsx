@@ -143,7 +143,7 @@ export default function UserSettings() {
                         placeholder="Buscar por email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     />
                 </div>
 
@@ -160,7 +160,7 @@ export default function UserSettings() {
                             <select
                                 value={roleFilter}
                                 onChange={(e) => setRoleFilter(e.target.value)}
-                                className="flex-1 sm:flex-none px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="flex-1 sm:flex-none px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                             >
                                 <option value="">Todos</option>
                                 <option value="ADMIN">Administrador</option>
@@ -174,7 +174,7 @@ export default function UserSettings() {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="flex-1 sm:flex-none px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="flex-1 sm:flex-none px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                             >
                                 <option value="">Todos</option>
                                 <option value="true">Activo</option>
@@ -204,7 +204,7 @@ export default function UserSettings() {
 
             {loading ? (
                 <div className="text-center py-8">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                     <p className="mt-2 text-gray-600">Cargando usuarios...</p>
                 </div>
             ) : (
@@ -214,7 +214,7 @@ export default function UserSettings() {
                         <div className="text-sm text-gray-600">
                             Mostrando {filteredUsers.length} usuarios
                             {(roleFilter || statusFilter || searchTerm) && (
-                                <span className="ml-2 text-blue-600">(filtrado)</span>
+                                <span className="ml-2 text-green-600">(filtrado)</span>
                             )}
                         </div>
                     </div>
@@ -267,7 +267,7 @@ export default function UserSettings() {
                                     <div className="flex flex-row sm:flex-col gap-2 justify-end">
                                         <button
                                             onClick={() => handleEditUser(user)}
-                                            className="flex items-center justify-center px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm transition-colors gap-1"
+                                            className="flex items-center justify-center px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 text-sm transition-colors gap-1"
                                             title="Editar usuario"
                                         >
                                             <Edit className="w-4 h-4" />
@@ -346,7 +346,7 @@ export default function UserSettings() {
                                         type="text"
                                         value={editFormData.name}
                                         onChange={(e) => handleInputChange('name', e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                         placeholder="Ingresa el nombre"
                                     />
                                 </div>
@@ -358,7 +358,7 @@ export default function UserSettings() {
                                         type="text"
                                         value={editFormData.lastName}
                                         onChange={(e) => handleInputChange('lastName', e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                         placeholder="Ingresa el apellido"
                                     />
                                 </div>
@@ -384,7 +384,7 @@ export default function UserSettings() {
                                 <select
                                     value={editFormData.role}
                                     onChange={(e) => handleInputChange('role', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                 >
                                     <option value="ADMIN">Administrador</option>
                                     <option value="OPERATOR">Operador</option>
@@ -399,7 +399,7 @@ export default function UserSettings() {
                                 <select
                                     value={editFormData.active}
                                     onChange={(e) => handleInputChange('active', e.target.value === 'true')}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                 >
                                     <option value="true">Activo</option>
                                     <option value="false">Inactivo</option>
@@ -410,7 +410,7 @@ export default function UserSettings() {
                         <div className="flex gap-3 mt-6">
                             <button
                                 onClick={handleSaveUser}
-                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
                             >
                                 Guardar Cambios
                             </button>

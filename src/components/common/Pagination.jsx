@@ -19,7 +19,7 @@ export default function Pagination({
             <button
                 onClick={() => onPageChange(safePage - 1)}
                 disabled={isPrevDisabled}
-                className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+                className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
             >
                 Anterior
             </button>
@@ -27,7 +27,7 @@ export default function Pagination({
             <button
                 onClick={() => onPageChange(safePage + 1)}
                 disabled={isNextDisabled}
-                className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+                className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
             >
                 Siguiente
             </button>

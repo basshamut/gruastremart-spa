@@ -48,7 +48,7 @@ export default function SignInForm() {
                 onSubmit={handleSubmit}
                 className="w-full max-w-md mx-auto p-6 space-y-4 bg-white shadow-md rounded"
             >
-                <img className="h-20 w-auto mb-4 mx-auto" src="/favicon.svg" alt="Logo de la empresa" />
+                <img className="h-30 w-auto mb-4 mx-auto" src="/favicon.svg" alt="Logo de la empresa" />
                 <h2 className="text-2xl font-bold text-center">Iniciar Sesión</h2>
 
                 {errorMsg && <p className="text-red-500">{errorMsg}</p>}
@@ -57,7 +57,7 @@ export default function SignInForm() {
                     <label className="block font-medium mb-1">Correo electrónico</label>
                     <input
                         type="email"
-                        className="border border-gray-300 rounded w-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="border border-gray-300 rounded w-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
@@ -68,7 +68,7 @@ export default function SignInForm() {
                     <label className="block font-medium mb-1">Contraseña</label>
                     <input
                         type="password"
-                        className="border border-gray-300 rounded w-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        className="border border-gray-300 rounded w-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
@@ -78,14 +78,14 @@ export default function SignInForm() {
                 <div className="flex flex-col gap-2">
                     <button
                         type="submit"
-                        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition-colors w-full"
+                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors w-full"
                     >
                         Iniciar Sesión
                     </button>
                     <button
                         type="button"
                         onClick={handleSignUp}
-                        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition-colors w-full"
+                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors w-full"
                     >
                         Registrarse
                     </button>

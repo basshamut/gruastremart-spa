@@ -164,7 +164,7 @@ export default function CustomerGeoLocation({onLocationChange, onDestinationChan
             <div className="flex flex-col items-center w-fit mx-auto">
                 <button
                     onClick={getLocation}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors mb-4 min-w-[250px]"
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors mb-4 min-w-[250px]"
                 >
                     Obtener Ubicación Actual
                 </button>

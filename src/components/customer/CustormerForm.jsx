@@ -105,7 +105,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 name="origin"
                                 value={formData.origin}
                                 onChange={handleChange}
-                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 required
                             />
                         </div>
@@ -117,7 +117,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 name="carType"
                                 value={formData.carType}
                                 onChange={handleChange}
-                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 required
                             />
                         </div>
@@ -129,7 +129,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 name="breakdown"
                                 value={formData.breakdown}
                                 onChange={handleChange}
-                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 required
                             />
                         </div>
@@ -141,7 +141,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 name="referenceSource"
                                 value={formData.referenceSource}
                                 onChange={handleChange}
-                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 required
                             />
                         </div>
@@ -153,7 +153,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 name="recommendedBy"
                                 value={formData.recommendedBy}
                                 onChange={handleChange}
-                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 required
                             />
                         </div>
@@ -164,7 +164,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 name="description"
                                 value={formData.description}
                                 onChange={handleChange}
-                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 rows={3}
                                 required
                             />
@@ -183,7 +183,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 name="vehicleBrand"
                                 value={formData.vehicleBrand}
                                 onChange={handleChange}
-                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 placeholder="Ej: Toyota, Ford, Chevrolet"
                                 required
                             />
@@ -196,7 +196,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 name="vehicleModel"
                                 value={formData.vehicleModel}
                                 onChange={handleChange}
-                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 placeholder="Ej: Corolla, Fiesta, Aveo"
                                 required
                             />
@@ -209,7 +209,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 name="vehicleYear"
                                 value={formData.vehicleYear}
                                 onChange={handleChange}
-                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 placeholder="Ej: 2020"
                                 min="1980"
                                 max={new Date().getFullYear() + 1}
@@ -224,7 +224,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 name="vehiclePlate"
                                 value={formData.vehiclePlate}
                                 onChange={handleChange}
-                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 placeholder="Ej: ABC-123"
                                 required
                             />
@@ -237,7 +237,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 name="vehicleColor"
                                 value={formData.vehicleColor}
                                 onChange={handleChange}
-                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 placeholder="Ej: Blanco, Azul, Rojo"
                                 required
                             />
@@ -250,7 +250,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                     <button
                         type="submit"
                         disabled={sending || !isFormValid()}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         title={
                             !isFormValid()
                                 ? "Rellena todos los campos y asegúrate de tener ubicaciones seleccionadas"
