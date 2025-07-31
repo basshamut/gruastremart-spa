@@ -104,7 +104,7 @@ export default function SecuritySettings() {
                                     type={showCurrentPassword ? "text" : "password"}
                                     value={passwordData.currentPassword}
                                     onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                 />
                                 <button
                                     type="button"
@@ -128,7 +128,7 @@ export default function SecuritySettings() {
                                     type={showNewPassword ? "text" : "password"}
                                     value={passwordData.newPassword}
                                     onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                 />
                                 <button
                                     type="button"
@@ -153,7 +153,7 @@ export default function SecuritySettings() {
                                     type={showConfirmPassword ? "text" : "password"}
                                     value={passwordData.confirmPassword}
                                     onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                                 />
                                 <button
                                     type="button"
@@ -171,7 +171,7 @@ export default function SecuritySettings() {
                         <button
                             onClick={handleChangePassword}
                             disabled={loading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
                         >
                             {loading ? "Cambiando..." : "Cambiar Contraseña"}
                         </button>

@@ -137,7 +137,7 @@ const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, 
             <div className="mt-4">
                 <div className="h-[400px] w-full rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center bg-gray-100">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-2"></div>
                         <p className="text-sm text-gray-600">Cargando mapa...</p>
                     </div>
                 </div>
@@ -175,7 +175,7 @@ const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, 
                         >
                             <Popup>
                                 <div className="text-center">
-                                    <div className="font-bold text-blue-600">🚛 Operador</div>
+                                    <div className="font-bold text-green-600">🚛 Operador</div>
                                     <div className="text-xs text-gray-600">
                                         Lat: {operatorLocation.lat.toFixed(6)}<br/>
                                         Lng: {operatorLocation.lng.toFixed(6)}
@@ -523,7 +523,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                 <select
                     value={stateFilter}
                     onChange={handleFilterChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 >
                     <option value="">Todos los estados</option>
                     <option value="ACTIVE">Activas</option>
@@ -536,7 +536,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
             {/* Lista de solicitudes */}
             {loading ? (
                 <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mr-3"></div>
                     <p className="text-sm text-muted-foreground">Cargando solicitudes...</p>
                 </div>
             ) : error ? (
@@ -544,7 +544,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                     <p className="text-sm text-red-500 mb-2">{error}</p>
                     <button 
                         onClick={fetchRequests} 
-                        className="text-xs text-blue-600 hover:text-blue-800 underline"
+                        className="text-xs text-green-600 hover:text-blue-800 underline"
                     >
                         Reintentar
                     </button>
@@ -595,7 +595,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                                     <div className="flex flex-col gap-2 ml-4">
                                         <button
                                             onClick={() => viewDetails(req)}
-                                            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm transition-colors"
+                                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm transition-colors"
                                         >
                                             {isTaken ? 'Seguir' : 'Ver'}
                                         </button>
@@ -736,7 +736,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {operatorLoading ? (
                                         <div className="flex items-center justify-center py-4 col-span-2">
-                                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-2"></div>
+                                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mr-2"></div>
                                             <span className="text-sm text-gray-600">Obteniendo información del operador...</span>
                                         </div>
                                     ) : operatorError ? (
@@ -750,7 +750,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                                                 // Solo tenemos estado, no coordenadas
                                                 <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg col-span-2">
                                                     <div className="flex items-center gap-2 mb-2">
-                                                        <span className="text-blue-600">📱</span>
+                                                        <span className="text-green-600">📱</span>
                                                         <span className="font-medium text-blue-800">Operador conectado</span>
                                                     </div>
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">

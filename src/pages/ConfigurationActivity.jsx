@@ -15,8 +15,8 @@ export default function ConfigurationActivity() {
             <div className="mt-6 mb-4 flex border-b border-gray-200">
                 <button
                     className={`px-4 py-2 font-semibold focus:outline-none transition-colors duration-200 border-b-2 ${activeTab === "usuarios"
-                            ? "border-blue-600 text-blue-600"
-                            : "border-transparent text-gray-500 hover:text-blue-600"
+                            ? "border-green-600 text-green-600"
+                            : "border-transparent text-gray-500 hover:text-green-600"
                         }`}
                     onClick={() => setActiveTab("usuarios")}
                 >
@@ -24,8 +24,8 @@ export default function ConfigurationActivity() {
                 </button>
                 <button
                     className={`ml-4 px-4 py-2 font-semibold focus:outline-none transition-colors duration-200 border-b-2 ${activeTab === "sistema"
-                            ? "border-blue-600 text-blue-600"
-                            : "border-transparent text-gray-500 hover:text-blue-600"
+                            ? "border-green-600 text-green-600"
+                            : "border-transparent text-gray-500 hover:text-green-600"
                         }`}
                     onClick={() => setActiveTab("sistema")}
                 >

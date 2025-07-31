@@ -62,7 +62,7 @@ export default function SystemSettings() {
                     <button
                         onClick={handleSave}
                         disabled={loading}
-                        className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
                     >
                         <Save className="w-4 h-4 mr-2" />
                         {loading ? "Guardando..." : "Guardar"}
@@ -102,7 +102,7 @@ export default function SystemSettings() {
                                 type="number"
                                 value={settings.defaultRadius}
                                 onChange={(e) => handleInputChange('defaultRadius', parseInt(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                             />
                         </div>
                         <div>
@@ -113,7 +113,7 @@ export default function SystemSettings() {
                                 type="number"
                                 value={settings.maxWaitTime}
                                 onChange={(e) => handleInputChange('maxWaitTime', parseInt(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                             />
                         </div>
                     </div>
@@ -129,7 +129,7 @@ export default function SystemSettings() {
                                 id="maintenanceMode"
                                 checked={settings.maintenanceMode}
                                 onChange={(e) => handleInputChange('maintenanceMode', e.target.checked)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                             />
                             <label htmlFor="maintenanceMode" className="ml-2 block text-sm text-gray-900">
                                 Modo de Mantenimiento
@@ -141,7 +141,7 @@ export default function SystemSettings() {
                                 id="autoAssignOperators"
                                 checked={settings.autoAssignOperators}
                                 onChange={(e) => handleInputChange('autoAssignOperators', e.target.checked)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                             />
                             <label htmlFor="autoAssignOperators" className="ml-2 block text-sm text-gray-900">
                                 Asignación Automática de Operadores
@@ -160,7 +160,7 @@ export default function SystemSettings() {
                                 id="emailNotifications"
                                 checked={settings.emailNotifications}
                                 onChange={(e) => handleInputChange('emailNotifications', e.target.checked)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                             />
                             <label htmlFor="emailNotifications" className="ml-2 block text-sm text-gray-900">
                                 Notificaciones por Email
@@ -172,7 +172,7 @@ export default function SystemSettings() {
                                 id="smsNotifications"
                                 checked={settings.smsNotifications}
                                 onChange={(e) => handleInputChange('smsNotifications', e.target.checked)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                             />
                             <label htmlFor="smsNotifications" className="ml-2 block text-sm text-gray-900">
                                 Notificaciones por SMS

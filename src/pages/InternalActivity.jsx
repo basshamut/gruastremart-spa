@@ -189,10 +189,10 @@ export default function InternalActivity() {
                                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-blue-600">Total Solicitudes</p>
+                                            <p className="text-sm font-medium text-green-600">Total Solicitudes</p>
                                             <p className="text-2xl font-bold text-blue-800">{stats.totalRequests}</p>
                                         </div>
-                                        <Calendar className="h-8 w-8 text-blue-500" />
+                                        <Calendar className="h-8 w-8 text-green-500" />
                                     </div>
                                     <div className="mt-2 flex items-center">
                                         {stats.monthlyTrend >= 0 ? (

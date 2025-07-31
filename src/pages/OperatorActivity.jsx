@@ -210,10 +210,10 @@ export default function OperatorActivity() {
                                 </div>
                             </div>
                         ) : locationLoading ? (
-                            <div className="text-xs text-blue-600 space-y-1">
+                            <div className="text-xs text-green-600 space-y-1">
                                 <div className="font-semibold">Obteniendo ubicación GPS...</div>
                                 <div className="flex items-center">
-                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500 mr-2"></div>
+                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-500 mr-2"></div>
                                     <span>Esperando respuesta del GPS</span>
                                 </div>
                                 <div className="text-[10px] text-gray-500 mt-1">
@@ -223,7 +223,7 @@ export default function OperatorActivity() {
                         ) : !operatorLocation ? (
                             <>
                                 <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
-                                <p className="text-xs text-blue-600 mt-1">Iniciando</p>
+                                <p className="text-xs text-green-600 mt-1">Iniciando</p>
                             </>
                         ) : (
                             <div className="text-xs text-gray-800 space-y-1 mt-2">
@@ -241,7 +241,7 @@ export default function OperatorActivity() {
                                         <div>
                                             <span className="font-semibold">Última actualización:</span> {new Date(operatorLocation.timestamp).toLocaleTimeString()}
                                         </div>
-                                        <div className={`text-[10px] mt-1 h-4 ${locationUpdating ? 'text-blue-600' : 'text-transparent'}`}>
+                                        <div className={`text-[10px] mt-1 h-4 ${locationUpdating ? 'text-green-600' : 'text-transparent'}`}>
                                             🔄 Actualizando ubicación...
                                         </div>
                                         {previousLocation &&
@@ -291,13 +291,13 @@ export default function OperatorActivity() {
                             </>
                         ) : locationLoading ? (
                             <>
-                                <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                                <p className="text-xs text-blue-600 mt-1">Obteniendo</p>
+                                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                <p className="text-xs text-green-600 mt-1">Obteniendo</p>
                             </>
                         ) : !operatorLocation ? (
                             <>
                                 <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
-                                <p className="text-xs text-blue-600 mt-1">Iniciando</p>
+                                <p className="text-xs text-green-600 mt-1">Iniciando</p>
                             </>
                         ) : operatorLocation.lat && operatorLocation.lng ? (
                             <>
@@ -329,7 +329,7 @@ export default function OperatorActivity() {
                             {pendingNotificationsForActiveDemands.length > 0 && (
                                 <button
                                     onClick={refreshData}
-                                    className="bg-orange-500 text-white text-xs px-3 py-1 rounded-full flex items-center hover:bg-orange-600 transition-colors"
+                                    className="bg-green-500 text-white text-xs px-3 py-1 rounded-full flex items-center hover:bg-green-600 transition-colors"
                                 >
                                     {pendingNotificationsForActiveDemands.length} nueva{pendingNotificationsForActiveDemands.length > 1 ? 's' : ''} •
                                     Actualizar
@@ -349,7 +349,7 @@ export default function OperatorActivity() {
 
                     {activeDemands.loading ? (
                         <div className="flex items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mr-3"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mr-3"></div>
                             <p className="text-sm text-muted-foreground">Buscando solicitudes activas...</p>
                         </div>
                     ) : activeDemands.error ? (
@@ -357,7 +357,7 @@ export default function OperatorActivity() {
                             <p className="text-sm text-red-500 mb-2">{activeDemands.error}</p>
                             <button
                                 onClick={() => window.location.reload()}
-                                className="text-xs text-blue-600 hover:text-blue-800 underline"
+                                className="text-xs text-green-600 hover:text-blue-800 underline"
                             >
                                 Reintentar
                             </button>
@@ -461,7 +461,7 @@ export default function OperatorActivity() {
                                                         onClick={() => openModal(demand, "ASSIGN")}
                                                         className={`px-4 py-2 text-white rounded text-sm transition-colors ${isUrgent ? 'bg-red-500 hover:bg-red-600' :
                                                                 isHighPriority ? 'bg-yellow-500 hover:bg-yellow-600' :
-                                                                    'bg-blue-500 hover:bg-blue-600'
+                                                                    'bg-green-500 hover:bg-green-600'
                                                             }`}
                                                     >
                                                         {isUrgent ? '🚨 Tomar Urgente' :
@@ -515,7 +515,7 @@ export default function OperatorActivity() {
 
                     {takenDemands.loading ? (
                         <div className="flex items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mr-3"></div>
                             <p className="text-sm text-muted-foreground">Cargando solicitudes asignadas...</p>
                         </div>
                     ) : takenDemands.error ? (
@@ -523,7 +523,7 @@ export default function OperatorActivity() {
                             <p className="text-sm text-red-500 mb-2">{takenDemands.error}</p>
                             <button
                                 onClick={() => window.location.reload()}
-                                className="text-xs text-blue-600 hover:text-blue-800 underline"
+                                className="text-xs text-green-600 hover:text-blue-800 underline"
                             >
                                 Reintentar
                             </button>
@@ -560,7 +560,7 @@ export default function OperatorActivity() {
                                                         </div>
                                                         <div>
                                                             <span className="font-medium">Tiempo transcurrido:</span>
-                                                            <span className={timeAgo > 60 ? 'text-orange-600' : 'text-gray-600'}>
+                                                            <span className={timeAgo > 60 ? 'text-green-600' : 'text-gray-600'}>
                                                                 {timeAgo < 1 ? 'Menos de 1 min' :
                                                                     timeAgo < 60 ? `${timeAgo} min` :
                                                                         `${Math.floor(timeAgo / 60)}h ${timeAgo % 60}min`}
@@ -603,12 +603,12 @@ export default function OperatorActivity() {
                                                 <div className="flex flex-col gap-2 ml-4">
                                                     <button
                                                         onClick={() => openModal(demand, "SHOW")}
-                                                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm transition-colors"
+                                                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm transition-colors"
                                                     >
                                                         Ver detalles
                                                     </button>
                                                     {timeAgo > 60 && (
-                                                        <div className="text-xs text-orange-600 text-center">
+                                                        <div className="text-xs text-green-600 text-center">
                                                             ⚠️ Pendiente
                                                         </div>
                                                     )}
@@ -758,7 +758,7 @@ export default function OperatorActivity() {
                                             id="weightCategory"
                                             value={selectedWeightCategory}
                                             onChange={(e) => handleWeightCategoryChange(e.target.value)}
-                                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                                             required
                                         >
                                             <option value="">Seleccionar categoría...</option>
@@ -782,7 +782,7 @@ export default function OperatorActivity() {
                                                 option.weightCategory === selectedWeightCategory
                                             );
                                             return selectedPricing ? (
-                                                <div className="text-sm text-blue-700 space-y-1">
+                                                <div className="text-sm text-green-700 space-y-1">
                                                     <p><strong>Categoría:</strong> {selectedPricing.weightCategory}</p>
                                                     <p><strong>Rango de peso:</strong> {selectedPricing.minWeightKg} - {selectedPricing.maxWeightKg} kg</p>
                                                     <p><strong>Servicio urbano (≤{selectedPricing.maxDistanceKm}km):</strong> ${selectedPricing.urbanPrice} USD</p>
@@ -898,7 +898,7 @@ export default function OperatorActivity() {
                                     disabled={!operatorLocation || !operatorLocation.lat || !operatorLocation.lng}
                                     className={`flex-1 py-2 px-4 rounded-md transition-colors text-sm ${
                                         operatorLocation && operatorLocation.lat && operatorLocation.lng
-                                            ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                            ? 'bg-green-500 text-white hover:bg-green-600'
                                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                                 >
