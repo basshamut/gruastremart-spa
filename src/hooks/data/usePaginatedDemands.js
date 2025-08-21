@@ -10,6 +10,7 @@ export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize =
 
     const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
     const assignedOperatorId = JSON.parse(localStorage.getItem("userDetail"))?.id;
+    const userRole =JSON.parse(localStorage.getItem("userDetail"))?.role;
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
 
     useEffect(() => {
@@ -22,7 +23,7 @@ export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize =
             let urlForAll = `${apiDomain}/v1/crane-demands?page=${safePage}&size=${safeSize}`;
             let urlForState = `${apiDomain}/v1/crane-demands?state=${state}&page=${safePage}&size=${safeSize}`;
 
-            if(state === "TAKEN"){
+            if(state === "TAKEN" && userRole !== "OPERATOR") {
                 urlForState += `&assignedOperatorId=${assignedOperatorId}`;
             }
 
