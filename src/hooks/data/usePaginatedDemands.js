@@ -9,6 +9,7 @@ export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize =
     const [pageSize, setPageSize] = useState(initialPageSize);
 
     const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+    const assignedOperatorId = JSON.parse(localStorage.getItem("userDetail"))?.id;
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
 
     useEffect(() => {
@@ -17,9 +18,14 @@ export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize =
             const safePage = isNaN(pageNumber) ? 0 : Math.max(0, pageNumber);
             const safeSize = isNaN(size) || size <= 0 ? initialPageSize : size;
 
+            //TODO agregar radio de busqueda
             let urlForAll = `${apiDomain}/v1/crane-demands?page=${safePage}&size=${safeSize}`;
             let urlForState = `${apiDomain}/v1/crane-demands?state=${state}&page=${safePage}&size=${safeSize}`;
-            
+
+            if(state === "TAKEN"){
+                urlForState += `&assignedOperatorId=${assignedOperatorId}`;
+            }
+
             // Agregar coordenadas a la URL si están disponibles
             if (lat !== null && lng !== null) {
                 const coords = `&lat=${lat}&lng=${lng}`;
