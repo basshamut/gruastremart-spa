@@ -1,17 +1,21 @@
 import React, { useState } from "react";
-import { Shield, Key, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Shield, Key, Eye, EyeOff, AlertTriangle, CheckCircle } from "lucide-react";
+import { changePassword } from "../../services/UserService";
 
 export default function SecuritySettings() {
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState({ type: '', text: '' });
 
     const [passwordData, setPasswordData] = useState({
         currentPassword: "",
         newPassword: "",
         confirmPassword: ""
     });
+
+
 
     const handlePasswordChange = (field, value) => {
         setPasswordData(prev => ({
@@ -21,22 +25,42 @@ export default function SecuritySettings() {
     };
 
     const handleChangePassword = async () => {
+        setMessage({ type: '', text: '' });
+        
+        if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+            setMessage({ type: 'error', text: 'Por favor, completa todos los campos' });
+            return;
+        }
+
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            alert("Las contraseñas no coinciden");
+            setMessage({ type: 'error', text: 'Las contraseñas no coinciden' });
+            return;
+        }
+
+        if (passwordData.newPassword.length < 6) {
+            setMessage({ type: 'error', text: 'La nueva contraseña debe tener al menos 6 caracteres' });
             return;
         }
 
         setLoading(true);
-        // Simular cambio de contraseña
-        setTimeout(() => {
-            setLoading(false);
-            alert("Contraseña cambiada exitosamente");
+
+        try {
+            await changePassword(null, {
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword
+            });
+            
+            setMessage({ type: 'success', text: 'Contraseña cambiada exitosamente' });
             setPasswordData({
                 currentPassword: "",
                 newPassword: "",
                 confirmPassword: ""
             });
-        }, 1000);
+        } catch (error) {
+            setMessage({ type: 'error', text: error.message || 'Error al cambiar la contraseña' });
+        } finally {
+            setLoading(false);
+        }
     };
 
     const PasswordStrengthIndicator = ({ password }) => {
@@ -168,6 +192,23 @@ export default function SecuritySettings() {
                                 </button>
                             </div>
                         </div>
+                        {message.text && (
+                            <div className={`p-3 rounded-lg mb-4 ${
+                                message.type === 'success' 
+                                    ? 'bg-green-50 text-green-700 border border-green-200' 
+                                    : 'bg-red-50 text-red-700 border border-red-200'
+                            }`}>
+                                <div className="flex items-center gap-2">
+                                    {message.type === 'success' ? (
+                                        <CheckCircle className="w-4 h-4" />
+                                    ) : (
+                                        <AlertTriangle className="w-4 h-4" />
+                                    )}
+                                    <span className="text-sm">{message.text}</span>
+                                </div>
+                            </div>
+                        )}
+                        
                         <button
                             onClick={handleChangePassword}
                             disabled={loading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}

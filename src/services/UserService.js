@@ -99,7 +99,14 @@ export async function getUsersWithFilters(filters = {}) {
             throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
         }
 
-        return await response.json();
+        // El endpoint puede devolver solo 200 OK sin contenido JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        } else {
+            // Si no hay contenido JSON, devolver un objeto de éxito
+            return { success: true, message: 'Contraseña cambiada exitosamente' };
+        }
     } catch (err) {
         console.error("Error al obtener usuarios:", err);
         throw err;
@@ -152,6 +159,35 @@ export async function deleteUser(userId) {
         return response.ok;
     } catch (err) {
         console.error("Error al eliminar usuario:", err);
+        throw err;
+    }
+}
+
+export async function changePassword(userId, passwordData) {
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
+    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+
+    try {
+        const response = await fetch(`${apiDomain}/v1/auth/change-password`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (err) {
+        console.error("Error al cambiar contraseña:", err);
         throw err;
     }
 }

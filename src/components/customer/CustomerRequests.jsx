@@ -1,7 +1,7 @@
-import {useEffect, useState, useRef} from "react";
-import {formatDate} from "../../utils/Utils.js";
+import { useEffect, useState, useRef } from "react";
+import { formatDate } from "../../utils/Utils.js";
 import Modal from "../common/Modal";
-import {useOperatorLocationForDemand} from "../../hooks/location/useOperatorLocationForDemand";
+import { useOperatorLocationForDemand } from "../../hooks/location/useOperatorLocationForDemand";
 import { DEMAND_POLL_INTERVAL } from "../../config/constants.js";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -42,15 +42,15 @@ const operatorIcon = new L.Icon({
 });
 
 // Componente para actualizar el mapa cuando cambia la ubicación del operador
-function MapUpdater({ operatorLocation, origin, destination, hasInitialized }) {
+function MapUpdater({ operatorLocation, origin, hasInitialized }) {
     const map = useMap();
     const prevLocationRef = useRef(null);
     const updateTimeoutRef = useRef(null);
-    
+
     useEffect(() => {
         if (operatorLocation && operatorLocation.lat && operatorLocation.lng) {
             const newPosition = [operatorLocation.lat, operatorLocation.lng];
-            
+
             if (!hasInitialized) {
                 // Primera vez: centrar el mapa en la ubicación del operador
                 map.setView(newPosition, 15);
@@ -58,20 +58,20 @@ function MapUpdater({ operatorLocation, origin, destination, hasInitialized }) {
                 // Actualizaciones posteriores: solo mover el marcador suavemente
                 const prevPosition = prevLocationRef.current;
                 const distance = map.distance(prevPosition, newPosition);
-                
+
                 // Solo mover si hay un cambio significativo (más de 10 metros)
                 if (distance > 10) {
                     // Usar debounce para evitar actualizaciones muy frecuentes
                     if (updateTimeoutRef.current) {
                         clearTimeout(updateTimeoutRef.current);
                     }
-                    
+
                     updateTimeoutRef.current = setTimeout(() => {
                         // Mover suavemente el marcador sin cambiar la vista del mapa
                     }, 100); // 100ms debounce
                 }
             }
-            
+
             prevLocationRef.current = newPosition;
         } else if (origin && origin.lat && origin.lng && !hasInitialized) {
             // Si no hay operador, centrar en el origen
@@ -92,7 +92,7 @@ function MapUpdater({ operatorLocation, origin, destination, hasInitialized }) {
 }
 
 // Componente del mapa con seguimiento del operador
-const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, operatorLoading }) {
+const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation }) {
     const [hasInitialized, setHasInitialized] = useState(false);
     const [mapCenter, setMapCenter] = useState(null);
     const [mapZoom, setMapZoom] = useState(13);
@@ -158,11 +158,10 @@ const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, 
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
-                    
-                    <MapUpdater 
-                        operatorLocation={operatorLocation} 
-                        origin={origin} 
-                        destination={destination}
+
+                    <MapUpdater
+                        operatorLocation={operatorLocation}
+                        origin={origin}
                         hasInitialized={hasInitialized}
                     />
 
@@ -177,7 +176,7 @@ const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, 
                                 <div className="text-center">
                                     <div className="font-bold text-green-600">🚛 Operador</div>
                                     <div className="text-xs text-gray-600">
-                                        Lat: {operatorLocation.lat.toFixed(6)}<br/>
+                                        Lat: {operatorLocation.lat.toFixed(6)}<br />
                                         Lng: {operatorLocation.lng.toFixed(6)}
                                     </div>
                                     {operatorLocation.accuracy && (
@@ -203,8 +202,8 @@ const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, 
                                 <div className="text-center">
                                     <div className="font-bold text-green-600">📍 Punto de origen</div>
                                     <div className="text-xs text-gray-600">
-                                        {demand.currentLocation?.name || 'Ubicación actual'}<br/>
-                                        Lat: {origin.lat.toFixed(6)}<br/>
+                                        {demand.currentLocation?.name || 'Ubicación actual'}<br />
+                                        Lat: {origin.lat.toFixed(6)}<br />
                                         Lng: {origin.lng.toFixed(6)}
                                     </div>
                                 </div>
@@ -222,8 +221,8 @@ const TrackingMap = React.memo(function TrackingMap({ demand, operatorLocation, 
                                 <div className="text-center">
                                     <div className="font-bold text-red-600">🎯 Punto de destino</div>
                                     <div className="text-xs text-gray-600">
-                                        {demand.destinationLocation?.name || 'Destino'}<br/>
-                                        Lat: {destination.lat.toFixed(6)}<br/>
+                                        {demand.destinationLocation?.name || 'Destino'}<br />
+                                        Lat: {destination.lat.toFixed(6)}<br />
                                         Lng: {destination.lng.toFixed(6)}
                                     </div>
                                 </div>
@@ -249,7 +248,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalType, setModalType] = useState("details"); // "details" o "cancel"
-    
+
     // Estados para polling y notificaciones
     const [pollingInterval, setPollingInterval] = useState(null);
     const [lastUpdate, setLastUpdate] = useState(null);
@@ -299,32 +298,32 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
 
             const data = await response.json();
             const newRequests = data.content || [];
-            
+
             // Detectar cambios de estado para notificaciones
             if (requests.length > 0) {
                 const previousTakenRequest = requests.find(r => r.state === "TAKEN");
                 const newTakenRequest = newRequests.find(r => r.state === "TAKEN");
-                
+
                 // Si no había solicitud tomada antes y ahora sí hay una
                 if (!previousTakenRequest && newTakenRequest && !notificationShown) {
                     showNotification("¡Operador asignado!", "Un operador ha tomado tu solicitud y está en camino.");
                     setNotificationShown(true);
                 }
-                
+
                 // Si había una solicitud tomada y ahora no hay (completada o cancelada)
                 if (previousTakenRequest && !newTakenRequest) {
                     showNotification("Solicitud finalizada", "Tu solicitud ha sido completada o cancelada.");
                     setNotificationShown(false);
                 }
             }
-            
+
             setRequests(newRequests);
             setLastUpdate(new Date());
-            
+
             // Verificar si hay solicitudes activas para determinar si continuar polling
             const hasActive = newRequests.some(r => r.state === "ACTIVE" || r.state === "TAKEN");
             setHasActiveRequests(hasActive);
-            
+
         } catch (err) {
             console.error(err);
             setError("Error cargando solicitudes.");
@@ -343,7 +342,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                 badge: "/favicon.svg"
             });
         }
-        
+
         // También mostrar una notificación en la página
         const notificationDiv = document.createElement('div');
         notificationDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full';
@@ -356,14 +355,14 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(notificationDiv);
-        
+
         // Animar entrada
         setTimeout(() => {
             notificationDiv.classList.remove('translate-x-full');
         }, 100);
-        
+
         // Remover después de 5 segundos
         setTimeout(() => {
             notificationDiv.classList.add('translate-x-full');
@@ -451,8 +450,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
-                } catch (e) {
-                    // Si no se puede parsear el JSON del error, usar mensaje por defecto
+                } catch {
                     errorMessage = `Error ${response.status}: ${response.statusText}`;
                 }
                 throw new Error(errorMessage);
@@ -460,13 +458,12 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
 
             // Verificar si la respuesta tiene contenido JSON
             const contentType = response.headers.get("content-type");
-            let responseData = { success: true };
             if (contentType && contentType.includes("application/json")) {
-                responseData = await response.json();
+                await response.json(); // Parse response but ignore result since we don't need it
             }
 
             setRequests((prev) =>
-                prev.map((r) => (r.id === selectedRequest.id ? {...r, state: "CANCELLED"} : r))
+                prev.map((r) => (r.id === selectedRequest.id ? { ...r, state: "CANCELLED" } : r))
             );
             setModalOpen(false);
             alert("Solicitud cancelada exitosamente");
@@ -560,8 +557,8 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
             ) : error ? (
                 <div className="text-center py-8">
                     <p className="text-sm text-red-500 mb-2">{error}</p>
-                    <button 
-                        onClick={fetchRequests} 
+                    <button
+                        onClick={fetchRequests}
                         className="text-xs text-green-600 hover:text-blue-800 underline"
                     >
                         Reintentar
@@ -579,12 +576,11 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                         const isTaken = req.state === "TAKEN";
                         const isActive = req.state === "ACTIVE";
                         const canCancel = isActive || isTaken;
-                        
+
                         return (
-                            <div key={req.id} className={`border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow ${
-                                isTaken ? 'border-green-300 bg-green-50' : 
+                            <div key={req.id} className={`border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow ${isTaken ? 'border-green-300 bg-green-50' :
                                 isActive ? 'border-blue-300 bg-blue-50' : ''
-                            }`}>
+                                }`}>
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-2">
@@ -605,7 +601,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                                             </div>
                                             {req.description && (
                                                 <div className="sm:col-span-2">
-                                                    <span className="font-medium">Descripción:</span> 
+                                                    <span className="font-medium">Descripción:</span>
                                                     <span className="text-gray-700 ml-1">{req.description}</span>
                                                 </div>
                                             )}
@@ -746,10 +742,10 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                                     )}
                                 </div>
                                 {/* Mapa con seguimiento del operador */}
-                                <TrackingMap 
+                                <TrackingMap
                                     demand={selectedRequest}
                                     operatorLocation={operatorLocation}
-                                    operatorLoading={operatorLoading}
+        
                                 />
                                 {/* El resto de la información adicional del operador (loading, error, etc.) */}
                                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -774,11 +770,11 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                                                     </div>
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                                                         <div>
-                                                            <span className="font-medium text-gray-700">Estado:</span> 
+                                                            <span className="font-medium text-gray-700">Estado:</span>
                                                             <span className="text-green-600 ml-1">🟢 En línea</span>
                                                         </div>
                                                         <div>
-                                                            <span className="font-medium text-gray-700">Última actividad:</span> 
+                                                            <span className="font-medium text-gray-700">Última actividad:</span>
                                                             <span className="text-gray-600 ml-1">
                                                                 {operatorLocation.timestamp ? new Date(operatorLocation.timestamp).toLocaleTimeString() : 'N/A'}
                                                             </span>
@@ -786,7 +782,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                                                     </div>
                                                     <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
                                                         <p className="text-xs text-yellow-700">
-                                                            ℹ️ El operador está conectado pero no ha compartido su ubicación GPS. 
+                                                            ℹ️ El operador está conectado pero no ha compartido su ubicación GPS.
                                                             Esto es normal si está en movimiento o en una zona con poca señal.
                                                         </p>
                                                     </div>
@@ -838,7 +834,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                                 Esta acción no se puede deshacer.
                             </p>
                         </div>
-                        
+
                         <div className="bg-gray-50 p-3 rounded-lg">
                             <h4 className="font-medium text-gray-700 mb-2">Detalles de la solicitud:</h4>
                             <div className="text-sm text-gray-600 space-y-1">

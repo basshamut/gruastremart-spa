@@ -63,7 +63,7 @@ export async function cancelCraneDemandByOperator(demandId) {
         try {
             const errorData = await response.json();
             errorMessage = errorData.message || errorMessage;
-        } catch (e) {
+        } catch {
             // Si no se puede parsear el JSON del error, usar mensaje por defecto
             errorMessage = `Error ${response.status}: ${response.statusText}`;
         }
