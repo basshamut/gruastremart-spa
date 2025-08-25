@@ -5,7 +5,7 @@ import Modal from "../components/common/Modal";
 import { usePaginatedDemands } from "../hooks/data/usePaginatedDemands";
 import { useOperatorActivity } from "../hooks/data/useOperatorActivity";
 import { useOperatorLocationService } from "../hooks/location/useOperatorLocationService";
-import { assignCraneDemandToOperator } from "../services/CraneDemandService.js";
+import { assignCraneDemandToOperator, cancelCraneDemandByOperator } from "../services/CraneDemandService.js";
 import { updateOperatorLocation } from "../services/OperatorLocationService.js";
 import { formatDate } from "../utils/Utils.js";
 import { LOCATION_UPDATE_INTERVAL } from "../config/constants.js";
@@ -21,6 +21,8 @@ export default function OperatorActivity() {
     const [previousLocation, setPreviousLocation] = useState(null);
     const [selectedWeightCategory, setSelectedWeightCategory] = useState('');
     const [priceCalculation, setPriceCalculation] = useState(null);
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [demandToCancel, setDemandToCancel] = useState(null);
 
     // Obtener el ID del operador directamente desde localStorage (no cambia durante la sesión)
     const assignedOperatorId = JSON.parse(localStorage.getItem("userDetail"))?.id;
@@ -177,6 +179,36 @@ export default function OperatorActivity() {
             }
         } else {
             setPriceCalculation(null);
+        }
+    };
+
+    const openCancelModal = (demand) => {
+        setDemandToCancel(demand);
+        setCancelModalOpen(true);
+    };
+
+    const closeCancelModal = () => {
+        setCancelModalOpen(false);
+        setDemandToCancel(null);
+    };
+
+    const confirmCancelDemand = async () => {
+        if (!demandToCancel) return;
+
+        try {
+            await cancelCraneDemandByOperator(demandToCancel.id);
+            
+            // Actualizar la lista de solicitudes tomadas
+            refreshData();
+            
+            // Cerrar el modal
+            closeCancelModal();
+            
+            // Mostrar mensaje de éxito
+            alert("Solicitud cancelada exitosamente");
+        } catch (error) {
+            console.error("Error cancelando solicitud:", error);
+            alert("Error al cancelar la solicitud: " + error.message);
         }
     };
 
@@ -607,6 +639,12 @@ export default function OperatorActivity() {
                                                     >
                                                         Ver detalles
                                                     </button>
+                                                    <button
+                                                        onClick={() => openCancelModal(demand)}
+                                                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm transition-colors"
+                                                    >
+                                                        Cancelar
+                                                    </button>
                                                     {timeAgo > 60 && (
                                                         <div className="text-xs text-green-600 text-center">
                                                             ⚠️ Pendiente
@@ -909,6 +947,41 @@ export default function OperatorActivity() {
                                 </button>
                             </div>
                         )}
+                    </div>
+                </Modal>
+            )}
+
+            {/* Modal de confirmación de cancelación */}
+            {cancelModalOpen && demandToCancel && (
+                <Modal
+                    isOpen={cancelModalOpen}
+                    onClose={closeCancelModal}
+                    title="Cancelar solicitud"
+                    showConfirmButton={true}
+                    confirmText="Confirmar cancelación"
+                    cancelText="No cancelar"
+                    onConfirm={confirmCancelDemand}
+                >
+                    <div className="space-y-4">
+                        <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                            <h3 className="font-bold text-red-800 mb-2">¿Estás seguro?</h3>
+                            <p className="text-red-700 text-sm">
+                                Estás a punto de cancelar la solicitud para <strong>{demandToCancel.origin}</strong>.
+                                Esta acción no se puede deshacer y el cliente será notificado.
+                            </p>
+                        </div>
+                        
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                            <h4 className="font-medium text-gray-700 mb-2">Detalles de la solicitud:</h4>
+                            <div className="text-sm text-gray-600 space-y-1">
+                                <div><span className="font-medium">Origen:</span> {demandToCancel.origin}</div>
+                                <div><span className="font-medium">Tipo de vehículo:</span> {demandToCancel.carType}</div>
+                                <div><span className="font-medium">Fecha:</span> {formatDate(demandToCancel.createdAt)}</div>
+                                {demandToCancel.description && (
+                                    <div><span className="font-medium">Descripción:</span> {demandToCancel.description}</div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </Modal>
             )}

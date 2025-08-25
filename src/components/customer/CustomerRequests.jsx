@@ -439,22 +439,40 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
 
         try {
             const response = await fetch(`${apiDomain}/v1/crane-demands/${selectedRequest.id}/cancel`, {
-                        method: "PATCH",
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                    });
+                method: "PATCH",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
 
-                    if (!response.ok) throw new Error("No se pudo cancelar");
+            if (!response.ok) {
+                let errorMessage = "No se pudo cancelar la solicitud";
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Si no se puede parsear el JSON del error, usar mensaje por defecto
+                    errorMessage = `Error ${response.status}: ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
+            }
 
-                    setRequests((prev) =>
+            // Verificar si la respuesta tiene contenido JSON
+            const contentType = response.headers.get("content-type");
+            let responseData = { success: true };
+            if (contentType && contentType.includes("application/json")) {
+                responseData = await response.json();
+            }
+
+            setRequests((prev) =>
                 prev.map((r) => (r.id === selectedRequest.id ? {...r, state: "CANCELLED"} : r))
-                    );
-                    setModalOpen(false);
-                } catch (err) {
+            );
+            setModalOpen(false);
+            alert("Solicitud cancelada exitosamente");
+        } catch (err) {
             console.error("Error cancelando solicitud:", err);
-            alert("Error al cancelar la solicitud");
+            alert(err.message || "Error al cancelar la solicitud");
         }
     };
 
@@ -560,6 +578,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                     {requests.map((req) => {
                         const isTaken = req.state === "TAKEN";
                         const isActive = req.state === "ACTIVE";
+                        const canCancel = isActive || isTaken;
                         
                         return (
                             <div key={req.id} className={`border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow ${
@@ -599,7 +618,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                                         >
                                             {isTaken ? 'Seguir' : 'Ver'}
                                         </button>
-                                        {isActive && (
+                                        {canCancel && (
                                             <button
                                                 onClick={() => cancelRequest(req.id)}
                                                 className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm transition-colors"
