@@ -42,6 +42,10 @@ export default function SignInForm() {
         navigate("/register");
     };
 
+    const handleForgotPassword = () => {
+        navigate("/forgot-password");
+    };
+
     return (
         <>
             <form
@@ -88,6 +92,13 @@ export default function SignInForm() {
                         className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors w-full"
                     >
                         Registrarse
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        className="text-green-600 hover:text-green-800 transition-colors text-sm underline"
+                    >
+                        ¿Olvidaste tu contraseña?
                     </button>
                 </div>
             </form>

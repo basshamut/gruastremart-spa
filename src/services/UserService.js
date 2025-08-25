@@ -191,3 +191,68 @@ export async function changePassword(userId, passwordData) {
         throw err;
     }
 }
+
+// Función para solicitar restablecimiento de contraseña
+export async function requestPasswordReset(email) {
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
+
+    try {
+        const response = await fetch(`${apiDomain}/v1/auth/forgot-password`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        // El endpoint puede devolver solo 200 OK sin contenido JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        } else {
+            return { success: true, message: 'Se ha enviado un enlace de recuperación a tu correo electrónico' };
+        }
+    } catch (err) {
+        console.error("Error al solicitar restablecimiento de contraseña:", err);
+        throw err;
+    }
+}
+
+// Función para confirmar restablecimiento de contraseña con token
+export async function resetPassword(token, newPassword) {
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
+
+    try {
+        const response = await fetch(`${apiDomain}/v1/auth/reset-password`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ 
+                token,
+                newPassword 
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        // El endpoint puede devolver solo 200 OK sin contenido JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        } else {
+            return { success: true, message: 'Contraseña restablecida exitosamente' };
+        }
+    } catch (err) {
+        console.error("Error al restablecer contraseña:", err);
+        throw err;
+    }
+}
