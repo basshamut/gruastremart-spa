@@ -1,6 +1,8 @@
+import { safeParseJSON } from '../utils/Utils.js';
+
 export async function getUserDetailByEmail(email) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+    const token = safeParseJSON(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM)?.access_token;
 
     try {
         const response = await fetch(`${apiDomain}/v1/users?page=0&size=1&email=${email}`, {
@@ -34,7 +36,7 @@ export async function getUserDetailByEmail(email) {
 
 export async function registerUserInDb(userData) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+    const token = safeParseJSON(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM)?.access_token;
 
     try {
         const response = await fetch(`${apiDomain}/v1/users/register`, {
@@ -51,7 +53,7 @@ export async function registerUserInDb(userData) {
             throw new Error(errorData.message || "Error al registrar en la base de datos");
         }
 
-        return await response.json(); // por si necesitas datos de vuelta
+        return await response.json();
     } catch (err) {
         console.error("Error registrando el usuario en la DB:", err);
         throw err;
@@ -60,16 +62,13 @@ export async function registerUserInDb(userData) {
 
 export async function getUsersWithFilters(filters = {}) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+    const token = safeParseJSON(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM)?.access_token;
 
-    // Construir los parámetros de la URL
     const params = new URLSearchParams();
     
-    // Parámetros obligatorios
     params.append('page', filters.page || 0);
     params.append('size', filters.size || 10);
     
-    // Parámetros opcionales
     if (filters.email) {
         params.append('email', filters.email);
     }
@@ -99,13 +98,11 @@ export async function getUsersWithFilters(filters = {}) {
             throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
         }
 
-        // El endpoint puede devolver solo 200 OK sin contenido JSON
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
             return await response.json();
         } else {
-            // Si no hay contenido JSON, devolver un objeto de éxito
-            return { success: true, message: 'Contraseña cambiada exitosamente' };
+            return { success: true, message: 'Operación exitosa' };
         }
     } catch (err) {
         console.error("Error al obtener usuarios:", err);
@@ -115,7 +112,7 @@ export async function getUsersWithFilters(filters = {}) {
 
 export async function updateUser(userId, userData) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+    const token = safeParseJSON(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM)?.access_token;
 
     try {
         const response = await fetch(`${apiDomain}/v1/users/${userId}`, {
@@ -141,7 +138,7 @@ export async function updateUser(userId, userData) {
 
 export async function deleteUser(userId) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+    const token = safeParseJSON(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM)?.access_token;
 
     try {
         const response = await fetch(`${apiDomain}/v1/users/${userId}`, {
@@ -165,7 +162,7 @@ export async function deleteUser(userId) {
 
 export async function changePassword(userId, passwordData) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
-    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+    const token = safeParseJSON(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM)?.access_token;
 
     try {
         const response = await fetch(`${apiDomain}/v1/auth/change-password`, {
@@ -185,14 +182,20 @@ export async function changePassword(userId, passwordData) {
             throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
         }
 
-        return await response.json();
+        // Verificar si la respuesta tiene contenido JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        } else {
+            // Si no hay contenido JSON, devolver un objeto de éxito
+            return { success: true, message: 'Contraseña cambiada exitosamente' };
+        }
     } catch (err) {
         console.error("Error al cambiar contraseña:", err);
         throw err;
     }
 }
 
-// Función para solicitar restablecimiento de contraseña
 export async function requestPasswordReset(email) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
 
@@ -210,7 +213,6 @@ export async function requestPasswordReset(email) {
             throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
         }
 
-        // El endpoint puede devolver solo 200 OK sin contenido JSON
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
             return await response.json();
@@ -223,7 +225,6 @@ export async function requestPasswordReset(email) {
     }
 }
 
-// Función para confirmar restablecimiento de contraseña con token
 export async function resetPassword(token, newPassword) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
 
@@ -244,7 +245,6 @@ export async function resetPassword(token, newPassword) {
             throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
         }
 
-        // El endpoint puede devolver solo 200 OK sin contenido JSON
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
             return await response.json();

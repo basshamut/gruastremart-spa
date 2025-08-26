@@ -23,7 +23,7 @@ export function usePaginatedDemands(state, refreshTrigger = 0, initialPageSize =
             let urlForAll = `${apiDomain}/v1/crane-demands?page=${safePage}&size=${safeSize}`;
             let urlForState = `${apiDomain}/v1/crane-demands?state=${state}&page=${safePage}&size=${safeSize}`;
 
-            if(state === "TAKEN" && userRole !== "OPERATOR") {
+            if(state === "TAKEN" && userRole === "OPERATOR") {
                 urlForState += `&assignedOperatorId=${assignedOperatorId}`;
             }
 
