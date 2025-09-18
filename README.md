@@ -113,10 +113,19 @@ La aplicación sigue una arquitectura moderna basada en componentes con las sigu
 - Los roles determinan las vistas y funcionalidades disponibles.
 - El hook `useGetRole` obtiene el rol del usuario autenticado.
 
+### Sistema de Precios Inteligente
+
+- **Cálculo automático** basado en categorías de peso y distancia.
+- **Tres categorías de peso**: PESO 1 (≤2,500kg), PESO 2 (2,501-5,000kg), PESO 3 (5,001-7,500kg).
+- **Servicios urbanos y extra urbanos** con precios competitivos.
+- **Transparencia total**: Desglose detallado de costos mostrado al operador.
+- 📊 **[Ver documentación completa de precios](README_PRICING_CALCULATION.md)**
+
 ### Geolocalización
 
 - Uso de Leaflet para mostrar mapas interactivos.
 - Los usuarios pueden seleccionar su ubicación actual y un destino.
+- Cálculo automático de distancias para determinar precios.
 
 ### Tablas de Actividades
 

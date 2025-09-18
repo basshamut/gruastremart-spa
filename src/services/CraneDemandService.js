@@ -79,3 +79,43 @@ export async function cancelCraneDemandByOperator(demandId) {
         return { success: true, message: "Solicitud cancelada exitosamente" };
     }
 }
+
+export async function completeCraneDemandByOperator(demandId) {
+    const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
+    const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
+
+    if (!demandId) {
+        throw new Error("El ID de la solicitud es requerido para completar");
+    }
+
+    const url = `${apiDomain}/v1/crane-demands/${demandId}/complete`;
+
+    const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        let errorMessage = "Error al completar la solicitud";
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+        } catch {
+            // Si no se puede parsear el JSON del error, usar mensaje por defecto
+            errorMessage = `Error ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+    }
+
+    // Verificar si la respuesta tiene contenido JSON
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+        return await response.json();
+    } else {
+        // Si no hay contenido JSON, retornar un objeto de éxito
+        return { success: true, message: "Solicitud completada exitosamente" };
+    }
+}

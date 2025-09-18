@@ -5,7 +5,7 @@ import Modal from "../components/common/Modal";
 import { usePaginatedDemands } from "../hooks/data/usePaginatedDemands";
 import { useOperatorActivity } from "../hooks/data/useOperatorActivity";
 import { useOperatorLocationService } from "../hooks/location/useOperatorLocationService";
-import { assignCraneDemandToOperator, cancelCraneDemandByOperator } from "../services/CraneDemandService.js";
+import { assignCraneDemandToOperator, cancelCraneDemandByOperator, completeCraneDemandByOperator } from "../services/CraneDemandService.js";
 import { updateOperatorLocation } from "../services/OperatorLocationService.js";
 import { formatDate } from "../utils/Utils.js";
 import { LOCATION_UPDATE_INTERVAL } from "../config/constants.js";
@@ -23,6 +23,8 @@ export default function OperatorActivity() {
     const [priceCalculation, setPriceCalculation] = useState(null);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [demandToCancel, setDemandToCancel] = useState(null);
+    const [completeModalOpen, setCompleteModalOpen] = useState(false);
+    const [demandToComplete, setDemandToComplete] = useState(null);
 
     // Obtener el ID del operador directamente desde localStorage (no cambia durante la sesión)
     const assignedOperatorId = JSON.parse(localStorage.getItem("userDetail"))?.id;
@@ -209,6 +211,36 @@ export default function OperatorActivity() {
         } catch (error) {
             console.error("Error cancelando solicitud:", error);
             alert("Error al cancelar la solicitud: " + error.message);
+        }
+    };
+
+    const openCompleteModal = (demand) => {
+        setDemandToComplete(demand);
+        setCompleteModalOpen(true);
+    };
+
+    const closeCompleteModal = () => {
+        setCompleteModalOpen(false);
+        setDemandToComplete(null);
+    };
+
+    const confirmCompleteDemand = async () => {
+        if (!demandToComplete) return;
+
+        try {
+            await completeCraneDemandByOperator(demandToComplete.id);
+            
+            // Actualizar la lista de solicitudes tomadas
+            refreshData();
+            
+            // Cerrar el modal
+            closeCompleteModal();
+            
+            // Mostrar mensaje de éxito
+            alert("Solicitud completada exitosamente");
+        } catch (error) {
+            console.error("Error completando solicitud:", error);
+            alert("Error al completar la solicitud: " + error.message);
         }
     };
 
@@ -645,6 +677,12 @@ export default function OperatorActivity() {
                                                     >
                                                         Cancelar
                                                     </button>
+                                                    <button
+                                                        onClick={() => openCompleteModal(demand)}
+                                                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm transition-colors"
+                                                    >
+                                                        Finalizar solicitud
+                                                    </button>
                                                     {timeAgo > 60 && (
                                                         <div className="text-xs text-green-600 text-center">
                                                             ⚠️ Pendiente
@@ -980,6 +1018,53 @@ export default function OperatorActivity() {
                                 {demandToCancel.description && (
                                     <div><span className="font-medium">Descripción:</span> {demandToCancel.description}</div>
                                 )}
+                            </div>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Modal de confirmación de finalización */}
+            {completeModalOpen && demandToComplete && (
+                <Modal
+                    isOpen={completeModalOpen}
+                    onClose={closeCompleteModal}
+                    title="Finalizar solicitud"
+                    showConfirmButton={true}
+                    confirmText="Confirmar finalización"
+                    cancelText="Cancelar"
+                    onConfirm={confirmCompleteDemand}
+                >
+                    <div className="space-y-4">
+                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                            <h3 className="font-bold text-blue-800 mb-2">¿Confirmar finalización?</h3>
+                            <p className="text-blue-700 text-sm">
+                                Estás a punto de marcar como completada la solicitud para <strong>{demandToComplete.origin}</strong>.
+                                Esto indicará que el traslado ha finalizado exitosamente y el cliente será notificado.
+                            </p>
+                        </div>
+                        
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                            <h4 className="font-medium text-gray-700 mb-2">Detalles de la solicitud:</h4>
+                            <div className="text-sm text-gray-600 space-y-1">
+                                <div><span className="font-medium">Origen:</span> {demandToComplete.origin}</div>
+                                <div><span className="font-medium">Tipo de vehículo:</span> {demandToComplete.carType}</div>
+                                <div><span className="font-medium">Fecha:</span> {formatDate(demandToComplete.createdAt)}</div>
+                                {demandToComplete.destinationLocation?.name && (
+                                    <div><span className="font-medium">Destino:</span> {demandToComplete.destinationLocation.name}</div>
+                                )}
+                                {demandToComplete.description && (
+                                    <div><span className="font-medium">Descripción:</span> {demandToComplete.description}</div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                            <div className="flex items-center gap-2">
+                                <span className="text-green-600">✅</span>
+                                <span className="text-sm font-medium text-green-800">
+                                    Al confirmar, la solicitud se marcará como completada
+                                </span>
                             </div>
                         </div>
                     </div>

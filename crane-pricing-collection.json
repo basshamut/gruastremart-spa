@@ -1,0 +1,80 @@
+[
+  {
+    "id": "pricing_peso_1",
+    "weightCategory": {
+      "name": "PESO_1",
+      "minWeightKg": 0,
+      "maxWeightKg": 2500,
+      "description": "Vehículos livianos - Carros pequeños, sedanes, hatchbacks"
+    },
+    "pricing": {
+      "urban": {
+        "type": "urbano",
+        "maxDistanceKm": 8,
+        "fixedPriceUsd": 30.00,
+        "description": "Servicio urbano - Recorridos de 8km o menos"
+      },
+      "extraUrban": {
+        "type": "extra_urbano",
+        "basePriceUsd": 30.00,
+        "pricePerKmUsd": 1.00,
+        "description": "Servicio extra urbano - $30 enganche + $1 por km adicional"
+      }
+    },
+    "active": true,
+    "createdAt": "2025-01-26T00:00:00Z",
+    "updatedAt": "2025-01-26T00:00:00Z"
+  },
+  {
+    "id": "pricing_peso_2",
+    "weightCategory": {
+      "name": "PESO_2",
+      "minWeightKg": 2501,
+      "maxWeightKg": 5000,
+      "description": "Vehículos medianos - SUVs, camionetas, vans"
+    },
+    "pricing": {
+      "urban": {
+        "type": "urbano",
+        "maxDistanceKm": 8,
+        "fixedPriceUsd": 60.00,
+        "description": "Servicio urbano - Recorridos de 8km o menos"
+      },
+      "extraUrban": {
+        "type": "extra_urbano",
+        "basePriceUsd": 60.00,
+        "pricePerKmUsd": 1.50,
+        "description": "Servicio extra urbano - $60 enganche + $1.50 por km adicional"
+      }
+    },
+    "active": true,
+    "createdAt": "2025-01-26T00:00:00Z",
+    "updatedAt": "2025-01-26T00:00:00Z"
+  },
+  {
+    "id": "pricing_peso_3",
+    "weightCategory": {
+      "name": "PESO_3",
+      "minWeightKg": 5001,
+      "maxWeightKg": 7500,
+      "description": "Vehículos pesados - Camiones pequeños, vehículos comerciales"
+    },
+    "pricing": {
+      "urban": {
+        "type": "urbano",
+        "maxDistanceKm": 8,
+        "fixedPriceUsd": 70.00,
+        "description": "Servicio urbano - Recorridos de 8km o menos"
+      },
+      "extraUrban": {
+        "type": "extra_urbano",
+        "basePriceUsd": 70.00,
+        "pricePerKmUsd": 1.80,
+        "description": "Servicio extra urbano - $70 enganche + $1.80 por km adicional"
+      }
+    },
+    "active": true,
+    "createdAt": "2025-01-26T00:00:00Z",
+    "updatedAt": "2025-01-26T00:00:00Z"
+  }
+]
