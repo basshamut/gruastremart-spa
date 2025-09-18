@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Users, Trash2, Search, Edit, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { useUsers } from "../../hooks/data/useUsers.js";
+import ToastContainer from "../common/ToastContainer";
+import { useToast } from "../../hooks/common/useToast.js";
 
 export default function UserSettings() {
+    // Hook para notificaciones
+    const { toasts, showSuccess, showError, removeToast } = useToast();
+
     const {
         users,
         loading,
@@ -58,9 +63,9 @@ export default function UserSettings() {
         if (window.confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
             const result = await deleteUser(userId);
             if (result.success) {
-                alert("Usuario eliminado exitosamente");
+                showSuccess("Usuario eliminado exitosamente");
             } else {
-                alert(`Error al eliminar usuario: ${result.error}`);
+                showError(`Error al eliminar usuario: ${result.error}`);
             }
         }
     };
@@ -91,7 +96,7 @@ export default function UserSettings() {
 
     const handleSaveUser = async () => {
         if (!editFormData.name || !editFormData.lastName) {
-            alert("Por favor completa todos los campos obligatorios");
+            showError("Por favor completa todos los campos obligatorios");
             return;
         }
 
@@ -104,9 +109,9 @@ export default function UserSettings() {
 
         if (result.success) {
             handleCloseModal();
-            alert("Usuario actualizado exitosamente");
+            showSuccess("Usuario actualizado exitosamente");
         } else {
-            alert(`Error al actualizar usuario: ${result.error}`);
+            showError(`Error al actualizar usuario: ${result.error}`);
         }
     };
 
@@ -424,6 +429,9 @@ export default function UserSettings() {
                     </div>
                 </div>
             )}
+
+            {/* Toast Container para notificaciones */}
+            <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
         </div>
     );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
+import ToastContainer from "../components/common/ToastContainer";
 import { usePaginatedDemands } from "../hooks/data/usePaginatedDemands";
 import { useOperatorActivity } from "../hooks/data/useOperatorActivity";
 import { useOperatorLocationService } from "../hooks/location/useOperatorLocationService";
@@ -11,6 +12,7 @@ import { formatDate } from "../utils/Utils.js";
 import { LOCATION_UPDATE_INTERVAL } from "../config/constants.js";
 import { useCranePricingDropdown } from "../hooks/data/useCranePricing.js";
 import { calculateServicePrice } from "../services/CranePricingService.js";
+import { useToast } from "../hooks/common/useToast.js";
 
 export default function OperatorActivity() {
     // Estados específicos del componente
@@ -28,6 +30,9 @@ export default function OperatorActivity() {
 
     // Obtener el ID del operador directamente desde localStorage (no cambia durante la sesión)
     const assignedOperatorId = JSON.parse(localStorage.getItem("userDetail"))?.id;
+
+    // Hook para notificaciones
+    const { toasts, showSuccess, showError, removeToast } = useToast();
 
     // Hook para obtener las opciones de pricing
     const { pricingOptions, loading: loadingPricing } = useCranePricingDropdown();
@@ -52,7 +57,7 @@ export default function OperatorActivity() {
     } = useOperatorLocationService(assignedOperatorId, LOCATION_UPDATE_INTERVAL, !!assignedOperatorId); // Usar variable configurable
 
     const activeDemands = usePaginatedDemands("ACTIVE", refreshTrigger, 50, location?.latitude || null, location?.longitude || null);
-    const takenDemands = usePaginatedDemands("TAKEN", refreshTrigger, 50);
+    const takenDemands = usePaginatedDemands("TAKEN", refreshTrigger, 1); // Solo puede haber 1 solicitud asignada
 
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
 
@@ -207,10 +212,10 @@ export default function OperatorActivity() {
             closeCancelModal();
             
             // Mostrar mensaje de éxito
-            alert("Solicitud cancelada exitosamente");
+            showSuccess("Solicitud cancelada exitosamente");
         } catch (error) {
             console.error("Error cancelando solicitud:", error);
-            alert("Error al cancelar la solicitud: " + error.message);
+            showError("Error al cancelar la solicitud: " + error.message);
         }
     };
 
@@ -237,10 +242,10 @@ export default function OperatorActivity() {
             closeCompleteModal();
             
             // Mostrar mensaje de éxito
-            alert("Solicitud completada exitosamente");
+            showSuccess("Solicitud completada exitosamente");
         } catch (error) {
             console.error("Error completando solicitud:", error);
-            alert("Error al completar la solicitud: " + error.message);
+            showError("Error al completar la solicitud: " + error.message);
         }
     };
 
@@ -695,13 +700,7 @@ export default function OperatorActivity() {
                                 })}
                             </div>
 
-                            <Pagination
-                                page={takenDemands.page}
-                                totalPages={takenDemands.totalPages}
-                                pageSize={takenDemands.pageSize}
-                                onPageChange={takenDemands.handlePageChange}
-                                onPageSizeChange={takenDemands.handlePageSizeChange}
-                            />
+                            {/* No se necesita paginación para solicitudes asignadas ya que solo puede haber una */}
                         </>
                     )}
                 </div>
@@ -1070,6 +1069,9 @@ export default function OperatorActivity() {
                     </div>
                 </Modal>
             )}
+
+            {/* Toast Container para notificaciones */}
+            <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
         </>
     );
 }

@@ -61,14 +61,20 @@ export const useOperatorActivity = (
 
     /**
      * Actualización automática de solicitudes cada 30 segundos
+     * Solo si el operador está activo y no hay errores críticos de ubicación
      */
     useEffect(() => {
+        // No hacer refresh automático si hay errores persistentes de ubicación
+        if (locationError) {
+            return;
+        }
+
         const interval = setInterval(() => {
             setRefreshTrigger(prev => prev + 1);
         }, demandsRefreshInterval * 1000); // Convertir segundos a milisegundos
 
         return () => clearInterval(interval);
-    }, [demandsRefreshInterval]);
+    }, [demandsRefreshInterval, locationError]);
 
     /**
      * Función para refrescar datos manualmente

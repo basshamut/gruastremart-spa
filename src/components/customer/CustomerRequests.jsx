@@ -1,12 +1,14 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { formatDate } from "../../utils/Utils.js";
 import Modal from "../common/Modal";
+import ToastContainer from "../common/ToastContainer";
 import { useOperatorLocationForDemand } from "../../hooks/location/useOperatorLocationForDemand";
 import { DEMAND_POLL_INTERVAL } from "../../config/constants.js";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import React from "react";
+import { useToast } from "../../hooks/common/useToast.js";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -239,12 +241,15 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
     const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
 
+    // Hook para notificaciones
+    const { toasts, showSuccess, showError, removeToast } = useToast();
+
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [stateFilter, setStateFilter] = useState("");
     const [page, setPage] = useState(0);
-    const [size] = useState(5);
+    const [size] = useState(1000); // Número grande para obtener todas las solicitudes posibles
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalType, setModalType] = useState("details"); // "details" o "cancel"
@@ -253,7 +258,14 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
     const [pollingInterval, setPollingInterval] = useState(null);
     const [lastUpdate, setLastUpdate] = useState(null);
     const [hasActiveRequests, setHasActiveRequests] = useState(false);
-    const [notificationShown, setNotificationShown] = useState(false);
+    const [notificationShown, setNotificationShown] = useState(() => {
+        // Si hay un ID de solicitud notificada, significa que ya se notificó
+        return localStorage.getItem('lastNotifiedRequestId') !== null;
+    });
+    const [lastNotifiedRequestId, setLastNotifiedRequestId] = useState(() => {
+        // Recuperar del localStorage para persistir entre recargas
+        return localStorage.getItem('lastNotifiedRequestId') || null;
+    });
 
     // Hook para seguimiento del operador (solo para solicitudes tomadas)
     const takenRequest = requests.find(r => r.state === "TAKEN");
@@ -274,66 +286,8 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
         isLoading: operatorLoading
     } = useOperatorLocationForDemand(selectedRequest?.id, DEMAND_POLL_INTERVAL, modalOpen && selectedRequest?.state === "TAKEN");
 
-    const fetchRequests = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const createdByUserId = JSON.parse(localStorage.getItem("userDetail")).id;
-            const params = new URLSearchParams({
-                page,
-                size,
-                createdByUserId
-            });
-            if (stateFilter) {
-                params.append("state", stateFilter);
-            }
-
-            const response = await fetch(`${apiDomain}/v1/crane-demands?${params.toString()}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            if (!response.ok) throw new Error("Error al obtener las solicitudes");
-
-            const data = await response.json();
-            const newRequests = data.content || [];
-
-            // Detectar cambios de estado para notificaciones
-            if (requests.length > 0) {
-                const previousTakenRequest = requests.find(r => r.state === "TAKEN");
-                const newTakenRequest = newRequests.find(r => r.state === "TAKEN");
-
-                // Si no había solicitud tomada antes y ahora sí hay una
-                if (!previousTakenRequest && newTakenRequest && !notificationShown) {
-                    showNotification("¡Operador asignado!", "Un operador ha tomado tu solicitud y está en camino.");
-                    setNotificationShown(true);
-                }
-
-                // Si había una solicitud tomada y ahora no hay (completada o cancelada)
-                if (previousTakenRequest && !newTakenRequest) {
-                    showNotification("Solicitud finalizada", "Tu solicitud ha sido completada o cancelada.");
-                    setNotificationShown(false);
-                }
-            }
-
-            setRequests(newRequests);
-            setLastUpdate(new Date());
-
-            // Verificar si hay solicitudes activas para determinar si continuar polling
-            const hasActive = newRequests.some(r => r.state === "ACTIVE" || r.state === "TAKEN");
-            setHasActiveRequests(hasActive);
-
-        } catch (err) {
-            console.error(err);
-            setError("Error cargando solicitudes.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     // Función para mostrar notificaciones
-    const showNotification = (title, message) => {
+    const showNotification = useCallback((title, message) => {
         // Verificar si el navegador soporta notificaciones
         if ("Notification" in window && Notification.permission === "granted") {
             new Notification(title, {
@@ -372,7 +326,116 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                 }
             }, 300);
         }, 5000);
-    };
+    }, []);
+
+    const fetchRequests = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const createdByUserId = JSON.parse(localStorage.getItem("userDetail")).id;
+            const params = new URLSearchParams({
+                page,
+                size,
+                createdByUserId
+            });
+            if (stateFilter) {
+                params.append("state", stateFilter);
+            }
+
+            const response = await fetch(`${apiDomain}/v1/crane-demands?${params.toString()}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) throw new Error("Error al obtener las solicitudes");
+
+            const data = await response.json();
+            const newRequests = data.content || [];
+            
+            // Log para debug: verificar cuántas solicitudes devuelve la API
+            console.log(`📊 API Response - Total solicitudes: ${newRequests.length}`, {
+                totalElements: data.totalElements,
+                totalPages: data.totalPages,
+                currentPage: data.pageable?.pageNumber,
+                pageSize: data.pageable?.pageSize
+            });
+
+            // Usar función de setState para acceder al estado anterior sin crear dependencias
+            setRequests(prevRequests => {
+                // Detectar cambios de estado para notificaciones automáticas
+                if (prevRequests.length > 0) {
+                    newRequests.forEach(newRequest => {
+                        const previousRequest = prevRequests.find(r => r.id === newRequest.id);
+                        
+                        if (previousRequest && previousRequest.state !== newRequest.state) {
+                            console.log(`🔄 Cambio de estado detectado para solicitud ${newRequest.id}: ${previousRequest.state} → ${newRequest.state}`);
+                            
+                            // Obtener el último ID notificado del localStorage para evitar dependencias
+                            const currentLastNotified = localStorage.getItem('lastNotifiedRequestId');
+                            
+                            // Caso 1: Solicitud fue tomada por operador
+                            if (previousRequest.state === "ACTIVE" && newRequest.state === "TAKEN") {
+                                if (currentLastNotified !== newRequest.id) {
+                                    console.log(`🔔 Notificando: Operador asignado a solicitud ${newRequest.id}`);
+                                    showNotification("¡Operador asignado!", "Un operador ha tomado tu solicitud y está en camino.");
+                                    setNotificationShown(true);
+                                    setLastNotifiedRequestId(newRequest.id);
+                                    localStorage.setItem('lastNotifiedRequestId', newRequest.id);
+                                }
+                            }
+                            
+                            // Caso 2: Solicitud fue completada
+                            else if (previousRequest.state === "TAKEN" && newRequest.state === "COMPLETED") {
+                                console.log(`🔔 Notificando: Solicitud completada ${newRequest.id}`);
+                                showNotification("¡Solicitud completada!", "Tu solicitud ha sido completada exitosamente. El servicio ha finalizado.");
+                                setNotificationShown(false);
+                                setLastNotifiedRequestId(null);
+                                localStorage.removeItem('lastNotifiedRequestId');
+                            }
+                            
+                            // Caso 3: Solicitud fue cancelada
+                            else if (previousRequest.state === "TAKEN" && newRequest.state === "CANCELLED") {
+                                console.log(`🔔 Notificando: Solicitud cancelada ${newRequest.id}`);
+                                showNotification("Solicitud cancelada", "Tu solicitud ha sido cancelada por el operador. Puedes crear una nueva solicitud si lo necesitas.");
+                                setNotificationShown(false);
+                                setLastNotifiedRequestId(null);
+                                localStorage.removeItem('lastNotifiedRequestId');
+                            }
+                            
+                            // Caso 4: Solicitud activa fue cancelada directamente
+                            else if (previousRequest.state === "ACTIVE" && newRequest.state === "CANCELLED") {
+                                console.log(`🔔 Notificando: Solicitud activa cancelada ${newRequest.id}`);
+                                showNotification("Solicitud cancelada", "Tu solicitud ha sido cancelada.");
+                            }
+                        }
+                    });
+                }
+                return newRequests;
+            });
+            
+            setLastUpdate(new Date());
+
+            // Verificar si hay solicitudes activas para determinar si continuar polling
+            const hasActive = newRequests.some(r => r.state === "ACTIVE");
+            const hasTaken = newRequests.some(r => r.state === "TAKEN");
+            const shouldPoll = hasActive || hasTaken;
+            
+            // Usar función de setState para evitar dependencias
+            setHasActiveRequests(prev => {
+                if (prev !== shouldPoll) {
+                    console.log(`🔄 Cambiando estado de polling: ${prev} → ${shouldPoll}`);
+                }
+                return shouldPoll;
+            });
+
+        } catch (err) {
+            console.error(err);
+            setError("Error cargando solicitudes.");
+        } finally {
+            setLoading(false);
+        }
+    }, [page, size, stateFilter, apiDomain, token, showNotification]);
 
     // Solicitar permisos de notificación al cargar
     useEffect(() => {
@@ -381,26 +444,45 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
         }
     }, []);
 
-    // Configurar polling automático
+    // Configurar polling automático - solo cuando realmente sea necesario
     useEffect(() => {
         // Limpiar intervalo anterior si existe
         if (pollingInterval) {
             clearInterval(pollingInterval);
-        }
-
-        // Si hay una solicitud en TAKEN, detener el polling
-        const hasTaken = requests.some(r => r.state === "TAKEN");
-        if (hasTaken) {
             setPollingInterval(null);
-            return;
         }
 
-        // Solo hacer polling si hay solicitudes activas
-        if (hasActiveRequests || requests.some(r => r.state === "ACTIVE")) {
-            const interval = setInterval(() => {
-                fetchRequests();
-            }, DEMAND_POLL_INTERVAL * 1000);
-            setPollingInterval(interval);
+        // Solo hacer polling si hasActiveRequests es true
+        if (hasActiveRequests) {
+            const hasTaken = requests.some(r => r.state === "TAKEN");
+            const hasActive = requests.some(r => r.state === "ACTIVE");
+            
+            // Determinar intervalo basado en el estado
+            let intervalTime;
+            if (hasTaken) {
+                // Solicitud tomada: polling moderado (para detectar finalización/cancelación)
+                intervalTime = DEMAND_POLL_INTERVAL * 2; // 2x más lento (20s si DEMAND_POLL_INTERVAL es 10s)
+            } else if (hasActive) {
+                // Solicitud activa: polling normal (para detectar cuando sea tomada)
+                intervalTime = DEMAND_POLL_INTERVAL;
+            }
+            
+            if (intervalTime) {
+                const minutes = Math.floor(intervalTime / 60);
+                const seconds = intervalTime % 60;
+                const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                
+                console.log(`🔄 Iniciando polling cada ${timeStr} - Active: ${hasActive}, Taken: ${hasTaken}`);
+                
+                const interval = setInterval(() => {
+                    const status = hasTaken ? 'TAKEN' : 'ACTIVE';
+                    console.log(`📡 Polling ${status} - ${new Date().toLocaleTimeString()}`);
+                    fetchRequests();
+                }, intervalTime * 1000);
+                setPollingInterval(interval);
+            }
+        } else {
+            console.log('⏹️ Polling detenido - No hay solicitudes que requieran seguimiento');
         }
 
         // Limpiar al desmontar
@@ -409,7 +491,7 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                 clearInterval(pollingInterval);
             }
         };
-    }, [hasActiveRequests, requests]);
+    }, [hasActiveRequests]); // Solo cuando cambie hasActiveRequests
 
     useEffect(() => {
         fetchRequests();
@@ -422,9 +504,48 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
         }
     }, [refreshTrigger]);
 
+    // Limpiar notificaciones al desmontar el componente
+    useEffect(() => {
+        return () => {
+            // Limpiar intervalo si existe
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            // No limpiar localStorage aquí para mantener persistencia entre navegación
+        };
+    }, [pollingInterval]);
+
     const handleFilterChange = (e) => {
         setStateFilter(e.target.value);
         setPage(0);
+    };
+
+    // Función para detener polling manualmente
+    const stopPolling = () => {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+            console.log('⏹️ Polling detenido manualmente');
+        }
+    };
+
+    // Función para reiniciar polling manualmente
+    const startPolling = () => {
+        if (!pollingInterval && hasActiveRequests) {
+            console.log('🔄 Reiniciando polling manualmente');
+            // Trigger del useEffect
+            setHasActiveRequests(prev => !prev);
+            setTimeout(() => setHasActiveRequests(prev => !prev), 100);
+        }
+    };
+
+    // Función para limpiar el estado de notificaciones (solo en caso de problemas)
+    const resetNotificationState = () => {
+        setNotificationShown(false);
+        setLastNotifiedRequestId(null);
+        localStorage.removeItem('lastNotifiedRequestId');
+        console.log('🔄 Estado de notificaciones reiniciado');
+        showNotification("Estado reiniciado", "El estado de notificaciones ha sido reiniciado.");
     };
 
     const cancelRequest = async (id) => {
@@ -466,10 +587,10 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                 prev.map((r) => (r.id === selectedRequest.id ? { ...r, state: "CANCELLED" } : r))
             );
             setModalOpen(false);
-            alert("Solicitud cancelada exitosamente");
+            showSuccess("Solicitud cancelada exitosamente");
         } catch (err) {
             console.error("Error cancelando solicitud:", err);
-            alert(err.message || "Error al cancelar la solicitud");
+            showError(err.message || "Error al cancelar la solicitud");
         }
     };
 
@@ -510,26 +631,57 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                         </span>
                     )}
                 </h2>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
                     {takenRequest && (
-                        <div className="text-xs text-green-600">
-                            🚗 Operador en camino
+                        <div className="text-xs text-green-600 flex items-center">
+                            🚗 <span className="ml-1">Operador en camino</span>
                         </div>
                     )}
-                    {requests.length > 0 && (
-                        <div className="text-xs text-gray-500 space-y-1">
-                            <div>Última actualización: {new Date().toLocaleTimeString()}</div>
+                    
+                    {/* Indicador de polling */}
+                    <div className="text-xs text-gray-500 flex items-center gap-2">
+                        {lastUpdate && (
+                            <span>Última actualización: {lastUpdate.toLocaleTimeString()}</span>
+                        )}
+                        
+                        {pollingInterval ? (
                             <div className="flex items-center text-green-600">
                                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
-                                Actualización cada 30s
+                                <span>Auto-actualización activa</span>
+                                <button
+                                    onClick={stopPolling}
+                                    className="ml-2 text-xs text-red-600 hover:text-red-800 underline"
+                                    title="Detener actualización automática"
+                                >
+                                    Pausar
+                                </button>
+                                <button
+                                    onClick={resetNotificationState}
+                                    className="ml-2 text-xs text-gray-600 hover:text-gray-800 underline"
+                                    title="Reiniciar estado de notificaciones"
+                                >
+                                    Reset
+                                </button>
                             </div>
-                        </div>
-                    )}
-                    {lastUpdate && (
-                        <div className="text-xs text-gray-500">
-                            Última actualización: {lastUpdate.toLocaleTimeString()}
-                        </div>
-                    )}
+                        ) : hasActiveRequests ? (
+                            <div className="flex items-center text-orange-600">
+                                <div className="w-2 h-2 bg-orange-500 rounded-full mr-1"></div>
+                                <span>Auto-actualización pausada</span>
+                                <button
+                                    onClick={startPolling}
+                                    className="ml-2 text-xs text-green-600 hover:text-green-800 underline"
+                                    title="Reanudar actualización automática"
+                                >
+                                    Reanudar
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center text-gray-400">
+                                <div className="w-2 h-2 bg-gray-400 rounded-full mr-1"></div>
+                                <span>Sin seguimiento activo</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -849,6 +1001,9 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                     </div>
                 </Modal>
             )}
+
+            {/* Toast Container para notificaciones */}
+            <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
         </div>
     );
 }

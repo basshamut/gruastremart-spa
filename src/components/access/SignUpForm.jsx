@@ -3,10 +3,15 @@ import { useState } from "react";
 import { useAuth } from "../../hooks/auth/useAuth";
 import { useNavigate } from "react-router-dom";
 import {registerUserInDb} from "../../services/UserService";
+import ToastContainer from "../common/ToastContainer";
+import { useToast } from "../../hooks/common/useToast.js";
 
 export default function SignUpForm() {
     const { signUp } = useAuth();
     const navigate = useNavigate();
+    
+    // Hook para notificaciones
+    const { toasts, showSuccess, removeToast } = useToast();
 
     const [form, setForm] = useState({
         email: "",
@@ -33,7 +38,7 @@ export default function SignUpForm() {
         try {
             await signUp(form.email, form.password); // Create user in Supabase
             await registerUserInDb(form); // Create user in the database
-            alert("¡Te has registrado correctamente! Revisa tu correo para confirmar.");
+            showSuccess("¡Te has registrado correctamente! Revisa tu correo para confirmar.");
             navigate("/");
         } catch (error) {
             setErrorMsg(error.message);
@@ -85,6 +90,9 @@ export default function SignUpForm() {
             >
                 Volver
             </button>
+
+            {/* Toast Container para notificaciones */}
+            <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
         </form>
     );
 }

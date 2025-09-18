@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { Settings, Save, RefreshCw } from "lucide-react";
+import ToastContainer from "../common/ToastContainer";
+import { useToast } from "../../hooks/common/useToast.js";
 
 export default function SystemSettings() {
+    // Hook para notificaciones
+    const { toasts, showSuccess, removeToast } = useToast();
+
     const [settings, setSettings] = useState({
         defaultRadius: 5000,
         maintenanceMode: false,
@@ -25,7 +30,7 @@ export default function SystemSettings() {
         // Simular guardado
         setTimeout(() => {
             setLoading(false);
-            alert("Configuraciones guardadas exitosamente");
+            showSuccess("Configuraciones guardadas exitosamente");
         }, 1000);
     };
 
@@ -181,6 +186,9 @@ export default function SystemSettings() {
                     </div>
                 </div>
             </div>
+
+            {/* Toast Container para notificaciones */}
+            <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
         </div>
     );
 }
