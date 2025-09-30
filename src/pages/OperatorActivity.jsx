@@ -8,10 +8,9 @@ import { useOperatorActivity } from "../hooks/data/useOperatorActivity";
 import { useOperatorLocationService } from "../hooks/location/useOperatorLocationService";
 import { assignCraneDemandToOperator, cancelCraneDemandByOperator, completeCraneDemandByOperator } from "../services/CraneDemandService.js";
 import { updateOperatorLocation } from "../services/OperatorLocationService.js";
-import { formatDate } from "../utils/Utils.js";
+import { formatDate, calculateDistance, calculateDistanceFromLocations } from "../utils/Utils.js";
 import { LOCATION_UPDATE_INTERVAL } from "../config/constants.js";
-import { useCranePricingDropdown } from "../hooks/data/useCranePricing.js";
-import { calculateServicePrice } from "../services/CranePricingService.js";
+import { usePriceCalculation } from "../hooks/data/usePriceCalculation.js";
 import { useToast } from "../hooks/common/useToast.js";
 
 export default function OperatorActivity() {
@@ -34,8 +33,14 @@ export default function OperatorActivity() {
     // Hook para notificaciones
     const { toasts, showSuccess, showError, removeToast } = useToast();
 
-    // Hook para obtener las opciones de pricing
-    const { pricingOptions, loading: loadingPricing } = useCranePricingDropdown();
+    // Hook centralizado para cálculos de precios
+    const { 
+        calculateAutomaticPrice, 
+        formatPrice, 
+        getPriceSourceText,
+        pricingOptions, 
+        loading: loadingPricing 
+    } = usePriceCalculation();
 
     // Hook personalizado que maneja toda la lógica de actividad del operador
     const {
@@ -102,14 +107,60 @@ export default function OperatorActivity() {
 
         if (modalType === "ASSIGN") {
             setShowConfirmButton(true);
-            // Sugerir categoría basada en el peso del vehículo si está disponible
-            if (demand.vehicleWeight && pricingOptions.length > 0) {
+            
+            let suggestedCategory = null;
+            
+            // Priorizar assignedWeightCategoryId si está disponible
+            if (demand.assignedWeightCategoryId && pricingOptions.length > 0) {
+                const assignedPricing = pricingOptions.find(option =>
+                    option.weightCategory === demand.assignedWeightCategoryId
+                );
+                if (assignedPricing) {
+                    suggestedCategory = assignedPricing.weightCategory;
+                    console.log('Using assigned weight category:', suggestedCategory);
+                }
+            }
+            
+            // Si no hay categoría asignada, sugerir basada en el peso del vehículo
+            if (!suggestedCategory && demand.vehicleWeight && pricingOptions.length > 0) {
                 const suggested = pricingOptions.find(option =>
                     demand.vehicleWeight >= option.minWeightKg &&
                     demand.vehicleWeight <= option.maxWeightKg
                 );
                 if (suggested) {
-                    setSelectedWeightCategory(suggested.weightCategory);
+                    suggestedCategory = suggested.weightCategory;
+                    console.log('Using weight-based category:', suggestedCategory);
+                }
+            }
+            
+            // Establecer la categoría sugerida y calcular precio automáticamente
+            if (suggestedCategory) {
+                setSelectedWeightCategory(suggestedCategory);
+                
+                // Calcular precio automáticamente
+                let distance = demand.distance;
+                if (!distance && demand.currentLocation && demand.destinationLocation) {
+                    distance = calculateDistanceFromLocations(
+                        demand.currentLocation,
+                        demand.destinationLocation
+                    );
+                    console.log('Auto-calculated distance for pricing:', distance, 'km');
+                }
+
+                if (distance) {
+                    try {
+                        // Crear un objeto temporal con la categoría sugerida para el cálculo
+                        const demandForCalculation = {
+                            ...demand,
+                            assignedWeightCategoryId: suggestedCategory,
+                            distance: distance
+                        };
+                        const calculation = calculateAutomaticPrice(demandForCalculation);
+                        setPriceCalculation(calculation);
+                        console.log('Auto-calculated price:', calculation);
+                    } catch (error) {
+                        console.error('Error auto-calculating price:', error);
+                    }
                 }
             }
         }
@@ -169,20 +220,34 @@ export default function OperatorActivity() {
     const handleWeightCategoryChange = (category) => {
         setSelectedWeightCategory(category);
 
-        // Calcular precio si hay distancia disponible
-        if (category && selectedDemand && selectedDemand.distance) {
-            const selectedPricing = pricingOptions.find(option =>
-                option.weightCategory === category
-            );
+        // Calcular precio si hay distancia disponible o se puede calcular
+        if (category && selectedDemand) {
+            // Obtener distancia: usar la existente o calcular automáticamente
+            let distance = selectedDemand.distance;
+            if (!distance && selectedDemand.currentLocation && selectedDemand.destinationLocation) {
+                distance = calculateDistanceFromLocations(
+                    selectedDemand.currentLocation,
+                    selectedDemand.destinationLocation
+                );
+                console.log('Calculated distance for operator view:', distance, 'km');
+            }
 
-            if (selectedPricing) {
+            if (distance) {
                 try {
-                    const calculation = calculateServicePrice(selectedPricing, selectedDemand.distance);
+                    // Crear un objeto temporal con la categoría seleccionada para el cálculo
+                    const demandForCalculation = {
+                        ...selectedDemand,
+                        assignedWeightCategoryId: category,
+                        distance: distance
+                    };
+                    const calculation = calculateAutomaticPrice(demandForCalculation);
                     setPriceCalculation(calculation);
                 } catch (error) {
                     console.error('Error calculating price:', error);
                     setPriceCalculation(null);
                 }
+            } else {
+                setPriceCalculation(null);
             }
         } else {
             setPriceCalculation(null);
@@ -448,6 +513,9 @@ export default function OperatorActivity() {
                                     const isUrgent = timeAgo > 30; // Más de 30 minutos
                                     const isHighPriority = timeAgo > 15; // Más de 15 minutos
 
+                                    // Calcular precio automáticamente
+                                    const priceCalculation = calculateAutomaticPrice(demand);
+
                                     return (
                                         <div key={demand.id} className={`border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow ${isUrgent ? 'border-orange-300 bg-orange-50' :
                                                 isHighPriority ? 'border-yellow-300 bg-yellow-50' : ''
@@ -469,6 +537,12 @@ export default function OperatorActivity() {
                                                                 ⏰ Prioritaria
                                                             </span>
                                                         )}
+                                                        {/* Mostrar precio si está disponible */}
+                                                        {priceCalculation && priceCalculation.isValid && (
+                                                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                                                                💰 {formatPrice(priceCalculation.totalPrice)}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
                                                         <div>
@@ -486,6 +560,24 @@ export default function OperatorActivity() {
                                                                         `${Math.floor(timeAgo / 60)}h ${timeAgo % 60}min`}
                                                             </span>
                                                         </div>
+                                                        {/* Información de precio detallada */}
+                                                        {priceCalculation && priceCalculation.isValid && (
+                                                            <>
+                                                                <div>
+                                                                    <span className="font-medium">Distancia:</span> {priceCalculation.distance?.toFixed(2)} km
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-medium">Servicio:</span> {getPriceSourceText(priceCalculation.serviceType)}
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-medium">Categoría:</span> {priceCalculation.weightCategory}
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-medium">Precio total:</span> 
+                                                                    <span className="text-green-600 font-semibold ml-1">{formatPrice(priceCalculation.totalPrice)}</span>
+                                                                </div>
+                                                            </>
+                                                        )}
                                                         {demand.breakdown && (
                                                             <div>
                                                                 <span className="font-medium">Avería:</span> {demand.breakdown}
@@ -610,6 +702,9 @@ export default function OperatorActivity() {
                                     const createdAt = new Date(demand.createdAt);
                                     const timeAgo = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60)); // minutos
 
+                                    // Calcular precio automáticamente
+                                    const priceCalculation = calculateAutomaticPrice(demand);
+
                                     return (
                                         <div key={demand.id} className="border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow">
                                             <div className="flex justify-between items-start">
@@ -619,6 +714,12 @@ export default function OperatorActivity() {
                                                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                                                             Asignada
                                                         </span>
+                                                        {/* Mostrar precio si está disponible */}
+                                                        {priceCalculation && priceCalculation.isValid && (
+                                                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                                                                💰 {formatPrice(priceCalculation.totalPrice)}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
                                                         <div>
@@ -635,6 +736,24 @@ export default function OperatorActivity() {
                                                                         `${Math.floor(timeAgo / 60)}h ${timeAgo % 60}min`}
                                                             </span>
                                                         </div>
+                                                        {/* Información de precio detallada */}
+                                                        {priceCalculation && priceCalculation.isValid && (
+                                                            <>
+                                                                <div>
+                                                                    <span className="font-medium">Distancia:</span> {priceCalculation.distance?.toFixed(2)} km
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-medium">Servicio:</span> {getPriceSourceText(priceCalculation.serviceType)}
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-medium">Categoría:</span> {priceCalculation.weightCategory}
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-medium">Precio total:</span> 
+                                                                    <span className="text-green-600 font-semibold ml-1">{formatPrice(priceCalculation.totalPrice)}</span>
+                                                                </div>
+                                                            </>
+                                                        )}
                                                         {/* Información del vehículo */}
                                                         {demand.vehicleBrand && (
                                                             <div>
@@ -718,10 +837,6 @@ export default function OperatorActivity() {
                             <h3 className="font-bold text-lg text-gray-800 mb-3">{selectedDemand.origin}</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                                 <div>
-                                    <span className="font-medium text-gray-700">Tipo de vehículo:</span>
-                                    <p className="text-gray-800">{selectedDemand.carType}</p>
-                                </div>
-                                <div>
                                     <span className="font-medium text-gray-700">Estado:</span>
                                     <p className="text-gray-800">
                                         <span className={`px-2 py-1 rounded-full text-xs ${selectedDemand.state === 'TAKEN' ? 'bg-green-100 text-green-800' :
@@ -735,16 +850,40 @@ export default function OperatorActivity() {
                                     </p>
                                 </div>
                                 <div>
-                                    <span className="font-medium text-gray-700">Fecha:</span>
+                                    <span className="font-medium text-gray-700">Tipo de vehículo:</span>
+                                    <p className="text-gray-800">{selectedDemand.carType}</p>
+                                </div>
+                                <div>
+                                    <span className="font-medium text-gray-700">Fecha de creación:</span>
                                     <p className="text-gray-800">{formatDate(selectedDemand.createdAt)}</p>
                                 </div>
                                 {selectedDemand.assignedOperatorId && (
                                     <div>
-                                        <span className="font-medium text-gray-700">Operador:</span>
+                                        <span className="font-medium text-gray-700">Operador asignado:</span>
                                         <p className="text-gray-800">{selectedDemand.assignedOperatorId}</p>
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Descripción y tipo de avería */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {selectedDemand.description && (
+                                <div>
+                                    <span className="font-medium text-gray-700 text-sm">Descripción:</span>
+                                    <p className="text-gray-800 mt-1 p-3 bg-gray-50 rounded-lg text-sm">
+                                        {selectedDemand.description}
+                                    </p>
+                                </div>
+                            )}
+                            {selectedDemand.breakdown && (
+                                <div>
+                                    <span className="font-medium text-gray-700 text-sm">Tipo de avería:</span>
+                                    <p className="text-gray-800 mt-1 p-3 bg-gray-50 rounded-lg text-sm">
+                                        {selectedDemand.breakdown}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Información del vehículo */}
@@ -787,25 +926,7 @@ export default function OperatorActivity() {
                                 </div>
                             )}
 
-                        {/* Descripción y avería */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {selectedDemand.description && (
-                                <div>
-                                    <span className="font-medium text-gray-700 text-sm">Descripción:</span>
-                                    <p className="text-gray-800 mt-1 p-3 bg-gray-50 rounded-lg text-sm">
-                                        {selectedDemand.description}
-                                    </p>
-                                </div>
-                            )}
-                            {selectedDemand.breakdown && (
-                                <div>
-                                    <span className="font-medium text-gray-700 text-sm">Tipo de avería:</span>
-                                    <p className="text-gray-800 mt-1 p-3 bg-gray-50 rounded-lg text-sm">
-                                        {selectedDemand.breakdown}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
+
 
                         {/* Selección de categoría de peso para asignación */}
                         {showConfirmButton && (
@@ -872,20 +993,26 @@ export default function OperatorActivity() {
                                 )}
 
                                 {/* Cálculo de precio */}
-                                {priceCalculation && (
+                                {priceCalculation && priceCalculation.isValid && (
                                     <div className="p-3 bg-green-50 border border-green-200 rounded">
                                         <h5 className="text-sm font-semibold text-green-800 mb-2">
                                             💰 Cálculo de Precio
                                         </h5>
                                         <div className="text-sm text-green-700">
-                                            <p><strong>Tipo de servicio:</strong> {priceCalculation.serviceType}</p>
-                                            <p><strong>Distancia:</strong> {priceCalculation.distance} km</p>
-                                            <p><strong>Precio total:</strong> ${priceCalculation.totalPrice.toFixed(2)} USD</p>
+                                            <p><strong>Categoría de peso:</strong> {priceCalculation.weightCategory}</p>
+                                            <p><strong>Tipo de servicio:</strong> {priceCalculation.serviceType.replace('_', ' ')}</p>
+                                            <p><strong>Distancia:</strong> {priceCalculation.distance?.toFixed(2)} km</p>
+                                            <p><strong>Precio total:</strong> {formatPrice(priceCalculation.totalPrice)}</p>
 
-                                            {priceCalculation.serviceType === 'extra_urbano' && (
-                                                <div className="text-xs text-green-600 mt-1 space-y-1">
-                                                    <p>• Base: ${priceCalculation.breakdown.basePrice}</p>
-                                                    <p>• Extra ({priceCalculation.breakdown.extraDistance} km × ${priceCalculation.breakdown.pricePerKm}): ${priceCalculation.breakdown.extraCost.toFixed(2)}</p>
+                                            {/* Información del origen del precio */}
+                                            <p className="text-xs text-green-600 mt-2">
+                                                {getPriceSourceText(priceCalculation.priceSource)}
+                                            </p>
+
+                                            {priceCalculation.serviceType === 'extra_urbano' && priceCalculation.breakdown && (
+                                                <div className="text-xs text-green-600 mt-2 space-y-1">
+                                                    <p>• Base: {formatPrice(priceCalculation.breakdown.basePrice)}</p>
+                                                    <p>• Extra ({priceCalculation.breakdown.extraDistance} km × {formatPrice(priceCalculation.breakdown.pricePerKm)}): {formatPrice(priceCalculation.breakdown.extraCost)}</p>
                                                 </div>
                                             )}
                                         </div>
@@ -925,6 +1052,46 @@ export default function OperatorActivity() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Mostrar distancia calculada si tenemos ambas ubicaciones */}
+                        {selectedDemand.currentLocation && selectedDemand.destinationLocation && (
+                            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <span className="font-medium text-blue-700 text-sm">📏 Distancia:</span>
+                                <p className="text-blue-800 mt-1">
+                                    {selectedDemand.distance || calculateDistanceFromLocations(
+                                        selectedDemand.currentLocation,
+                                        selectedDemand.destinationLocation
+                                    )} km
+                                    {!selectedDemand.distance && (
+                                        <span className="text-xs text-blue-600 ml-2">(calculada automáticamente)</span>
+                                    )}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Mostrar precio calculado automáticamente (solo en modo visualización) */}
+                        {!showConfirmButton && (() => {
+                            const priceCalculationAuto = calculateAutomaticPrice(selectedDemand);
+                            if (priceCalculationAuto && priceCalculationAuto.isValid) {
+                                return (
+                                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                        <span className="font-medium text-green-700 text-sm">💰 Precio estimado:</span>
+                                        <p className="text-green-800 mt-1 font-semibold">
+                                            {formatPrice(priceCalculationAuto.totalPrice)}
+                                            <span className="text-xs text-green-600 ml-2 font-normal">
+                                                ({getPriceSourceText(priceCalculationAuto.serviceType)})
+                                            </span>
+                                        </p>
+                                        <div className="text-xs text-green-600 mt-1">
+                                            <span>Distancia: {priceCalculationAuto.distance?.toFixed(2)} km</span>
+                                            <span className="ml-3">Categoría: {priceCalculationAuto.weightCategory}</span>
+                                            <span className="ml-3">Tipo: {priceCalculationAuto.serviceType}</span>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })()}
 
                         {modalError && (
                             <div className="bg-red-50 border border-red-200 p-3 rounded-lg">

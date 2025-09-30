@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { formatDate } from "../../utils/Utils.js";
+import { formatDate, calculateDistance, calculateDistanceFromLocations } from "../../utils/Utils.js";
 import Modal from "../common/Modal";
 import ToastContainer from "../common/ToastContainer";
 import { useOperatorLocationForDemand } from "../../hooks/location/useOperatorLocationForDemand";
@@ -9,6 +9,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import React from "react";
 import { useToast } from "../../hooks/common/useToast.js";
+import { usePriceCalculation } from "../../hooks/data/usePriceCalculation.js";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -267,6 +268,9 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
         return localStorage.getItem('lastNotifiedRequestId') || null;
     });
 
+    // Hook centralizado para cálculos de precios
+    const { calculateAutomaticPrice, formatPrice, getPriceSourceText } = usePriceCalculation();
+
     // Hook para seguimiento del operador (solo para solicitudes tomadas)
     const takenRequest = requests.find(r => r.state === "TAKEN");
     const {
@@ -328,6 +332,8 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
         }, 5000);
     }, []);
 
+
+
     const fetchRequests = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -353,13 +359,6 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
             const data = await response.json();
             const newRequests = data.content || [];
             
-            // Log para debug: verificar cuántas solicitudes devuelve la API
-            console.log(`📊 API Response - Total solicitudes: ${newRequests.length}`, {
-                totalElements: data.totalElements,
-                totalPages: data.totalPages,
-                currentPage: data.pageable?.pageNumber,
-                pageSize: data.pageable?.pageSize
-            });
 
             // Usar función de setState para acceder al estado anterior sin crear dependencias
             setRequests(prevRequests => {
@@ -369,7 +368,6 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                         const previousRequest = prevRequests.find(r => r.id === newRequest.id);
                         
                         if (previousRequest && previousRequest.state !== newRequest.state) {
-                            console.log(`🔄 Cambio de estado detectado para solicitud ${newRequest.id}: ${previousRequest.state} → ${newRequest.state}`);
                             
                             // Obtener el último ID notificado del localStorage para evitar dependencias
                             const currentLastNotified = localStorage.getItem('lastNotifiedRequestId');
@@ -377,7 +375,6 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                             // Caso 1: Solicitud fue tomada por operador
                             if (previousRequest.state === "ACTIVE" && newRequest.state === "TAKEN") {
                                 if (currentLastNotified !== newRequest.id) {
-                                    console.log(`🔔 Notificando: Operador asignado a solicitud ${newRequest.id}`);
                                     showNotification("¡Operador asignado!", "Un operador ha tomado tu solicitud y está en camino.");
                                     setNotificationShown(true);
                                     setLastNotifiedRequestId(newRequest.id);
@@ -387,7 +384,6 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                             
                             // Caso 2: Solicitud fue completada
                             else if (previousRequest.state === "TAKEN" && newRequest.state === "COMPLETED") {
-                                console.log(`🔔 Notificando: Solicitud completada ${newRequest.id}`);
                                 showNotification("¡Solicitud completada!", "Tu solicitud ha sido completada exitosamente. El servicio ha finalizado.");
                                 setNotificationShown(false);
                                 setLastNotifiedRequestId(null);
@@ -396,7 +392,6 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                             
                             // Caso 3: Solicitud fue cancelada
                             else if (previousRequest.state === "TAKEN" && newRequest.state === "CANCELLED") {
-                                console.log(`🔔 Notificando: Solicitud cancelada ${newRequest.id}`);
                                 showNotification("Solicitud cancelada", "Tu solicitud ha sido cancelada por el operador. Puedes crear una nueva solicitud si lo necesitas.");
                                 setNotificationShown(false);
                                 setLastNotifiedRequestId(null);
@@ -405,7 +400,6 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                             
                             // Caso 4: Solicitud activa fue cancelada directamente
                             else if (previousRequest.state === "ACTIVE" && newRequest.state === "CANCELLED") {
-                                console.log(`🔔 Notificando: Solicitud activa cancelada ${newRequest.id}`);
                                 showNotification("Solicitud cancelada", "Tu solicitud ha sido cancelada.");
                             }
                         }
@@ -423,9 +417,6 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
             
             // Usar función de setState para evitar dependencias
             setHasActiveRequests(prev => {
-                if (prev !== shouldPoll) {
-                    console.log(`🔄 Cambiando estado de polling: ${prev} → ${shouldPoll}`);
-                }
                 return shouldPoll;
             });
 
@@ -472,17 +463,11 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                 const seconds = intervalTime % 60;
                 const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
                 
-                console.log(`🔄 Iniciando polling cada ${timeStr} - Active: ${hasActive}, Taken: ${hasTaken}`);
-                
                 const interval = setInterval(() => {
-                    const status = hasTaken ? 'TAKEN' : 'ACTIVE';
-                    console.log(`📡 Polling ${status} - ${new Date().toLocaleTimeString()}`);
                     fetchRequests();
                 }, intervalTime * 1000);
                 setPollingInterval(interval);
             }
-        } else {
-            console.log('⏹️ Polling detenido - No hay solicitudes que requieran seguimiento');
         }
 
         // Limpiar al desmontar
@@ -525,14 +510,12 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
         if (pollingInterval) {
             clearInterval(pollingInterval);
             setPollingInterval(null);
-            console.log('⏹️ Polling detenido manualmente');
         }
     };
 
     // Función para reiniciar polling manualmente
     const startPolling = () => {
         if (!pollingInterval && hasActiveRequests) {
-            console.log('🔄 Reiniciando polling manualmente');
             // Trigger del useEffect
             setHasActiveRequests(prev => !prev);
             setTimeout(() => setHasActiveRequests(prev => !prev), 100);
@@ -544,7 +527,6 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
         setNotificationShown(false);
         setLastNotifiedRequestId(null);
         localStorage.removeItem('lastNotifiedRequestId');
-        console.log('🔄 Estado de notificaciones reiniciado');
         showNotification("Estado reiniciado", "El estado de notificaciones ha sido reiniciado.");
     };
 
@@ -861,6 +843,46 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                                 </div>
                             )}
                         </div>
+
+                        {/* Mostrar distancia calculada si tenemos ambas ubicaciones */}
+                        {selectedRequest.currentLocation && selectedRequest.destinationLocation && (
+                            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <span className="font-medium text-blue-700 text-sm">📏 Distancia:</span>
+                                <p className="text-blue-800 mt-1">
+                                    {selectedRequest.distance || calculateDistanceFromLocations(
+                                        selectedRequest.currentLocation,
+                                        selectedRequest.destinationLocation
+                                    )} km
+                                    {!selectedRequest.distance && (
+                                        <span className="text-xs text-blue-600 ml-2">(calculada automáticamente)</span>
+                                    )}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Mostrar precio calculado automáticamente */}
+                        {(() => {
+                            const priceCalculation = calculateAutomaticPrice(selectedRequest);
+                            if (priceCalculation && priceCalculation.isValid) {
+                                return (
+                                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                        <span className="font-medium text-green-700 text-sm">💰 Precio estimado:</span>
+                                        <p className="text-green-800 mt-1 font-semibold">
+                                            {formatPrice(priceCalculation.totalPrice)}
+                                            <span className="text-xs text-green-600 ml-2 font-normal">
+                                                ({getPriceSourceText(priceCalculation.priceSource)})
+                                            </span>
+                                        </p>
+                                        <div className="text-xs text-green-600 mt-1">
+                                            <span>Distancia: {priceCalculation.distance?.toFixed(2)} km</span>
+                                            <span className="ml-3">Categoría: {priceCalculation.weightCategory}</span>
+                                            <span className="ml-3">Tipo: {priceCalculation.serviceType}</span>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })()}
 
                         {/* Seguimiento del operador (solo para solicitudes tomadas) */}
                         {selectedRequest.state === "TAKEN" && (

@@ -1,8 +1,12 @@
 import { ReceiptText, TrendingUp, TrendingDown, Calendar, CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react';
 import Pagination from "../components/common/Pagination";
+import Modal from "../components/common/Modal";
 import { usePaginatedDemands } from "../hooks/data/usePaginatedDemands";
 import { useMonthlyStats } from "../hooks/data/useMonthlyStats";
 import { useAutoRefresh } from "../hooks/data/useAutoRefresh";
+import { usePriceCalculation } from "../hooks/data/usePriceCalculation";
+import { formatDate, calculateDistance, calculateDistanceFromLocations } from "../utils/Utils";
+import { useState } from "react";
 
 export default function InternalActivity() {
     const userName = JSON.parse(localStorage.getItem("userDetail")).name
@@ -15,6 +19,51 @@ export default function InternalActivity() {
     const cancelledList = usePaginatedDemands("CANCELLED", refreshTrigger, 10);
     const completedList = usePaginatedDemands("COMPLETED", refreshTrigger, 10);
     const { stats, loading: statsLoading, error: statsError } = useMonthlyStats();
+    
+    // Estados para el modal de detalles
+    const [selectedDemand, setSelectedDemand] = useState(null);
+    const [modalOpen, setModalOpen] = useState(false);
+    
+    // Hook centralizado para cálculos de precios
+    const { 
+        calculateAutomaticPrice, 
+        formatPrice, 
+        getPriceSourceText, 
+        pricingOptions, 
+        loading: loadingPricing 
+    } = usePriceCalculation();
+
+
+
+    // Función para abrir el modal de detalles
+    const openDetailsModal = (demand) => {
+        setSelectedDemand(demand);
+        setModalOpen(true);
+    };
+
+    // Función para cerrar el modal
+    const closeModal = () => {
+        setModalOpen(false);
+        setSelectedDemand(null);
+    };
+
+
+
+    // Función para obtener el badge de estado
+    const getStatusBadge = (state) => {
+        const badges = {
+            ACTIVE: { text: "Activa", class: "bg-blue-100 text-blue-800" },
+            TAKEN: { text: "Asignada", class: "bg-green-100 text-green-800" },
+            CANCELLED: { text: "Cancelada", class: "bg-red-100 text-red-800" },
+            COMPLETED: { text: "Completada", class: "bg-purple-100 text-purple-800" }
+        };
+        const badge = badges[state] || { text: state, class: "bg-gray-100 text-gray-800" };
+        return (
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${badge.class}`}>
+                {badge.text}
+            </span>
+        );
+    };
 
     // Función helper para renderizar tabla de solicitudes
     const renderDemandTable = (demandList, title, emptyMessage) => (
@@ -56,19 +105,15 @@ export default function InternalActivity() {
                                 </thead>
                                 <tbody>
                                     {demandList.demands.map(demand => (
-                                        <tr key={demand.id} className="border-b">
+                                        <tr key={demand.id} className="border-b hover:bg-gray-50">
                                             <td className="p-2">{demand.description}</td>
                                             <td className="p-2">{demand.currentLocation.name}</td>
                                             <td className="p-2">{demand.destinationLocation.name}</td>
                                             <td className="p-2">
                                                 <div className="text-sm">
-                                                    {demand.vehicleBrand && demand.vehicleModel ? (
-                                                        <>
-                                                            <div className="font-medium">{demand.vehicleBrand} {demand.vehicleModel}</div>
-                                                            {demand.vehicleYear && <div className="text-xs text-gray-600">{demand.vehicleYear}</div>}
-                                                            {demand.vehiclePlate && <div className="text-xs text-gray-600">Placa: {demand.vehiclePlate}</div>}
-                                                            {demand.vehicleColor && <div className="text-xs text-gray-600">{demand.vehicleColor}</div>}
-                                                        </>
+                                                    <div className="font-medium">{demand.carType}</div>
+                                                    {demand.vehicleWeight ? (
+                                                        <div className="text-xs text-gray-500">{demand.vehicleWeight} kg</div>
                                                     ) : (
                                                         <span className="text-gray-400">No especificado</span>
                                                     )}
@@ -90,7 +135,14 @@ export default function InternalActivity() {
                                                      demand.state}
                                                 </span>
                                             </td>
-                                            <td className="p-2"><ReceiptText className="h-6 w-6 text-primary" /></td>
+                                            <td className="p-2">
+                                                <button
+                                                    onClick={() => openDetailsModal(demand)}
+                                                    className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                >
+                                                    <ReceiptText className="h-6 w-6" />
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -132,27 +184,13 @@ export default function InternalActivity() {
                                             </span>
                                         </div>
                                     </div>
-                                    
-                                    {/* Información del vehículo en tarjetas móviles */}
-                                    {(demand.vehicleBrand || demand.vehicleModel || demand.vehicleYear || 
-                                      demand.vehiclePlate || demand.vehicleColor) && (
-                                        <div className="mt-2 pt-2 border-t border-gray-200">
-                                            <span className="font-medium text-xs block text-muted-foreground mb-1">Vehículo</span>
-                                            <div className="text-sm">
-                                                {demand.vehicleBrand && demand.vehicleModel && (
-                                                    <div className="font-medium">{demand.vehicleBrand} {demand.vehicleModel}</div>
-                                                )}
-                                                <div className="text-xs text-gray-600 flex flex-wrap gap-2">
-                                                    {demand.vehicleYear && <span>Año: {demand.vehicleYear}</span>}
-                                                    {demand.vehiclePlate && <span>Placa: {demand.vehiclePlate}</span>}
-                                                    {demand.vehicleColor && <span>Color: {demand.vehicleColor}</span>}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    
-                                    <div className="flex justify-end mt-1">
-                                        <ReceiptText className="h-5 w-5 text-primary" />
+                                    <div className="mt-2 flex justify-end">
+                                        <button
+                                            onClick={() => openDetailsModal(demand)}
+                                            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm transition-colors"
+                                        >
+                                            Ver detalles
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -174,6 +212,7 @@ export default function InternalActivity() {
     return (
         <>
             <h1 className="text-2xl font-bold text-foreground">Bienvenido de nuevo {userName} !</h1>
+            
             {/* Resumen Mensual */}
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
                 <div className="bg-card p-4 rounded-lg shadow-md">
@@ -275,6 +314,209 @@ export default function InternalActivity() {
                 {renderDemandTable(cancelledList, "Solicitudes Canceladas", "No hay solicitudes canceladas.")}
             </div>
 
+            {/* Modal de detalles */}
+            {modalOpen && selectedDemand && (
+                <Modal
+                    isOpen={modalOpen}
+                    onClose={closeModal}
+                    title="Detalles de la Asignación"
+                >
+                    <div className="space-y-4">
+                        {/* Información principal */}
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <h3 className="font-bold text-lg text-gray-800 mb-3">{selectedDemand.origin}</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                <div>
+                                    <span className="font-medium text-gray-700">Estado:</span>
+                                    <div className="mt-1">{getStatusBadge(selectedDemand.state)}</div>
+                                </div>
+                                <div>
+                                    <span className="font-medium text-gray-700">Tipo de vehículo:</span>
+                                    <p className="text-gray-800">{selectedDemand.carType}</p>
+                                </div>
+                                <div>
+                                    <span className="font-medium text-gray-700">Fecha:</span>
+                                    <p className="text-gray-800">{formatDate(selectedDemand.createdAt)}</p>
+                                </div>
+                                {selectedDemand.assignedOperatorId && (
+                                    <div>
+                                        <span className="font-medium text-gray-700">Operador:</span>
+                                        <p className="text-gray-800">{selectedDemand.assignedOperatorId}</p>
+                                    </div>
+                                )}
+                                {selectedDemand.vehicleWeight && (
+                                    <div>
+                                        <span className="font-medium text-gray-700">Peso del vehículo:</span>
+                                        <p className="text-gray-800">{selectedDemand.vehicleWeight} kg</p>
+                                    </div>
+                                )}
+                                {selectedDemand.distance && (
+                                    <div>
+                                        <span className="font-medium text-gray-700">Distancia:</span>
+                                        <p className="text-gray-800">{selectedDemand.distance} km</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Descripción y avería */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {selectedDemand.description && (
+                                <div>
+                                    <span className="font-medium text-gray-700 text-sm">Descripción:</span>
+                                    <p className="text-gray-800 mt-1 p-3 bg-gray-50 rounded-lg text-sm">
+                                        {selectedDemand.description}
+                                    </p>
+                                </div>
+                            )}
+                            {selectedDemand.breakdown && (
+                                <div>
+                                    <span className="font-medium text-gray-700 text-sm">Tipo de avería:</span>
+                                    <p className="text-gray-800 mt-1 p-3 bg-gray-50 rounded-lg text-sm">
+                                        {selectedDemand.breakdown}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Ubicaciones */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {selectedDemand.currentLocation && (
+                                <div>
+                                    <span className="font-medium text-gray-700 text-sm">📍 Ubicación actual:</span>
+                                    <div className="mt-1 p-3 bg-blue-50 rounded-lg">
+                                        <p className="text-gray-800 text-sm font-medium">{selectedDemand.currentLocation.name || 'Sin nombre'}</p>
+                                        <p className="text-xs text-gray-600 mt-1">
+                                            {selectedDemand.currentLocation.latitude?.toFixed(6)}, {selectedDemand.currentLocation.longitude?.toFixed(6)}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedDemand.destinationLocation && (
+                                <div>
+                                    <span className="font-medium text-gray-700 text-sm">🎯 Destino:</span>
+                                    <div className="mt-1 p-3 bg-green-50 rounded-lg">
+                                        <p className="text-gray-800 text-sm font-medium">{selectedDemand.destinationLocation.name || 'Sin nombre'}</p>
+                                        <p className="text-xs text-gray-600 mt-1">
+                                            {selectedDemand.destinationLocation.latitude?.toFixed(6)}, {selectedDemand.destinationLocation.longitude?.toFixed(6)}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Mostrar distancia calculada si tenemos ambas ubicaciones */}
+                            {selectedDemand.currentLocation && selectedDemand.destinationLocation && (
+                                <div className="sm:col-span-2">
+                                    <span className="font-medium text-gray-700 text-sm">📏 Distancia:</span>
+                                    <div className="mt-1 p-3 bg-purple-50 rounded-lg">
+                                        <p className="text-gray-800 text-sm font-medium">
+                                            {selectedDemand.distance || calculateDistance(
+                                                selectedDemand.currentLocation.latitude,
+                                                selectedDemand.currentLocation.longitude,
+                                                selectedDemand.destinationLocation.latitude,
+                                                selectedDemand.destinationLocation.longitude
+                                            )} km
+                                            {!selectedDemand.distance && (
+                                                <span className="text-xs text-purple-600 ml-2">(calculada automáticamente)</span>
+                                            )}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+
+
+                        {/* Cálculo del viaje */}
+                        {(() => {
+                            // Calcular distancia si no está disponible
+                            const distance = selectedDemand.distance || 
+                                (selectedDemand.currentLocation && selectedDemand.destinationLocation ? 
+                                    calculateDistance(
+                                        selectedDemand.currentLocation.latitude,
+                                        selectedDemand.currentLocation.longitude,
+                                        selectedDemand.destinationLocation.latitude,
+                                        selectedDemand.destinationLocation.longitude
+                                    ) : null);
+                            
+                            const priceCalculation = calculateAutomaticPrice(selectedDemand);
+                            return priceCalculation && priceCalculation.isValid ? (
+                                <div className="border-t border-gray-200 pt-4">
+                                    <h4 className="font-medium text-gray-700 mb-3">💰 Cálculo del Viaje</h4>
+                                    <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <span className="font-medium text-green-800 text-sm">Categoría de peso:</span>
+                                                <p className="text-green-700">{priceCalculation.weightCategory}</p>
+                                            </div>
+                                            <div>
+                                                <span className="font-medium text-green-800 text-sm">Tipo de servicio:</span>
+                                                <p className="text-green-700 capitalize">{priceCalculation.serviceType.replace('_', ' ')}</p>
+                                            </div>
+                                            <div>
+                                                <span className="font-medium text-green-800 text-sm">Distancia total:</span>
+                                                <p className="text-green-700">{priceCalculation.distance?.toFixed(2)} km</p>
+                                            </div>
+                                            <div>
+                                                <span className="font-medium text-green-800 text-sm">Precio total:</span>
+                                                <p className="text-green-700 font-bold text-lg">{formatPrice(priceCalculation.totalPrice)}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Información del origen del precio */}
+                                        <div className="mt-3 pt-3 border-t border-green-300">
+                                            <p className="text-xs text-green-600">
+                                                {getPriceSourceText(priceCalculation.priceSource)}
+                                            </p>
+                                        </div>
+
+                                        {/* Desglose del cálculo */}
+                                        <div className="mt-4 pt-3 border-t border-green-300">
+                                            <h5 className="font-medium text-green-800 text-sm mb-2">Desglose del cálculo:</h5>
+                                            {priceCalculation.serviceType === 'urbano' ? (
+                                                <div className="text-sm text-green-700">
+                                                    <p>• Servicio urbano (≤8 km): <span className="font-medium">{formatPrice(priceCalculation.breakdown.urbanPrice)}</span></p>
+                                                    <p className="text-xs text-green-600 mt-1">Precio fijo para servicios dentro del área urbana</p>
+                                                </div>
+                                            ) : (
+                                                <div className="text-sm text-green-700 space-y-1">
+                                                    <p>• Precio base: <span className="font-medium">{formatPrice(priceCalculation.breakdown.basePrice)}</span></p>
+                                                    <p>• Distancia extra: <span className="font-medium">{priceCalculation.breakdown.extraDistance} km</span></p>
+                                                    <p>• Tarifa por km adicional: <span className="font-medium">{formatPrice(priceCalculation.breakdown.pricePerKm)}/km</span></p>
+                                                    <p>• Costo adicional: <span className="font-medium">{formatPrice(priceCalculation.breakdown.extraCost)}</span></p>
+                                                    <div className="border-t border-green-300 pt-2 mt-2">
+                                                        <p className="font-medium">Total: {formatPrice(priceCalculation.breakdown.basePrice)} + {formatPrice(priceCalculation.breakdown.extraCost)} = {formatPrice(priceCalculation.totalPrice)}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                selectedDemand.distance || selectedDemand.vehicleWeight ? (
+                                    <div className="border-t border-gray-200 pt-4">
+                                        <h4 className="font-medium text-gray-700 mb-3">💰 Cálculo del Viaje</h4>
+                                        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                                            <p className="text-yellow-800 text-sm">
+                                                No se puede calcular el precio automáticamente.
+                                            </p>
+                                            <div className="text-xs text-yellow-700 mt-2">
+                                                <p className="font-medium mb-1">Datos faltantes:</p>
+                                                {!distance && !selectedDemand.currentLocation && <p>• Falta información de distancia y ubicaciones</p>}
+                                                {!distance && selectedDemand.currentLocation && !selectedDemand.destinationLocation && <p>• Falta ubicación de destino</p>}
+                                                {!distance && !selectedDemand.currentLocation && selectedDemand.destinationLocation && <p>• Falta ubicación actual</p>}
+                                                {!selectedDemand.vehicleWeight && <p>• Falta información del peso del vehículo</p>}
+                                                {pricingOptions.length === 0 && <p>• No hay categorías de precio configuradas</p>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : null
+                            );
+                        })()}
+                    </div>
+                </Modal>
+            )}
         </>
     );
 }
