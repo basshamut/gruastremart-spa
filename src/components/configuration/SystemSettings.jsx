@@ -108,80 +108,9 @@ export default function SystemSettings() {
                                 value={settings.defaultRadius}
                                 onChange={(e) => handleInputChange('defaultRadius', parseInt(e.target.value))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                readOnly
+                                disabled
                             />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Tiempo Máximo de Espera (minutos)
-                            </label>
-                            <input
-                                type="number"
-                                value={settings.maxWaitTime}
-                                onChange={(e) => handleInputChange('maxWaitTime', parseInt(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Configuraciones de Operación */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-medium mb-4">Configuraciones de Operación</h3>
-                    <div className="space-y-4">
-                        <div className="flex items-center">
-                            <input
-                                type="checkbox"
-                                id="maintenanceMode"
-                                checked={settings.maintenanceMode}
-                                onChange={(e) => handleInputChange('maintenanceMode', e.target.checked)}
-                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                            />
-                            <label htmlFor="maintenanceMode" className="ml-2 block text-sm text-gray-900">
-                                Modo de Mantenimiento
-                            </label>
-                        </div>
-                        <div className="flex items-center">
-                            <input
-                                type="checkbox"
-                                id="autoAssignOperators"
-                                checked={settings.autoAssignOperators}
-                                onChange={(e) => handleInputChange('autoAssignOperators', e.target.checked)}
-                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                            />
-                            <label htmlFor="autoAssignOperators" className="ml-2 block text-sm text-gray-900">
-                                Asignación Automática de Operadores
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Configuraciones de Notificaciones */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-medium mb-4">Configuraciones de Notificaciones</h3>
-                    <div className="space-y-4">
-                        <div className="flex items-center">
-                            <input
-                                type="checkbox"
-                                id="emailNotifications"
-                                checked={settings.emailNotifications}
-                                onChange={(e) => handleInputChange('emailNotifications', e.target.checked)}
-                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                            />
-                            <label htmlFor="emailNotifications" className="ml-2 block text-sm text-gray-900">
-                                Notificaciones por Email
-                            </label>
-                        </div>
-                        <div className="flex items-center">
-                            <input
-                                type="checkbox"
-                                id="smsNotifications"
-                                checked={settings.smsNotifications}
-                                onChange={(e) => handleInputChange('smsNotifications', e.target.checked)}
-                                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                            />
-                            <label htmlFor="smsNotifications" className="ml-2 block text-sm text-gray-900">
-                                Notificaciones por SMS
-                            </label>
                         </div>
                     </div>
                 </div>
