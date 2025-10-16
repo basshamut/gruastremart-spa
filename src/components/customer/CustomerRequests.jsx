@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { formatDate, calculateDistance, calculateDistanceFromLocations } from "../../utils/Utils.js";
+import { formatDate, calculateDistanceFromLocations } from "../../utils/Utils.js";
 import Modal from "../common/Modal";
+import PaymentModal from "../common/PaymentModal";
 import ToastContainer from "../common/ToastContainer";
 import { useOperatorLocationForDemand } from "../../hooks/location/useOperatorLocationForDemand";
 import { DEMAND_POLL_INTERVAL } from "../../config/constants.js";
@@ -10,6 +11,7 @@ import "leaflet/dist/leaflet.css";
 import React from "react";
 import { useToast } from "../../hooks/common/useToast.js";
 import { usePriceCalculation } from "../../hooks/data/usePriceCalculation.js";
+import PaymentService from "../../services/PaymentService.js";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -254,6 +256,10 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalType, setModalType] = useState("details"); // "details" o "cancel"
+    
+    // Estados para modal de pago
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [paymentLoading, setPaymentLoading] = useState(false);
 
     // Estados para polling y notificaciones
     const [pollingInterval, setPollingInterval] = useState(null);
@@ -587,6 +593,38 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
         setSelectedRequest(null);
     };
 
+    const handleRegisterPayment = (request) => {
+        setSelectedRequest(request);
+        setPaymentModalOpen(true);
+    };
+
+    const handlePaymentSubmit = async (paymentData) => {
+        setPaymentLoading(true);
+        try {
+            const result = await PaymentService.registerPayment(paymentData);
+            
+            if (result.success) {
+                showSuccess("Pago registrado exitosamente. Será verificado por nuestro equipo.");
+                setPaymentModalOpen(false);
+                
+                // Actualizar la lista de solicitudes para reflejar el cambio
+                fetchRequests();
+            } else {
+                showError(result.message || "Error al registrar el pago");
+            }
+        } catch (error) {
+            console.error("Error al registrar pago:", error);
+            showError("Error al registrar el pago. Por favor, intente nuevamente.");
+        } finally {
+            setPaymentLoading(false);
+        }
+    };
+
+    const handlePaymentModalClose = () => {
+        setPaymentModalOpen(false);
+        setSelectedRequest(null);
+    };
+
     const getStatusBadge = (state) => {
         const badges = {
             ACTIVE: { text: "Activa", class: "bg-blue-100 text-blue-800" },
@@ -884,6 +922,21 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                             return null;
                         })()}
 
+                        {/* Botón de Registrar Pago (solo para solicitudes completadas) */}
+                        {selectedRequest.state === "COMPLETED" && (
+                            <div className="border-t border-gray-200 pt-4">
+                                <div className="flex justify-center">
+                                    <button
+                                        onClick={() => handleRegisterPayment(selectedRequest)}
+                                        className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center gap-2 shadow-md"
+                                    >
+                                        <span>💳</span>
+                                        Registrar Pago
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Seguimiento del operador (solo para solicitudes tomadas) */}
                         {selectedRequest.state === "TAKEN" && (
                             <div className="border-t border-gray-200 pt-4">
@@ -1022,6 +1075,17 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                         </div>
                     </div>
                 </Modal>
+            )}
+
+            {/* Modal de registro de pago */}
+            {paymentModalOpen && selectedRequest && (
+                <PaymentModal
+                    isOpen={paymentModalOpen}
+                    onClose={handlePaymentModalClose}
+                    onSubmit={handlePaymentSubmit}
+                    requestData={selectedRequest}
+                    isLoading={paymentLoading}
+                />
             )}
 
             {/* Toast Container para notificaciones */}

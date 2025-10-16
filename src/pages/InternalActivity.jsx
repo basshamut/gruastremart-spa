@@ -1,11 +1,11 @@
-import { ReceiptText, TrendingUp, TrendingDown, Calendar, CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react';
+import { ReceiptText, TrendingUp, TrendingDown, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
 import { usePaginatedDemands } from "../hooks/data/usePaginatedDemands";
 import { useMonthlyStats } from "../hooks/data/useMonthlyStats";
 import { useAutoRefresh } from "../hooks/data/useAutoRefresh";
 import { usePriceCalculation } from "../hooks/data/usePriceCalculation";
-import { formatDate, calculateDistance, calculateDistanceFromLocations } from "../utils/Utils";
+import { formatDate, calculateDistance } from "../utils/Utils";
 import { useState } from "react";
 
 export default function InternalActivity() {
@@ -29,8 +29,7 @@ export default function InternalActivity() {
         calculateAutomaticPrice, 
         formatPrice, 
         getPriceSourceText, 
-        pricingOptions, 
-        loading: loadingPricing 
+        pricingOptions
     } = usePriceCalculation();
 
 

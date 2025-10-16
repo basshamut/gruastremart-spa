@@ -8,7 +8,7 @@ import { useOperatorActivity } from "../hooks/data/useOperatorActivity";
 import { useOperatorLocationService } from "../hooks/location/useOperatorLocationService";
 import { assignCraneDemandToOperator, cancelCraneDemandByOperator, completeCraneDemandByOperator } from "../services/CraneDemandService.js";
 import { updateOperatorLocation } from "../services/OperatorLocationService.js";
-import { formatDate, calculateDistance, calculateDistanceFromLocations } from "../utils/Utils.js";
+import { formatDate, calculateDistanceFromLocations } from "../utils/Utils.js";
 import { LOCATION_UPDATE_INTERVAL } from "../config/constants.js";
 import { usePriceCalculation } from "../hooks/data/usePriceCalculation.js";
 import { useToast } from "../hooks/common/useToast.js";
