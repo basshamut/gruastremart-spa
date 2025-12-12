@@ -19,8 +19,8 @@
     "gruastremart-spa": "file:",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.485.0",
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.3.0"
   },
