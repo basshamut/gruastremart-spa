@@ -10,7 +10,8 @@ export default function PaymentModal({
 }) {
     const [formData, setFormData] = useState({
         mobilePaymentReference: '',
-        paymentImage: null
+        paymentImage: null,
+        amount: ''
     });
     const [errors, setErrors] = useState({});
     const [imagePreview, setImagePreview] = useState(null);
@@ -89,6 +90,12 @@ export default function PaymentModal({
             newErrors.paymentImage = 'Debe adjuntar una imagen del comprobante de pago';
         }
 
+        if (!formData.amount || formData.amount <= 0) {
+            newErrors.amount = 'El monto es obligatorio y debe ser mayor a 0';
+        } else if (isNaN(parseFloat(formData.amount))) {
+            newErrors.amount = 'El monto debe ser un número válido';
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -103,7 +110,8 @@ export default function PaymentModal({
         const paymentData = {
             demandId: requestData.id,
             mobilePaymentReference: formData.mobilePaymentReference.trim(),
-            paymentImage: formData.paymentImage
+            paymentImage: formData.paymentImage,
+            amount: parseFloat(formData.amount)
         };
 
         onSubmit(paymentData);
@@ -113,7 +121,8 @@ export default function PaymentModal({
         // Resetear formulario al cerrar
         setFormData({
             mobilePaymentReference: '',
-            paymentImage: null
+            paymentImage: null,
+            amount: ''
         });
         setErrors({});
         setImagePreview(null);
@@ -184,6 +193,36 @@ export default function PaymentModal({
                         )}
                         <p className="mt-1 text-xs text-gray-500">
                             Ingrese la referencia o número de confirmación del pago móvil
+                        </p>
+                    </div>
+
+                    {/* Monto del pago */}
+                    <div>
+                        <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+                            💰 Monto del Pago *
+                        </label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-2.5 text-gray-500 text-lg">$</span>
+                            <input
+                                type="number"
+                                id="amount"
+                                name="amount"
+                                value={formData.amount}
+                                onChange={handleInputChange}
+                                placeholder="Ej: 50.00, 100.50, etc."
+                                step="0.01"
+                                min="0"
+                                className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                                    errors.amount ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                disabled={isLoading}
+                            />
+                        </div>
+                        {errors.amount && (
+                            <p className="mt-1 text-sm text-red-600">{errors.amount}</p>
+                        )}
+                        <p className="mt-1 text-xs text-gray-500">
+                            Ingrese el monto exacto del pago realizado
                         </p>
                     </div>
 
