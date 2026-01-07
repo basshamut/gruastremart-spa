@@ -24,6 +24,7 @@ createRoot(document.getElementById('root')).render(
                     <Route path="/operators" element={<App/>}/>
                     <Route path="/configurations" element={<App/>}/>
                     <Route path="/profiles" element={<App/>}/>
+                    <Route path="/payments" element={<App/>}/>
                 </Routes>
             </BrowserRouter>
         </AuthProvider>

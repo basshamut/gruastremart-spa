@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import NavBar from "../components/common/NavBar.jsx";
 import InternalActivity from "../pages/InternalActivity.jsx";
 import OperatorActivity from "../pages/OperatorActivity.jsx";
+import OperatorPaymentsActivity from "../pages/OperatorPaymentsActivity.jsx";
 import CustomerActivity from "../pages/CustomerActivity.jsx";
 import ConfigurationActivity from "../pages/ConfigurationActivity.jsx";
 import ProfileActivity from "../pages/ProfileActivity.jsx";
@@ -36,6 +37,8 @@ export default function Hero() {
             setCurrentView("configurations");
         } else if (path === "/profiles") {
             setCurrentView("profiles");
+        } else if (path === "/payments") {
+            setCurrentView("payments");
         } else {
             setCurrentView("dashboard");
         }
@@ -53,6 +56,8 @@ export default function Hero() {
                     <ConfigurationActivity />
                 ) : currentView === "profiles" ? (
                     <ProfileActivity />
+                ) : currentView === "payments" ? (
+                    <OperatorPaymentsActivity />
                 ) : (
                     <>
                         {activeRole === "ADMIN" && <InternalActivity role={activeRole} />}

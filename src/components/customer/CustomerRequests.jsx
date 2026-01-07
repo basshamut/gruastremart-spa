@@ -922,8 +922,8 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                             return null;
                         })()}
 
-                        {/* Botón de Registrar Pago (solo para solicitudes completadas) */}
-                        {selectedRequest.state === "COMPLETED" && (
+                        {/* Botón de Registrar Pago (solo para solicitudes completadas sin pago) */}
+                        {selectedRequest.state === "COMPLETED" && !selectedRequest.paymentId && (
                             <div className="border-t border-gray-200 pt-4">
                                 <div className="flex justify-center">
                                     <button
@@ -933,6 +933,21 @@ export default function CustomerRequests({ refreshTrigger = 0 }) {
                                         <span>💳</span>
                                         Registrar Pago
                                     </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Mensaje de pago ya registrado */}
+                        {selectedRequest.state === "COMPLETED" && selectedRequest.paymentId && (
+                            <div className="border-t border-gray-200 pt-4">
+                                <div className="bg-green-50 border border-green-200 p-4 rounded-lg text-center">
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <span className="text-green-600 text-lg">✅</span>
+                                        <span className="font-semibold text-green-800">Pago Registrado</span>
+                                    </div>
+                                    <p className="text-sm text-green-700">
+                                        Ya has registrado el pago para esta solicitud.
+                                    </p>
                                 </div>
                             </div>
                         )}

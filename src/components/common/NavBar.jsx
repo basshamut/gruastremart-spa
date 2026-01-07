@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useAuth} from "../../hooks/auth/useAuth";
-import {ClipboardCheck, HardHat, Home, LogOut, Menu, MessageSquareWarning, Settings, User, X} from "lucide-react";
+import {ClipboardCheck, HardHat, Home, LogOut, Menu, MessageSquareWarning, Settings, User, X, DollarSign} from "lucide-react";
 
 import {clearLocalStorage} from "../../utils/Utils.js";
 
@@ -35,6 +35,12 @@ export default function NavBar({role}) {
             icon: <User className="w-5 h-5 mr-2"/>,
             onClick: (e) => goTo(e, "/profiles"),
             show: true
+        },
+        {
+            label: "Pagos",
+            icon: <DollarSign className="w-5 h-5 mr-2"/>,
+            onClick: (e) => goTo(e, "/payments"),
+            show: role === "OPERATOR" || role === "ADMIN"
         },
 
         {

@@ -59,7 +59,8 @@ class PaymentService {
         formData.append('demandId', paymentData.demandId);
         formData.append('userId', userId);
         formData.append('mobilePaymentReference', paymentData.mobilePaymentReference);
-        
+        formData.append('amount', paymentData.amount);
+
         if (paymentData.paymentImage) {
             formData.append('paymentImage', paymentData.paymentImage);
         }
@@ -162,6 +163,107 @@ class PaymentService {
             return await response.json();
         } catch (error) {
             console.error('Error obteniendo detalles del pago:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtiene los pagos de un operador específico (pagos de sus demandas completadas)
+     * @param {string} operatorId - ID del operador
+     * @param {Object} options - Opciones de consulta
+     * @param {string} options.status - Estado del pago (opcional: PENDING, VERIFIED, REJECTED)
+     * @param {number} options.page - Página (por defecto 0)
+     * @param {number} options.size - Tamaño de página (por defecto 10)
+     * @returns {Promise<Object>} Lista de pagos del operador
+     */
+    async getOperatorPayments(operatorId, options = {}) {
+        const token = this.getAuthToken();
+
+        if (!token) {
+            throw new Error('No se encontró token de autenticación');
+        }
+
+        if (!operatorId) {
+            throw new Error('El ID del operador es requerido');
+        }
+
+        const { status, page = 0, size = 10 } = options;
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString()
+        });
+
+        if (status) {
+            params.append('status', status);
+        }
+
+        try {
+            const response = await fetch(`${this.apiDomain}/v1/payments/operator/${operatorId}?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error obteniendo pagos del operador:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Verifica o rechaza un pago
+     * @param {string} paymentId - ID del pago
+     * @param {Object} verificationData - Datos de verificación
+     * @param {string} verificationData.status - Estado (VERIFIED o REJECTED)
+     * @param {string} verificationData.verificationComments - Comentarios (opcional, obligatorio para rechazo)
+     * @returns {Promise<Object>} Pago actualizado
+     */
+    async verifyPayment(paymentId, verificationData) {
+        const token = this.getAuthToken();
+
+        if (!token) {
+            throw new Error('No se encontró token de autenticación');
+        }
+
+        if (!paymentId) {
+            throw new Error('El ID del pago es requerido');
+        }
+
+        if (!verificationData || !verificationData.status) {
+            throw new Error('El estado es requerido (VERIFIED o REJECTED)');
+        }
+
+        // Validar que se incluyan comentarios al rechazar
+        if (verificationData.status === 'REJECTED' && !verificationData.verificationComments) {
+            throw new Error('Debe incluir comentarios al rechazar un pago');
+        }
+
+        try {
+            const response = await fetch(`${this.apiDomain}/v1/payments/${paymentId}/verify`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(verificationData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error verificando pago:', error);
             throw error;
         }
     }
