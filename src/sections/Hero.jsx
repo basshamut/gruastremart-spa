@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import NavBar from "../components/common/NavBar.jsx";
 import InternalActivity from "../pages/InternalActivity.jsx";
 import OperatorActivity from "../pages/OperatorActivity.jsx";
+import AdminPaymentsActivity from "../pages/AdminPaymentsActivity.jsx";
 import OperatorPaymentsActivity from "../pages/OperatorPaymentsActivity.jsx";
 import CustomerActivity from "../pages/CustomerActivity.jsx";
 import ConfigurationActivity from "../pages/ConfigurationActivity.jsx";
@@ -33,6 +34,8 @@ export default function Hero() {
 
         // Determinar la vista actual basada en la URL
         const path = location.pathname;
+        const userDetail = JSON.parse(localStorage.getItem("userDetail")) || {};
+
         if (path === "/configurations") {
             setCurrentView("configurations");
         } else if (path === "/profiles") {
@@ -57,7 +60,10 @@ export default function Hero() {
                 ) : currentView === "profiles" ? (
                     <ProfileActivity />
                 ) : currentView === "payments" ? (
-                    <OperatorPaymentsActivity />
+                    <>
+                        {activeRole === "ADMIN" && <AdminPaymentsActivity />}
+                        {activeRole === "OPERATOR" && <OperatorPaymentsActivity />}
+                    </>
                 ) : (
                     <>
                         {activeRole === "ADMIN" && <InternalActivity role={activeRole} />}

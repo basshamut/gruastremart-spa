@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAutoRefresh } from '../hooks/data/useAutoRefresh';
-import { useOperatorPayments } from '../hooks/data/useOperatorPayments';
 import PaymentVerificationModal from '../components/common/PaymentVerificationModal';
 import PaymentService from '../services/PaymentService.js';
 import { useToast } from '../hooks/common/useToast.js';
@@ -34,7 +33,14 @@ export default function OperatorPaymentsActivity() {
     // Cerrar dropdown al hacer clic fuera
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownOpen && !event.target.closest('#operatorFilter')) {
+            const filterButton = document.getElementById('operatorFilter');
+            const dropdown = document.getElementById('operatorDropdown');
+            
+            if (dropdownOpen && 
+                filterButton && 
+                dropdown && 
+                !filterButton.contains(event.target) && 
+                !dropdown.contains(event.target)) {
                 setDropdownOpen(false);
             }
         };
@@ -62,20 +68,59 @@ export default function OperatorPaymentsActivity() {
 
     const { refreshTrigger } = useAutoRefresh(30);
 
-    const {
-        payments,
-        loading,
-        error,
-        page,
-        totalPages,
-        totalElements,
-        handlePageChange
-    } = useOperatorPayments(
-        isAdmin ? selectedOperator : operatorId,  // Si es admin usa el seleccionado, si no usa su propio ID
-        activeTab === 'pending' ? 'PENDING' : activeTab === 'verified' ? 'VERIFIED' : 'REJECTED',
-        refreshTrigger,
-        10
+    // Estados para pagos
+    const [allPayments, setAllPayments] = useState([]);
+    const [paymentsLoading, setPaymentsLoading] = useState(false);
+    const [paymentsError, setPaymentsError] = useState(null);
+    const [page, setPage] = useState(0);
+    const [pageSize] = useState(10);
+
+    // Cargar todos los pagos del operador
+    const loadAllPayments = async () => {
+        const targetOperatorId = isAdmin ? selectedOperator : operatorId;
+        if (!targetOperatorId) {
+            setPaymentsLoading(false);
+            return;
+        }
+
+        setPaymentsLoading(true);
+        setPaymentsError(null);
+
+        try {
+            const result = await PaymentService.getOperatorPayments(targetOperatorId, {
+                page: 0,
+                size: 1000 // Obtener todos los pagos para filtrar localmente
+            });
+
+            if (result && result.content) {
+                setAllPayments(result.content);
+            } else {
+                setAllPayments([]);
+            }
+        } catch (err) {
+            console.error('Error cargando pagos:', err);
+            setPaymentsError(err.message || 'Error al cargar los pagos');
+            setAllPayments([]);
+        } finally {
+            setPaymentsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadAllPayments();
+    }, [isAdmin, selectedOperator, operatorId, refreshTrigger]);
+
+    // Filtrar pagos por estado y paginar localmente
+    const filteredPayments = allPayments.filter(payment =>
+        payment.status === activeTab.toUpperCase()
     );
+
+    const totalPages = Math.ceil(filteredPayments.length / pageSize);
+    const paginatedPayments = filteredPayments.slice(
+        page * pageSize,
+        (page + 1) * pageSize
+    );
+    const totalElements = filteredPayments.length;
 
     const openVerificationModal = (payment) => {
         setSelectedPayment(payment);
@@ -106,6 +151,7 @@ export default function OperatorPaymentsActivity() {
                         : 'Pago rechazado exitosamente'
                 );
                 closeVerificationModal();
+                loadAllPayments(); // Recargar la lista de pagos
             } else {
                 showError(result.message || 'Error al procesar el pago');
             }
@@ -148,11 +194,33 @@ export default function OperatorPaymentsActivity() {
         );
     };
 
+    // Estadísticas fijas (no cambian con el tab activo)
+    const getStatistics = () => {
+        const stats = {
+            pending: 0,
+            verified: 0,
+            rejected: 0
+        };
+
+        allPayments.forEach(payment => {
+            if (payment.status === 'PENDING') stats.pending++;
+            else if (payment.status === 'VERIFIED') stats.verified++;
+            else if (payment.status === 'REJECTED') stats.rejected++;
+        });
+
+        return stats;
+    };
+
+    const statistics = getStatistics();
+
     const getTabCount = (status) => {
-        // Para obtener el conteo real, necesitamos hacer otra llamada.
-        // Por ahora, mostramos un indicador de carga o el número actual
-        if (loading) return '...';
-        return activeTab === status ? totalElements : '-';
+        return statistics[status];
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 0 && newPage < totalPages) {
+            setPage(newPage);
+        }
     };
 
     return (
@@ -198,7 +266,7 @@ export default function OperatorPaymentsActivity() {
 
                             {/* Dropdown de opciones */}
                             {dropdownOpen && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                                <div id="operatorDropdown" className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
                                     {/* Opción "Todos" */}
                                     <button
                                         onClick={() => {
@@ -256,7 +324,7 @@ export default function OperatorPaymentsActivity() {
                         <div>
                             <p className="text-sm text-yellow-800 font-medium">Pagos Pendientes</p>
                             <p className="text-2xl font-bold text-yellow-900 mt-1">
-                                {loading ? '...' : getTabCount('pending')}
+                                {paymentsLoading ? '...' : statistics.pending}
                             </p>
                         </div>
                         <Clock className="w-8 h-8 text-yellow-500" />
@@ -265,9 +333,9 @@ export default function OperatorPaymentsActivity() {
                 <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-green-800 font-medium">Pagos Aprobados Hoy</p>
+                            <p className="text-sm text-green-800 font-medium">Pagos Aprobados</p>
                             <p className="text-2xl font-bold text-green-900 mt-1">
-                                {loading ? '...' : getTabCount('verified')}
+                                {paymentsLoading ? '...' : statistics.verified}
                             </p>
                         </div>
                         <CheckCircle className="w-8 h-8 text-green-500" />
@@ -276,9 +344,9 @@ export default function OperatorPaymentsActivity() {
                 <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-red-800 font-medium">Pagos Rechazados Hoy</p>
+                            <p className="text-sm text-red-800 font-medium">Pagos Rechazados</p>
                             <p className="text-2xl font-bold text-red-900 mt-1">
-                                {loading ? '...' : getTabCount('rejected')}
+                                {paymentsLoading ? '...' : statistics.rejected}
                             </p>
                         </div>
                         <XCircle className="w-8 h-8 text-red-500" />
@@ -293,6 +361,7 @@ export default function OperatorPaymentsActivity() {
                         <button
                             onClick={() => {
                                 setActiveTab('pending');
+                                setPage(0);
                             }}
                             className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors ${
                                 activeTab === 'pending'
@@ -305,11 +374,14 @@ export default function OperatorPaymentsActivity() {
                             <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
                                 activeTab === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-600'
                             }`}>
-                                {loading ? '...' : totalElements}
+                                {paymentsLoading ? '...' : statistics.pending}
                             </span>
                         </button>
                         <button
-                            onClick={() => setActiveTab('verified')}
+                            onClick={() => {
+                                setActiveTab('verified');
+                                setPage(0);
+                            }}
                             className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors ${
                                 activeTab === 'verified'
                                     ? 'border-green-500 text-green-600'
@@ -318,9 +390,17 @@ export default function OperatorPaymentsActivity() {
                         >
                             <CheckCircle className="w-4 h-4 mr-2" />
                             Aprobados
+                            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                                activeTab === 'verified' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                                {paymentsLoading ? '...' : statistics.verified}
+                            </span>
                         </button>
                         <button
-                            onClick={() => setActiveTab('rejected')}
+                            onClick={() => {
+                                setActiveTab('rejected');
+                                setPage(0);
+                            }}
                             className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors ${
                                 activeTab === 'rejected'
                                     ? 'border-red-500 text-red-600'
@@ -329,28 +409,33 @@ export default function OperatorPaymentsActivity() {
                         >
                             <XCircle className="w-4 h-4 mr-2" />
                             Rechazados
+                            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                                activeTab === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                                {paymentsLoading ? '...' : statistics.rejected}
+                            </span>
                         </button>
                     </nav>
                 </div>
 
                 {/* Lista de pagos */}
                 <div className="p-4">
-                    {loading ? (
+                    {paymentsLoading ? (
                         <div className="flex items-center justify-center py-8">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
                             <p className="text-sm text-gray-500">Cargando pagos...</p>
                         </div>
-                    ) : error ? (
+                    ) : paymentsError ? (
                         <div className="text-center py-8">
-                            <p className="text-sm text-red-500 mb-2">{error}</p>
+                            <p className="text-sm text-red-500 mb-2">{paymentsError}</p>
                             <button
-                                onClick={() => window.location.reload()}
+                                onClick={loadAllPayments}
                                 className="text-sm text-blue-600 hover:text-blue-800 underline"
                             >
                                 Reintentar
                             </button>
                         </div>
-                    ) : payments.length === 0 ? (
+                    ) : paginatedPayments.length === 0 ? (
                         <div className="text-center py-8">
                             <div className="text-gray-400 mb-2">📋</div>
                             <p className="text-sm text-muted-foreground">
@@ -363,7 +448,7 @@ export default function OperatorPaymentsActivity() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {payments.map((payment) => (
+                            {paginatedPayments.map((payment) => (
                                 <div
                                     key={payment.id}
                                     className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-white"

@@ -164,6 +164,57 @@ class PaymentService {
         } catch (error) {
             console.error('Error obteniendo detalles del pago:', error);
             throw error;
+         }
+     }
+
+    /**
+     * Obtiene todos los pagos del sistema
+     * @param {Object} options - Opciones de consulta
+     * @param {string} options.status - Estado del pago (opcional: PENDING, VERIFIED, REJECTED)
+     * @param {number} options.page - Página (por defecto 0)
+     * @param {number} options.size - Tamaño de página (por defecto 10)
+     * @returns {Promise<Object>} Lista de todos los pagos
+     */
+    async getAllPayments(options = {}) {
+        const token = this.getAuthToken();
+
+        if (!token) {
+            throw new Error('No se encontró token de autenticación');
+        }
+
+        const { status, page = 0, size = 10 } = options;
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString()
+        });
+
+        if (status) {
+            params.append('status', status);
+        }
+
+        try {
+            const response = await fetch(`${this.apiDomain}/v1/payments/all?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            } else {
+                return { success: true, message: 'Operación exitosa' };
+            }
+        } catch (error) {
+            console.error('Error obteniendo todos los pagos:', error);
+            throw error;
         }
     }
 
