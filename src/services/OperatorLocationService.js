@@ -10,9 +10,15 @@ export async function getOperatorLocation(assignedOperatorId) {
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
-        console.error("❌ Error consultando ubicación:", errorData);
-        throw new Error(errorData.message || "Error al obtener la ubicación del operador");
+        try {
+            const errorData = await response.json();
+            console.error("❌ Error consultando ubicación:", errorData);
+            throw new Error(errorData.message || "Error al obtener la ubicación del operador");
+        } catch {
+            // Si no puede parsear JSON, crear un error genérico
+            console.error("❌ Error consultando ubicación (sin JSON valido):", response.status, response.statusText);
+            throw new Error(`Error al obtener la ubicación del operador (${response.status})`);
+        }
     }
 
     return await response.json();
@@ -38,9 +44,14 @@ export async function updateOperatorLocation(assignedOperatorId, location) {
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
-        console.error("❌ Error en respuesta del backend:", errorData);
-        throw new Error(errorData.message || "Error al actualizar la ubicación del operador");
+        try {
+            const errorData = await response.json();
+            console.error("❌ Error en respuesta del backend:", errorData);
+            throw new Error(errorData.message || "Error al actualizar la ubicación del operador");
+        } catch {
+            console.error("❌ Error en respuesta del backend (sin JSON valido):", response.status, response.statusText);
+            throw new Error(`Error al actualizar la ubicación del operador (${response.status})`);
+        }
     }
 
     return await response.json();

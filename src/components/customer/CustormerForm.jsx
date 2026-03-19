@@ -1,6 +1,12 @@
 import { useState } from "react";
 
-export default function CustomerForm({ formData, setFormData, onDemandCreated }) {
+export default function CustomerForm({
+    formData,
+    setFormData,
+    onDemandCreated,
+    onCustomSubmit,  // Nuevo: handler personalizado de envío
+    submitButtonText = "Solicitar Grúa"  // Nuevo: texto personalizable del botón
+}) {
     const apiDomain = import.meta.env.VITE_API_DOMAIN_URL;
     const token = JSON.parse(localStorage.getItem(import.meta.env.VITE_SUPABASE_LOCAL_STORAGE_ITEM))?.access_token;
     const [message, setMessage] = useState(null);
@@ -8,14 +14,28 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ 
-            ...prev, 
-            [name]: name === 'vehicleYear' ? parseInt(value) || 0 : value 
+        setFormData((prev) => ({
+            ...prev,
+            [name]: name === 'vehicleYear' ? parseInt(value) || 0 : value
         }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validar formulario antes de proceder
+        if (!isFormValid()) {
+            setMessage("❌ Por favor completa todos los campos requeridos.");
+            return;
+        }
+
+        // Si hay un handler personalizado, usarlo en lugar del comportamiento por defecto
+        if (onCustomSubmit) {
+            onCustomSubmit(formData);
+            return;
+        }
+
+        // Comportamiento por defecto: crear la demanda directamente (retrocompatibilidad)
         setSending(true);
         setMessage(null);
 
@@ -46,6 +66,8 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                     breakdown: "",
                     referenceSource: "",
                     recommendedBy: "",
+                    customerName: "",
+                    customerPhone: "",
                     vehicleBrand: "",
                     vehicleModel: "",
                     vehicleYear: 0,
@@ -78,6 +100,8 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
             formData.breakdown?.trim() &&
             formData.referenceSource?.trim() &&
             formData.recommendedBy?.trim() &&
+            formData.customerName?.trim() &&
+            formData.customerPhone?.trim() &&
             formData.description?.trim() &&
             formData.vehicleBrand?.trim() &&
             formData.vehicleModel?.trim() &&
@@ -154,6 +178,32 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 value={formData.recommendedBy}
                                 onChange={handleChange}
                                 className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                required
+                            />
+                        </div>
+
+                        <div className="flex flex-col">
+                            <label className="block font-medium mb-1 text-gray-700">Nombre del solicitante *</label>
+                            <input
+                                type="text"
+                                name="customerName"
+                                value={formData.customerName}
+                                onChange={handleChange}
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="Ej: Juan Pérez"
+                                required
+                            />
+                        </div>
+
+                        <div className="flex flex-col">
+                            <label className="block font-medium mb-1 text-gray-700">Teléfono de contacto *</label>
+                            <input
+                                type="tel"
+                                name="customerPhone"
+                                value={formData.customerPhone}
+                                onChange={handleChange}
+                                className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="Ej: +58 412 1234567"
                                 required
                             />
                         </div>
@@ -257,7 +307,7 @@ export default function CustomerForm({ formData, setFormData, onDemandCreated })
                                 : ""
                         }
                     >
-                        {sending ? "Enviando..." : "Solicitar Grúa"}
+                        {sending ? "Enviando..." : submitButtonText}
                     </button>
 
                     <button
