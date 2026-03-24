@@ -401,15 +401,15 @@ export default function OperatorActivity() {
                                         </div>
                                     </div>
                                 )}
-                                {operatorStatus && (
+                                {operatorStatus != null && (
                                     <div className="mt-2 pt-2 border-t border-gray-200">
                                         <div className="font-semibold text-gray-700">Estado del operador:</div>
                                         <div className="text-[10px] text-gray-600">
-                                            {operatorStatus.isOnline ? '🟢 En línea' : '🔴 Desconectado'}
+                                            {operatorStatus === true ? '🟢 En línea' : '🔴 Desconectado'}
                                         </div>
-                                        {operatorStatus.lastSeen && (
+                                        {operatorLocation?.timestamp && (
                                             <div className="text-[10px] text-gray-500">
-                                                Última actividad: {new Date(operatorStatus.lastSeen).toLocaleTimeString()}
+                                                Última actividad: {new Date(operatorLocation.timestamp).toLocaleTimeString()}
                                             </div>
                                         )}
                                     </div>
