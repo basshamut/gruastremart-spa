@@ -2,20 +2,29 @@
 FROM node:22.12-slim AS build
 WORKDIR /app
 
-# Copiamos archivos de dependencias primero para aprovechar la caché de Docker
 COPY package*.json ./
 RUN npm install
 
-# Copiamos el resto del código y construimos
 COPY . .
 RUN npm run build
 
-# Etapa 2: Servidor de producción (ligero)
+# Etapa 2: Servidor de producción
 FROM nginx:alpine
-# Copiamos los archivos estáticos generados por Vite (carpeta dist)
+
+# --- MAGIA AQUÍ ---
+# Creamos el archivo de configuración de Nginx directamente desde el Dockerfile
+RUN echo 'server { \
+    listen 80; \
+    location / { \
+        root /usr/share/nginx/html; \
+        index index.html; \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
+# ------------------
+
+# Copiamos los archivos generados por Vite
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copiamos una configuración básica de Nginx para React (opcional pero recomendado)
-# Si no tienes un nginx.conf personalizado, Nginx usará el por defecto
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
