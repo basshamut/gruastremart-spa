@@ -1,0 +1,5 @@
+onlyBuiltDependencies:
+  - '@swc/core'
+allowBuilds:
+  '@swc/core': true
+  sharp: false

@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@11.1.1",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -14,7 +14,6 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.49.1",
-    "@vitejs/plugin-react": "^6.0.1",
     "dayjs": "^1.11.13",
     "esri-leaflet-geocoder": "^3.1.5",
     "gruastremart-spa": "file:",
@@ -33,7 +32,7 @@
     "@eslint/js": "^9.21.0",
     "@types/react": "^19.0.11",
     "@types/react-dom": "^19.0.5",
-    "@vitejs/plugin-react-swc": "^4.3.0",
+    "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.4.20",
     "eslint": "9.26.0",
     "eslint-plugin-react-hooks": "^5.1.0",
