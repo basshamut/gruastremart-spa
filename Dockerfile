@@ -1,5 +1,5 @@
 # Etapa 1: Construcción
-FROM node:22.12-slim AS build
+FROM node:22-slim AS build
 WORKDIR /app
 
 RUN npm install -g pnpm@11.1.1
