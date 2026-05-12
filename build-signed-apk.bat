@@ -8,7 +8,7 @@ if "%KEY_ALIAS%"=="" (
 )
 
 echo ===== Compilando la aplicación web =====
-call npm run build
+call pnpm run build
 
 echo ===== Copiando archivos a la plataforma Android =====
 call npx cap copy android

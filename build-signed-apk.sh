@@ -4,7 +4,7 @@ ANDROID_HOME="/c/Users/jesfa/AppData/Local/Android/Sdk"
 echo "===== <> Iniciando proceso de compilacion y firma del APK <> ====="
 
 echo "===== Compilando la aplicación web ====="
-npm run build
+pnpm run build
 
 echo "===== Copiando archivos a la plataforma Android ====="
 npx cap copy android
