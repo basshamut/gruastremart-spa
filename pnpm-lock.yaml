@@ -8,6 +8,18 @@ importers:
 
   .:
     dependencies:
+      '@capacitor/android':
+        specifier: ^8.4.1
+        version: 8.4.1(@capacitor/core@8.4.1)
+      '@capacitor/app':
+        specifier: ^8.1.0
+        version: 8.1.0(@capacitor/core@8.4.1)
+      '@capacitor/core':
+        specifier: ^8.4.1
+        version: 8.4.1
+      '@capacitor/ios':
+        specifier: ^8.4.1
+        version: 8.4.1(@capacitor/core@8.4.1)
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.6)
@@ -20,9 +32,6 @@ importers:
       esri-leaflet-geocoder:
         specifier: ^3.1.5
         version: 3.1.7
-      gruastremart-spa:
-        specifier: 'file:'
-        version: 'file:'
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
@@ -42,18 +51,12 @@ importers:
         specifier: ^7.3.0
         version: 7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
     devDependencies:
-      '@capacitor/android':
-        specifier: ^7.4.0
-        version: 7.6.4(@capacitor/core@7.6.4)
       '@capacitor/assets':
         specifier: ^3.0.5
         version: 3.0.5(@types/node@25.7.0)(typescript@6.0.3)
       '@capacitor/cli':
-        specifier: ^7.4.0
-        version: 7.6.4
-      '@capacitor/core':
-        specifier: ^7.4.0
-        version: 7.6.4
+        specifier: ^8.4.1
+        version: 8.4.1
       '@eslint/js':
         specifier: ^9.21.0
         version: 9.39.4
@@ -108,10 +111,15 @@ packages:
     resolution: {integrity: sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q==}
     engines: {node: '>=6.9.0'}
 
-  '@capacitor/android@7.6.4':
-    resolution: {integrity: sha512-ETk+B1q+kt7H5ArRK+OG478L1LtDQFtFpYbY37M3T8jzYe7BDZEem2QJEsNX6Mszy4hhPkhdOiogohR2YrlDvw==}
+  '@capacitor/android@8.4.1':
+    resolution: {integrity: sha512-igtDCJ7QQn0P2qHFD9p4KXaa6V1b2PRNt+MxjVwtjTm/BJvqmiazOJq6rPjwFSZnfHm6iFoZk8TfzHd44pyBGw==}
     peerDependencies:
-      '@capacitor/core': ^7.6.0
+      '@capacitor/core': ^8.4.0
+
+  '@capacitor/app@8.1.0':
+    resolution: {integrity: sha512-MlmttTOWHDedr/G4SrhNRxsXMqY+R75S4MM4eIgzsgCzOYhb/MpCkA5Q3nuOCfL1oHm26xjUzqZ5aupbOwdfYg==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@capacitor/assets@3.0.5':
     resolution: {integrity: sha512-ohz/OUq61Y1Fc6aVSt0uDrUdeOA7oTH4pkWDbv/8I3UrPjH7oPkzYhShuDRUjekNp9RBi198VSFdt0CetpEOzw==}
@@ -123,13 +131,18 @@ packages:
     engines: {node: '>=16.0.0'}
     hasBin: true
 
-  '@capacitor/cli@7.6.4':
-    resolution: {integrity: sha512-lW692IiFQC5gd1fvMxrwLN3exS/Z9VmiCBL+k440edNSl4VxE+LhVmTXkqFg0tW46VJUbIdW3PXkx/Y64On7ag==}
-    engines: {node: '>=20.0.0'}
+  '@capacitor/cli@8.4.1':
+    resolution: {integrity: sha512-t7F2s7fFHCq113xgrggrmK6ctV0/8E5YfLNVLfPHp4GCTDO+tly9fZvWPf2/sOI8lMm18dLT43qbXLRTz/OZgw==}
+    engines: {node: '>=22.0.0'}
     hasBin: true
 
-  '@capacitor/core@7.6.4':
-    resolution: {integrity: sha512-wRq5d8+EGaIztp5sEvmOyA5kmqFwwE+Ceocw2XTQSePFD11msdLXNERGfyQhMCyxnrPfrwhWqO3SjfC73Nxq6g==}
+  '@capacitor/core@8.4.1':
+    resolution: {integrity: sha512-xqhOGLbTAYeOWK+IDUNSjQJAPapQjRHrIcgk9PYp52or9zFTaaMko31uNi16N6W+CRJ8VrRram6fOYILkBG2Hg==}
+
+  '@capacitor/ios@8.4.1':
+    resolution: {integrity: sha512-EgcAk7NYheHMTyP3CUrA65qKs4D2UEAKgw44HI6Uk3dTw6KjLQkdLOQWvbeRncHaZ2gklfOojUoc5DlSw2lhYg==}
+    peerDependencies:
+      '@capacitor/core': ^8.4.0
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -1390,9 +1403,6 @@ packages:
   gradle-to-js@2.0.1:
     resolution: {integrity: sha512-is3hDn9zb8XXnjbEeAEIqxTpLHUiGBqjegLmXPuyMBfKAggpadWFku4/AP8iYAGBX6qR9/5UIUIp47V0XI3aMw==}
     hasBin: true
-
-  'gruastremart-spa@file:':
-    resolution: {directory: '', type: directory}
 
   handlebars@4.7.9:
     resolution: {integrity: sha512-4E71E0rpOaQuJR2A3xDZ+GM1HyWYv1clR58tC8emQNeQe3RH7MAzSbat+V0wG78LQBo6m6bzSG/L4pBuCsgnUQ==}
@@ -2859,9 +2869,13 @@ snapshots:
 
   '@babel/helper-validator-identifier@7.28.5': {}
 
-  '@capacitor/android@7.6.4(@capacitor/core@7.6.4)':
+  '@capacitor/android@8.4.1(@capacitor/core@8.4.1)':
     dependencies:
-      '@capacitor/core': 7.6.4
+      '@capacitor/core': 8.4.1
+
+  '@capacitor/app@8.1.0(@capacitor/core@8.4.1)':
+    dependencies:
+      '@capacitor/core': 8.4.1
 
   '@capacitor/assets@3.0.5(@types/node@25.7.0)(typescript@6.0.3)':
     dependencies:
@@ -2910,7 +2924,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@capacitor/cli@7.6.4':
+  '@capacitor/cli@8.4.1':
     dependencies:
       '@ionic/cli-framework-output': 2.2.8
       '@ionic/utils-subprocess': 3.0.1
@@ -2932,9 +2946,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@capacitor/core@7.6.4':
+  '@capacitor/core@8.4.1':
     dependencies:
       tslib: 2.8.1
+
+  '@capacitor/ios@8.4.1(@capacitor/core@8.4.1)':
+    dependencies:
+      '@capacitor/core': 8.4.1
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
@@ -3066,7 +3084,7 @@ snapshots:
       debug: 4.3.4
       signal-exit: 3.0.7
       tree-kill: 1.2.2
-      tslib: 2.6.2
+      tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
 
@@ -3084,7 +3102,7 @@ snapshots:
   '@ionic/utils-stream@3.1.6':
     dependencies:
       debug: 4.3.4
-      tslib: 2.6.2
+      tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
 
@@ -3104,7 +3122,7 @@ snapshots:
       '@ionic/utils-terminal': 2.3.4
       cross-spawn: 7.0.6
       debug: 4.3.4
-      tslib: 2.6.2
+      tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
 
@@ -3129,7 +3147,7 @@ snapshots:
       slice-ansi: 4.0.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
-      tslib: 2.6.2
+      tslib: 2.8.1
       untildify: 4.0.0
       wrap-ansi: 7.0.0
     transitivePeerDependencies:
@@ -4299,19 +4317,6 @@ snapshots:
   gradle-to-js@2.0.1:
     dependencies:
       lodash.merge: 4.6.2
-
-  'gruastremart-spa@file:':
-    dependencies:
-      '@heroicons/react': 2.2.0(react@19.2.6)
-      '@supabase/supabase-js': 2.105.4
-      dayjs: 1.11.20
-      esri-leaflet-geocoder: 3.1.7
-      leaflet: 1.9.4
-      lucide-react: 0.485.0(react@19.2.6)
-      react: 19.2.6
-      react-dom: 19.2.6(react@19.2.6)
-      react-leaflet: 5.0.0(leaflet@1.9.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      react-router-dom: 7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
 
   handlebars@4.7.9:
     dependencies:
