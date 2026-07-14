@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client'
 import "./styles/global.css";
 import App from './App.jsx'
 import {AuthProvider} from "./components/access/AuthProvider.jsx";
-import {BrowserRouter, Route, Routes} from "react-router-dom";
+import {HashRouter, Route, Routes} from "react-router-dom";
 import SignInForm from "./components/access/SignInForm.jsx";
 import SignUpForm from "./components/access/SignUpForm.jsx";
 import ResetPassword from "./components/access/ResetPassword.jsx";
@@ -12,7 +12,7 @@ import ForgotPassword from "./components/access/ForgotPassword.jsx";
 createRoot(document.getElementById('root')).render(
     <React.StrictMode>
         <AuthProvider>
-            <BrowserRouter>
+            <HashRouter>
                 <Routes>
                     <Route path="/" element={<SignInForm/>}/>
                     <Route path="/login" element={<SignInForm/>}/>
@@ -26,7 +26,7 @@ createRoot(document.getElementById('root')).render(
                     <Route path="/profiles" element={<App/>}/>
                     <Route path="/payments" element={<App/>}/>
                 </Routes>
-            </BrowserRouter>
+            </HashRouter>
         </AuthProvider>
     </React.StrictMode>
 )
