@@ -3,16 +3,19 @@ import {createRoot} from 'react-dom/client'
 import "./styles/global.css";
 import App from './App.jsx'
 import {AuthProvider} from "./components/access/AuthProvider.jsx";
-import {HashRouter, Route, Routes} from "react-router-dom";
+import {BrowserRouter, HashRouter, Route, Routes} from "react-router-dom";
 import SignInForm from "./components/access/SignInForm.jsx";
 import SignUpForm from "./components/access/SignUpForm.jsx";
 import ResetPassword from "./components/access/ResetPassword.jsx";
 import ForgotPassword from "./components/access/ForgotPassword.jsx";
 
+const isCapacitor = window.Capacitor !== undefined;
+const Router = isCapacitor ? HashRouter : BrowserRouter;
+
 createRoot(document.getElementById('root')).render(
     <React.StrictMode>
         <AuthProvider>
-            <HashRouter>
+            <Router>
                 <Routes>
                     <Route path="/" element={<SignInForm/>}/>
                     <Route path="/login" element={<SignInForm/>}/>
@@ -26,7 +29,7 @@ createRoot(document.getElementById('root')).render(
                     <Route path="/profiles" element={<App/>}/>
                     <Route path="/payments" element={<App/>}/>
                 </Routes>
-            </HashRouter>
+            </Router>
         </AuthProvider>
     </React.StrictMode>
 )
