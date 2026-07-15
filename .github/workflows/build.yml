@@ -184,7 +184,7 @@ jobs:
 
       - name: List Xcode schemes
         working-directory: ios/App
-        run: xcodebuild -project App.xcodeproj -list
+        run: xcodebuild -workspace App.xcworkspace -list
 
       - name: Build iOS Archive
         working-directory: ios/App
@@ -194,13 +194,13 @@ jobs:
           DEVELOPMENT_TEAM: ${{ steps.check-signing.outputs.available == 'true' && secrets.IOS_TEAM_ID || '' }}
         run: |
           if [ "$SIGNING_AVAILABLE" = "true" ]; then
-            xcodebuild -project App.xcodeproj \
+            xcodebuild -workspace App.xcworkspace \
               -scheme App \
               -configuration Release \
               -archivePath $RUNNER_TEMP/App.xcarchive \
               archive
           else
-            xcodebuild -project App.xcodeproj \
+            xcodebuild -workspace App.xcworkspace \
               -scheme App \
               -configuration Release \
               -archivePath $RUNNER_TEMP/App.xcarchive \
