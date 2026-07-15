@@ -148,7 +148,8 @@ jobs:
 
       - name: Fix Podfile paths for pnpm
         run: |
-          sed -i "s|../../node_modules/.pnpm/[^/]*/node_modules/@capacitor|../../node_modules/@capacitor|g" ios/App/Podfile
+          sed -i.bak "s|../../node_modules/.pnpm/[^/]*/node_modules/@capacitor|../../node_modules/@capacitor|g" ios/App/Podfile
+          rm -f ios/App/Podfile.bak
 
       - name: Install CocoaPods
         working-directory: ios/App
