@@ -1,5 +1,10 @@
 {
   "appId": "com.gruastremart.app",
   "appName": "gruastremart-spa",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
 }
