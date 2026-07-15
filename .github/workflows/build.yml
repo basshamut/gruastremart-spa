@@ -146,6 +146,10 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
+      - name: Fix Podfile paths for pnpm
+        run: |
+          sed -i "s|../../node_modules/.pnpm/[^/]*/node_modules/@capacitor|../../node_modules/@capacitor|g" ios/App/Podfile
+
       - name: Install CocoaPods
         working-directory: ios/App
         run: pod install
