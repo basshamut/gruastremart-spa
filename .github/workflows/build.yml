@@ -146,6 +146,10 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
+      - name: Install CocoaPods
+        working-directory: ios/App
+        run: pod install
+
       - name: Check signing secret
         id: check-signing
         run: |
