@@ -52,6 +52,10 @@ jobs:
 
       - name: Build web app
         run: pnpm build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_API_DOMAIN_URL: ${{ secrets.VITE_API_DOMAIN_URL }}
 
       - name: Add Android platform
         run: npx cap add android || true
@@ -139,6 +143,10 @@ jobs:
 
       - name: Build web app
         run: pnpm build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_API_DOMAIN_URL: ${{ secrets.VITE_API_DOMAIN_URL }}
 
       - name: Add iOS platform
         run: npx cap add ios || true
